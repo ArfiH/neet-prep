@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { GraduationCap, Search, ChevronRight, TrendingUp, Award } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/backend/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PredictedCollege = {

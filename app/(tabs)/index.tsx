@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { BookOpen, GraduationCap, TrendingUp, ChevronRight, Star } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/backend/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -31,6 +31,7 @@ type College = {
   id: string;
   name: string;
   state: string;
+  city: string;
   type: string;
   image_url: string;
 };

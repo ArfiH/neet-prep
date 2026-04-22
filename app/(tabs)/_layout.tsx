@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Hop as Home, BookOpen, GraduationCap, User } from 'lucide-react-native';
+import { Hop as Home, BookOpen, GraduationCap, User, HomeIcon } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { StyleSheet, View } from 'react-native';
 
@@ -19,13 +19,13 @@ export default function TabLayout() {
         name="index"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} strokeWidth={2} />,
+          tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="pdfs"
         options={{
-          title: 'Study PDFs',
+          title: 'PDFs',
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} strokeWidth={2} />,
         }}
       />

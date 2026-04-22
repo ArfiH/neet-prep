@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, BookOpen, Lock, Download, User, FileText, Tag, ShoppingCart, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/backend/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');

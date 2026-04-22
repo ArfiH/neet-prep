@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, MapPin, Phone, Globe, Users, IndianRupee, Calendar, Award, Hop as Home, ExternalLink, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/backend/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type College = {

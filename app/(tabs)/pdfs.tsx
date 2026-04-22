@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Search, ListFilter as Filter, BookOpen, Lock } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/lib/supabase';
+import { supabase } from '@/backend/supabase';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PDF = {
@@ -115,8 +115,8 @@ export default function PDFsScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Study PDFs</Text>
-        <Text style={styles.headerSubtitle}>NEET & MBBS study material</Text>
+        <Text style={styles.headerTitle}>Read PDFs</Text>
+        <Text style={styles.headerSubtitle}>NEET study materials</Text>
       </View>
 
       {/* Search Bar */}
@@ -148,7 +148,12 @@ export default function PDFsScreen() {
         ))}
       </View>
 
+      
       {/* Subject Tabs */}
+      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 }}>
+        <Text style={{paddingHorizontal: 4, fontSize: 16, fontWeight: '900'}}>Subjects</Text>
+      </View>
+
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subjectScroll} contentContainerStyle={styles.subjectScrollContent}>
         {SUBJECTS.map((subject) => (
           <TouchableOpacity
@@ -235,6 +240,7 @@ const styles = StyleSheet.create({
   subjectScrollContent: { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
   subjectTab: {
     paddingHorizontal: 14,
+    height: 32,
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
