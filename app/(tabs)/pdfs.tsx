@@ -150,7 +150,7 @@ export default function PDFsScreen() {
 
       
       {/* Subject Tabs */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: 6 }}>
+      <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6 }}>
         <Text style={{paddingHorizontal: 4, fontSize: 16, fontWeight: '900'}}>Subjects</Text>
       </View>
 
@@ -245,6 +245,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     borderWidth: 1,
     borderColor: COLORS.border,
+    marginBottom: 20,
   },
   subjectTabActive: { backgroundColor: COLORS.primarySurface, borderColor: COLORS.primaryBorder },
   subjectTabText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },

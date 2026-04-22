@@ -10,9 +10,10 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { BookOpen, GraduationCap, TrendingUp, ChevronRight, Star } from 'lucide-react-native';
+import { BookOpen, ChevronRight, Star } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { supabase } from '@/backend/supabase';
+import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -41,6 +42,7 @@ const SUBJECTS = ['All', 'Biology', 'Chemistry', 'Physics', 'Anatomy', 'Pharmaco
 export default function HomeScreen() {
   const router = useRouter();
   const [featuredPdfs, setFeaturedPdfs] = useState<PDF[]>([]);
+  const [recentlyViewedPdfs, setRecentlyViewedPdfs] = useState<PDF[]>([]);
   const [topColleges, setTopColleges] = useState<College[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -50,39 +52,32 @@ export default function HomeScreen() {
 
   async function fetchData() {
     try {
-      const [pdfsRes, collegesRes] = await Promise.all([
+      const [pdfsRes, collegesRes, recentIds] = await Promise.all([
         supabase.from('pdfs').select('*').limit(6),
         supabase.from('colleges').select('*').limit(4),
+        getRecentlyViewedIds(),
       ]);
       if (pdfsRes.data) setFeaturedPdfs(pdfsRes.data);
       if (collegesRes.data) setTopColleges(collegesRes.data);
+      
+      if (recentIds.length > 0) {
+        const { data: recentPdfs } = await supabase
+          .from('pdfs')
+          .select('*')
+          .in('id', recentIds);
+        if (recentPdfs) {
+          const sortedRecent = recentIds
+            .map((id) => recentPdfs.find((p) => p.id === id))
+            .filter((p): p is PDF => p !== undefined);
+          setRecentlyViewedPdfs(sortedRecent);
+        }
+      }
     } catch (e) {
       // ignore
     } finally {
       setLoading(false);
     }
   }
-
-  const quickActions = [
-    {
-      label: 'Study PDFs',
-      icon: <BookOpen size={24} color={COLORS.primary} strokeWidth={2} />,
-      bg: COLORS.primarySurface,
-      route: '/(tabs)/pdfs',
-    },
-    {
-      label: 'Predict College',
-      icon: <GraduationCap size={24} color='#2563EB' strokeWidth={2} />,
-      bg: '#EFF6FF',
-      route: '/(tabs)/colleges',
-    },
-    {
-      label: 'Top Ranked',
-      icon: <TrendingUp size={24} color='#D97706' strokeWidth={2} />,
-      bg: '#FFFBEB',
-      route: '/(tabs)/colleges',
-    },
-  ];
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -91,12 +86,13 @@ export default function HomeScreen() {
         <View style={styles.heroBanner}>
           <View style={styles.heroTextBlock}>
             <Text style={styles.heroGreeting}>Welcome, Future Doctor!</Text>
-            <Text style={styles.heroSubtitle}>Your NEET preparation hub</Text>
+            <Text style={styles.heroSubtitle}>Your NEET preparation centre</Text>
           </View>
+          
+          {/* profile photo can go here
           <View style={styles.neetBadge}>
-            <Text style={styles.neetBadgeLabel}>NEET 2025</Text>
-            <Text style={styles.neetBadgeValue}>Prep Ready</Text>
-          </View>
+          </View> */}
+        
         </View>
 
         {/* Stats Row */}
@@ -113,23 +109,43 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Quick Actions */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Access</Text>
-          <View style={styles.quickActionsRow}>
-            {quickActions.map((a) => (
-              <TouchableOpacity
-                key={a.label}
-                style={[styles.quickAction, { backgroundColor: a.bg }]}
-                onPress={() => router.push(a.route as any)}
-                activeOpacity={0.8}
-              >
-                {a.icon}
-                <Text style={styles.quickActionLabel}>{a.label}</Text>
-              </TouchableOpacity>
-            ))}
+        {/* Recently Viewed PDFs */}
+        {recentlyViewedPdfs.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Recently Viewed</Text>
+            <FlatList
+              data={recentlyViewedPdfs}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingLeft: 2, paddingRight: 16 }}
+              renderItem={({ item }) => (
+                <TouchableOpacity
+                  style={styles.pdfCard}
+                  onPress={() => router.push(`/pdf/${item.id}` as any)}
+                  activeOpacity={0.9}
+                >
+                  <Image
+                    source={{ uri: item.cover_image_url || 'https://images.pexels.com/photos/4855428/pexels-photo-4855428.jpeg' }}
+                    style={styles.pdfCardImage}
+                  />
+                  <View style={styles.pdfCardOverlay}>
+                    <View style={[styles.pdfTag, item.is_free ? styles.freeTag : styles.paidTag]}>
+                      <Text style={[styles.pdfTagText, { color: item.is_free ? COLORS.tagFree : COLORS.tagPaid }]}>
+                        {item.is_free ? 'FREE' : `₹${item.price}`}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.pdfCardBody}>
+                    <Text style={styles.pdfSubject}>{item.subject}</Text>
+                    <Text style={styles.pdfTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={styles.pdfPages}>{item.pages_count} pages</Text>
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
           </View>
-        </View>
+        )}
 
         {/* Featured PDFs */}
         <View style={styles.section}>
@@ -259,17 +275,6 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text },
   seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   seeAllText: { fontSize: 13, color: COLORS.primary, fontWeight: '600' },
-
-  quickActionsRow: { flexDirection: 'row', gap: 10 },
-  quickAction: {
-    flex: 1,
-    borderRadius: 14,
-    paddingVertical: 16,
-    alignItems: 'center',
-    gap: 8,
-    ...SHADOWS.sm,
-  },
-  quickActionLabel: { fontSize: 11, fontWeight: '600', color: COLORS.text, textAlign: 'center' },
 
   pdfCard: {
     width: 160,
