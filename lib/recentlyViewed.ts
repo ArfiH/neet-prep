@@ -10,7 +10,7 @@ export async function getRecentlyViewedIds(): Promise<string[]> {
       return JSON.parse(data);
     }
   } catch (e) {
-    // ignore
+    console.error('Error fetching recently viewed PDFs:', e);
   }
   return [];
 }
@@ -25,6 +25,6 @@ export async function addRecentlyViewed(pdfId: string): Promise<void> {
     }
     await AsyncStorage.setItem(RECENTLY_VIEWED_KEY, JSON.stringify(ids));
   } catch (e) {
-    // ignore
+    console.error('Error adding recently viewed PDF:', e);
   }
 }
