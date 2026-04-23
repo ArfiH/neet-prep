@@ -27,6 +27,7 @@ type PDF = {
   price: number;
   is_free: boolean;
   cover_image_url: string;
+  file_url: string;
   pages_count: number;
   tags: string[];
   downloads: number;
@@ -60,6 +61,14 @@ export default function PDFDetailScreen() {
       addRecentlyViewed(id);
     }
     setLoading(false);
+  }
+
+  function handleReadPdf() {
+    if (!pdf?.file_url) {
+      console.log('PDF file not available. Please contact support.');
+      return;
+    }
+    router.push(`/pdf/viewer/${pdf.id}`);
   }
 
   if (loading) {
@@ -173,6 +182,7 @@ export default function PDFDetailScreen() {
 
         <TouchableOpacity
           style={[styles.ctaBtn, pdf.is_free ? styles.freeCta : styles.paidCta]}
+          onPress={handleReadPdf}
           activeOpacity={0.85}
         >
           {pdf.is_free ? (

@@ -12,6 +12,7 @@ export default function RootLayout() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="pdf/[id]" />
+        <Stack.Screen name="pdf/viewer/[id]" />
         <Stack.Screen name="college/[id]" />
         <Stack.Screen name="+not-found" />
       </Stack>

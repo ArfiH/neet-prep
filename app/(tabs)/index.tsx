@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
 
   section: { paddingHorizontal: 16, marginTop: 20 },
   sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
-  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text },
+  sectionTitle: { fontSize: 17, fontWeight: '700', color: COLORS.text, marginBottom: 12},
   seeAllBtn: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   seeAllText: { fontSize: 13, color: COLORS.primary, fontWeight: '600' },
 
