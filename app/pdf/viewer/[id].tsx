@@ -15,6 +15,190 @@ type PDF = {
   file_url: string;
 };
 
+const getPdfJsViewerHTML = (url: string, title: string) => `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes">
+  <title>${title}</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    html, body {
+      width: 100%;
+      height: auto;
+      min-height: 100%;
+      overflow: auto;
+      background: #1a1a1a;
+      font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #pdf-container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      overflow-y: visible;
+      overflow-x: hidden;
+      padding: 20px;
+      padding-bottom: 60px;
+      -webkit-overflow-scrolling: touch;
+      touch-action: manipulation;
+    }
+    .page-wrapper {
+      position: relative;
+      display: inline-block;
+      width: 100%;
+      margin-bottom: 12px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.5);
+      -webkit-touch-callout: none;
+    }
+    .page-wrapper canvas {
+      display: block;
+      width: 100%;
+      height: auto;
+    }
+    .watermark {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .watermark-text {
+      font-size: 36px;
+      font-weight: 800;
+      color: rgba(0, 0, 0, 0.1);
+      text-transform: uppercase;
+      letter-spacing: 4px;
+      white-space: nowrap;
+    }
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-size: 16px;
+      text-align: center;
+    }
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 4px solid rgba(255,255,255,0.2);
+      border-top-color: white;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    #error-message {
+      display: none;
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff6b6b;
+      font-size: 16px;
+      text-align: center;
+      padding: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="pdf-container">
+    <div id="loading">
+      <div class="spinner"></div>
+      <p>Loading PDF...</p>
+    </div>
+    <div id="error-message">Unable to load PDF</div>
+  </div>
+
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    
+    const container = document.getElementById('pdf-container');
+    const loading = document.getElementById('loading');
+    const errorMsg = document.getElementById('error-message');
+    const pdfUrl = "${url}";
+    
+    document.addEventListener('contextmenu', function(e) {
+      e.preventDefault();
+      return false;
+    });
+    
+    document.addEventListener('keydown', function(e) {
+      if (e.ctrlKey || e.metaKey) {
+        if (e.key !== '+' && e.key !== '-' && e.key !== '=' && e.key !== '0') {
+          e.preventDefault();
+          return false;
+        }
+      }
+    });
+
+    loading.style.display = 'block';
+    
+    pdfjsLib.getDocument(pdfUrl).promise.then(function(pdf) {
+      loading.style.display = 'none';
+      
+      function renderPage(pageNum) {
+        if (pageNum > pdf.numPages) return;
+        
+        pdf.getPage(pageNum).then(function(page) {
+          const scale = window.innerWidth / page.getViewport({ scale: 1 }).width;
+          const viewport = page.getViewport({ scale: scale });
+          
+          const wrapper = document.createElement('div');
+          wrapper.className = 'page-wrapper';
+          
+          const canvas = document.createElement('canvas');
+          canvas.width = viewport.width;
+          canvas.height = viewport.height;
+          
+          const watermark = document.createElement('div');
+          watermark.className = 'watermark';
+          const watermarkText = document.createElement('div');
+          watermarkText.className = 'watermark-text';
+          watermarkText.textContent = 'NEET ZYME';
+          watermark.appendChild(watermarkText);
+          
+          wrapper.appendChild(canvas);
+          wrapper.appendChild(watermark);
+          container.appendChild(wrapper);
+          
+          const context = canvas.getContext('2d');
+          page.render({
+            canvasContext: context,
+            viewport: viewport
+          }).promise.then(function() {
+            renderPage(pageNum + 1);
+          });
+        });
+      }
+      
+      renderPage(1);
+    }).catch(function(error) {
+      loading.style.display = 'none';
+      errorMsg.style.display = 'block';
+      console.log('PDF load error:', error);
+    });
+  </script>
+</body>
+</html>
+`;
+
 export default function PdfViewerScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -85,9 +269,7 @@ export default function PdfViewerScreen() {
     );
   }
 
-  // Convert direct URL to Google Docs viewer URL for better PDF rendering
-  const pdfUrl = pdf.file_url;
-  const googleViewerUrl = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(pdfUrl)}`;
+  const htmlContent = getPdfJsViewerHTML(pdf.file_url, pdf.title);
 
   return (
     <SafeAreaProvider>
@@ -100,19 +282,23 @@ export default function PdfViewerScreen() {
         </View>
         <View style={styles.webviewContainer}>
           <WebView
-            source={{ uri: googleViewerUrl }}
+            originWhitelist={['*']}
+            source={{ html: htmlContent, baseUrl: 'https://cdnjs.cloudflare.com' }}
             style={styles.webview}
             javaScriptEnabled={true}
             domStorageEnabled={true}
             startInLoadingState={true}
             scalesPageToFit={true}
-            bounces={false}
+            bounces={true}
             allowsInlineMediaPlayback={true}
+            mediaPlaybackRequiresUserAction={false}
+            allowFileAccess={true}
+            allowUniversalAccessFromFileURLs={true}
             onError={(error) => {
               console.log('WebView error:', error);
             }}
             onLoadEnd={() => {
-              console.log('PDF loaded via Google Viewer');
+              console.log('PDF loaded via PDF.js');
             }}
             renderLoading={() => (
               <View style={styles.loadingOverlay}>
@@ -198,7 +384,7 @@ const styles = StyleSheet.create({
   },
   webviewContainer: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#1a1a1a',
   },
   webview: {
     flex: 1,
@@ -213,6 +399,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.9)',
   },
 });

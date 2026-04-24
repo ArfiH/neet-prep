@@ -37,3 +37,4 @@ yarn-error.*
 TODO.txt
 PLAN.md
 /android
+release.keystore
