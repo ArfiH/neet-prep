@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     ...SHADOWS.md,
   },
   titleContainer: {
-    paddingTop: 70,
+    paddingTop: 32,
     paddingBottom: 10,
     paddingHorizontal: 16,
     backgroundColor: '#fff',

@@ -30,7 +30,7 @@ type PDF = {
   downloads: number;
 };
 
-const SUBJECTS = ['All', 'Biology', 'Chemistry', 'Physics', 'Anatomy', 'Biochemistry', 'Pharmacology', 'Practice'];
+const SUBJECTS = ['All', 'Biology', 'Chemistry', 'Physics'];
 
 export default function PDFsScreen() {
   const router = useRouter();
@@ -149,24 +149,24 @@ export default function PDFsScreen() {
       </View>
 
       
-      {/* Subject Tabs */}
-      <View style={{ paddingHorizontal: 16, paddingTop: 6, paddingBottom: 6 }}>
-        <Text style={{paddingHorizontal: 4, fontSize: 16, fontWeight: '900'}}>Subjects</Text>
+{/* Subject Tabs */}
+      <View style={styles.subjectSection}>
+        <Text style={styles.subjectSectionTitle}>Subjects</Text>
+        <View style={styles.subjectGrid}>
+          {SUBJECTS.map((subject) => (
+            <TouchableOpacity
+              key={subject}
+              style={[styles.subjectChip, activeSubject === subject && styles.subjectChipActive]}
+              onPress={() => setActiveSubject(subject)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.subjectChipText, activeSubject === subject && styles.subjectChipTextActive]}>
+                {subject}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
       </View>
-
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.subjectScroll} contentContainerStyle={styles.subjectScrollContent}>
-        {SUBJECTS.map((subject) => (
-          <TouchableOpacity
-            key={subject}
-            style={[styles.subjectTab, activeSubject === subject && styles.subjectTabActive]}
-            onPress={() => setActiveSubject(subject)}
-          >
-            <Text style={[styles.subjectTabText, activeSubject === subject && styles.subjectTabTextActive]}>
-              {subject}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
 
       {loading ? (
         <View style={styles.loadingContainer}>
@@ -236,20 +236,20 @@ const styles = StyleSheet.create({
   filterPillText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
   filterPillTextActive: { color: '#fff' },
 
-  subjectScroll: { backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: COLORS.borderLight },
-  subjectScrollContent: { paddingHorizontal: 16, paddingBottom: 10, gap: 8 },
-  subjectTab: {
+  subjectSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
+  subjectSectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
+  subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  subjectChip: {
     paddingHorizontal: 14,
-    height: 32,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingVertical: 8,
+    borderRadius: 8,
+    backgroundColor: COLORS.surface,
     borderWidth: 1,
     borderColor: COLORS.border,
-    marginBottom: 20,
   },
-  subjectTabActive: { backgroundColor: COLORS.primarySurface, borderColor: COLORS.primaryBorder },
-  subjectTabText: { fontSize: 12, fontWeight: '600', color: COLORS.textSecondary },
-  subjectTabTextActive: { color: COLORS.primary },
+  subjectChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  subjectChipText: { fontSize: 13, fontWeight: '500', color: COLORS.textSecondary },
+  subjectChipTextActive: { color: '#fff' },
 
   loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
   loadingText: { fontSize: 14, color: COLORS.textSecondary },

@@ -7,11 +7,13 @@
     "scheme": "myapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "icon": "./assets/images/icon.png"
     },
     "android": {
       "package": "com.ahmad.neetzyme",
-      "versionCode": 1
+      "versionCode": 1,
+      "icon": "./assets/images/icon.png"
     },
     "web": {
       "bundler": "metro",
