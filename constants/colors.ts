@@ -35,6 +35,8 @@ export const COLORS = {
   tagGovtBg: '#DBEAFE',
   tagPrivate: '#7C3AED',
   tagPrivateBg: '#EDE9FE',
+
+  skeleton: '#E5E7EB',
 };
 
 export const SHADOWS = {

@@ -124,7 +124,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.version}>MedPrep v1.0.0</Text>
+        <Text style={styles.version}>Neet Zyme v1.0.0</Text>
         <View style={{ height: 24 }} />
       </ScrollView>
     </SafeAreaView>
