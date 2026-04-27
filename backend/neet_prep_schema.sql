@@ -122,76 +122,146 @@ INSERT INTO colleges (name, state, city, type, total_seats, tuition_fee_annual, 
 ('KEM Hospital Mumbai', 'Maharashtra', 'Mumbai', 'Government', 200, 25000, 20000, 1926, 'MCI/NMC', 'https://images.pexels.com/photos/1692693/pexels-photo-1692693.jpeg')
 ON DUPLICATE KEY UPDATE id = id;
 
+ALTER TABLE cutoffs 
+ADD UNIQUE KEY unique_cutoff (college_id, year);
+
 -- Seed Cutoffs
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 50, 200, 600, 800 FROM colleges WHERE name = 'AIIMS New Delhi'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 50, 200, 600, 800 FROM colleges WHERE name = 'AIIMS New Delhi'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2023, 70, 250, 700, 900 FROM colleges WHERE name = 'AIIMS New Delhi'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2023, 70, 250, 700, 900 FROM colleges WHERE name = 'AIIMS New Delhi'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 200, 600, 1500, 2000 FROM colleges WHERE name = 'JIPMER Puducherry'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 200, 600, 1500, 2000 FROM colleges WHERE name = 'JIPMER Puducherry'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2023, 250, 700, 1800, 2500 FROM colleges WHERE name = 'JIPMER Puducherry'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2023, 250, 700, 1800, 2500 FROM colleges WHERE name = 'JIPMER Puducherry'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 500, 1200, 3000, 4000 FROM colleges WHERE name = 'AIIMS Mumbai'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 500, 1200, 3000, 4000 FROM colleges WHERE name = 'AIIMS Mumbai'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 2500, 5000, 12000, 18000 FROM colleges WHERE name = 'Maulana Azad Medical College Delhi'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 2500, 5000, 12000, 18000 FROM colleges WHERE name = 'Maulana Azad Medical College Delhi'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 3000, 6000, 14000, 20000 FROM colleges WHERE name = 'Grant Medical College Mumbai'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 3000, 6000, 14000, 20000 FROM colleges WHERE name = 'Grant Medical College Mumbai'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 800, 2000, 5000, 7000 FROM colleges WHERE name = 'Lady Hardinge Medical College'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 800, 2000, 5000, 7000 FROM colleges WHERE name = 'Lady Hardinge Medical College'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 5000, 10000, 22000, 30000 FROM colleges WHERE name = 'BHU Institute of Medical Sciences'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 5000, 10000, 22000, 30000 FROM colleges WHERE name = 'BHU Institute of Medical Sciences'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 1200, 3000, 8000, 12000 FROM colleges WHERE name = 'AIIMS Jodhpur'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 1200, 3000, 8000, 12000 FROM colleges WHERE name = 'AIIMS Jodhpur'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 1500, 3500, 9000, 13000 FROM colleges WHERE name = 'AIIMS Bhopal'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 1500, 3500, 9000, 13000 FROM colleges WHERE name = 'AIIMS Bhopal'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 1800, 4000, 10000, 15000 FROM colleges WHERE name = 'AIIMS Rishikesh'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 1800, 4000, 10000, 15000 FROM colleges WHERE name = 'AIIMS Rishikesh'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 4000, 8000, 18000, 25000 FROM colleges WHERE name = 'Madras Medical College'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 4000, 8000, 18000, 25000 FROM colleges WHERE name = 'Madras Medical College'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 4500, 9000, 20000, 28000 FROM colleges WHERE name = 'KEM Hospital Mumbai'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 4500, 9000, 20000, 28000 FROM colleges WHERE name = 'KEM Hospital Mumbai'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 15000, 25000, 50000, 70000 FROM colleges WHERE name = 'Christian Medical College Vellore'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 15000, 25000, 50000, 70000 FROM colleges WHERE name = 'Christian Medical College Vellore'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 30000, 50000, 80000, 100000 FROM colleges WHERE name = 'Kasturba Medical College Manipal'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 30000, 50000, 80000, 100000 FROM colleges WHERE name = 'Kasturba Medical College Manipal'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
-INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank)
-SELECT id, 2024, 20000, 35000, 60000, 80000 FROM colleges WHERE name = 'Sri Ramachandra Institute Chennai'
-ON DUPLICATE KEY UPDATE id = id;
+INSERT INTO cutoffs (id, college_id, year, general_rank, obc_rank, sc_rank, st_rank)
+SELECT UUID(), id, 2024, 20000, 35000, 60000, 80000 FROM colleges WHERE name = 'Sri Ramachandra Institute Chennai'
+ON DUPLICATE KEY UPDATE 
+    general_rank = VALUES(general_rank),
+    obc_rank = VALUES(obc_rank),
+    sc_rank = VALUES(sc_rank),
+    st_rank = VALUES(st_rank);
 
--- Verification query
 SELECT 'Database setup complete!' AS status;
 SELECT COUNT(*) AS pdfs_count FROM pdfs;
 SELECT COUNT(*) AS colleges_count FROM colleges;
