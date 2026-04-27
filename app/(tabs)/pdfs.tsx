@@ -13,7 +13,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { Search, ListFilter as Filter, BookOpen, Lock } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/backend/supabase';
+import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PDF = {
@@ -51,10 +51,10 @@ export default function PDFsScreen() {
 
   async function fetchPdfs() {
     setLoading(true);
-    const { data } = await supabase.from('pdfs').select('*').order('created_at', { ascending: false });
-    if (data) {
-      setPdfs(data);
-      setFiltered(data);
+    const pdfs = await api.getPdfs();
+    if (pdfs) {
+      setPdfs(pdfs);
+      setFiltered(pdfs);
     }
     setLoading(false);
   }

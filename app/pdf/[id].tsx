@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, BookOpen, Lock, Download, User, FileText, Tag, ShoppingCart, CircleCheck as CheckCircle } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/backend/supabase';
+import { api } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -55,9 +55,9 @@ export default function PDFDetailScreen() {
   }, [id]);
 
   async function fetchPdf() {
-    const { data } = await supabase.from('pdfs').select('*').eq('id', id).maybeSingle();
-    if (data) {
-      setPdf(data);
+    const pdf = await api.getPdfById(id);
+    if (pdf) {
+      setPdf(pdf);
       addRecentlyViewed(id);
     }
     setLoading(false);

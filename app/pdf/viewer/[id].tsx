@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
-import { supabase } from '@/backend/supabase';
+import { api } from '@/lib/api';
 import { COLORS, SHADOWS } from '@/constants/colors';
 
 const { width, height } = Dimensions.get('window');
@@ -212,31 +212,21 @@ export default function PdfViewerScreen() {
 
   async function fetchPdf() {
     try {
-      const { data, error: fetchError } = await supabase
-        .from('pdfs')
-        .select('id, title, file_url')
-        .eq('id', id)
-        .maybeSingle();
+      const pdfData = await api.getPdfById(id);
 
-      if (fetchError) {
-        setError('Failed to load PDF');
-        setLoading(false);
-        return;
-      }
-
-      if (!data) {
+      if (!pdfData) {
         setError('PDF not found');
         setLoading(false);
         return;
       }
 
-      if (!data.file_url) {
+      if (!pdfData.file_url) {
         setError('PDF file not available. Please upload the PDF file.');
         setLoading(false);
         return;
       }
 
-      setPdf(data);
+      setPdf(pdfData);
       setLoading(false);
     } catch (err) {
       console.log('Error fetching PDF:', err);

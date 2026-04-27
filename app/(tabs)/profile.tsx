@@ -7,9 +7,11 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { User, BookOpen, GraduationCap, Bell, Shield, Circle as HelpCircle, ChevronRight, LogOut, Star, CreditCard } from 'lucide-react-native';
+import { api } from '@/lib/api';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, Star, CreditCard } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useState } from 'react';
 
 const MENU_SECTIONS = [
   {

@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { GraduationCap, Search, ChevronRight, TrendingUp, Award } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/backend/supabase';
+import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PredictedCollege = {
@@ -72,47 +72,8 @@ export default function CollegesScreen() {
     setPredicted(false);
 
     const userRank = parseInt(rank);
-    const col = categoryColumn[category];
+    const predictions = await api.predictColleges(userRank, category, state);
 
-    const { data: cutoffs } = await supabase
-      .from('cutoffs')
-      .select(`*, colleges(*)`)
-      .eq('year', 2024)
-      .order(col, { ascending: true });
-
-    if (!cutoffs) {
-      setLoading(false);
-      return;
-    }
-
-    const predictions: PredictedCollege[] = [];
-
-    for (const cutoff of cutoffs) {
-      const college = (cutoff as any).colleges;
-      if (!college) continue;
-      if (state !== 'All India' && college.state !== state) continue;
-
-      const cutoffRank = (cutoff as any)[col] ?? 999999;
-      const prob = getProbability(userRank, cutoffRank);
-
-      if (prob > 0) {
-        predictions.push({
-          id: college.id,
-          name: college.name,
-          state: college.state,
-          city: college.city,
-          type: college.type,
-          image_url: college.image_url,
-          tuition_fee_annual: college.tuition_fee_annual,
-          total_seats: college.total_seats,
-          cutoff_rank: cutoffRank,
-          probability: prob,
-          rank_diff: cutoffRank - userRank,
-        });
-      }
-    }
-
-    predictions.sort((a, b) => b.probability - a.probability);
     setResults(predictions);
     setLoading(false);
     setPredicted(true);

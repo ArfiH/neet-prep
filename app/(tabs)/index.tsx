@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { ChevronRight } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { supabase } from '@/backend/supabase';
+import { api } from '@/lib/api';
 import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { getCachedHomeData, setCachedHomeData } from '@/lib/homeCache';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -118,24 +119,24 @@ export default function HomeScreen() {
   async function fetchData() {
     try {
       const [pdfsRes, collegesRes, recentIds] = await Promise.all([
-        supabase.from('pdfs').select('*').limit(6),
-        supabase.from('colleges').select('*').limit(4),
+        api.getPdfs(),
+        api.getColleges(),
         getRecentlyViewedIds(),
       ]);
 
-      const pdfs = pdfsRes.data || [];
-      const colleges = collegesRes.data || [];
+      const pdfs = pdfsRes;
+      const colleges = collegesRes;
 
       setFeaturedPdfs(pdfs);
       setTopColleges(colleges);
 
       if (recentIds.length > 0) {
-        const { data: recentPdfs } = await supabase.from('pdfs').select('*').in('id', recentIds);
-        if (recentPdfs) {
-          const sortedRecent = recentIds.map((id) => recentPdfs.find((p) => p.id === id)).filter((p): p is PDF => p !== undefined);
-          setRecentlyViewedPdfs(sortedRecent);
-          await setCachedHomeData({ featuredPdfs: pdfs, topColleges: colleges, recentlyViewedPdfs: sortedRecent, timestamp: Date.now() });
-        }
+        const recentPdfs = await Promise.all(
+          recentIds.map((id) => api.getPdfById(id).catch(() => null))
+        );
+        const sortedRecent = recentPdfs.filter((p): p is PDF => p !== null);
+        setRecentlyViewedPdfs(sortedRecent);
+        await setCachedHomeData({ featuredPdfs: pdfs, topColleges: colleges, recentlyViewedPdfs: sortedRecent, timestamp: Date.now() });
       } else {
         await setCachedHomeData({ featuredPdfs: pdfs, topColleges: colleges, recentlyViewedPdfs: [], timestamp: Date.now() });
       }

@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, MapPin, Phone, Globe, Users, IndianRupee, Calendar, Award, Hop as Home, ExternalLink, TrendingDown, TrendingUp } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { supabase } from '@/backend/supabase';
+import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type College = {
@@ -60,12 +60,11 @@ export default function CollegeDetailScreen() {
   }, [id]);
 
   async function fetchCollege() {
-    const [collegeRes, cutoffsRes] = await Promise.all([
-      supabase.from('colleges').select('*').eq('id', id).maybeSingle(),
-      supabase.from('cutoffs').select('*').eq('college_id', id).order('year', { ascending: false }),
-    ]);
-    if (collegeRes.data) setCollege(collegeRes.data);
-    if (cutoffsRes.data) setCutoffs(cutoffsRes.data);
+    const collegeData = await api.getCollegeById(id);
+    if (collegeData) {
+      setCollege(collegeData);
+      setCutoffs(collegeData.cutoffs || []);
+    }
     setLoading(false);
   }
 
