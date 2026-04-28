@@ -63,13 +63,9 @@ function AuthRouter() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {isLoggedIn ? (
-        <>
-          <Stack.Screen name="(tabs)" />
-        </>
+        <Stack.Screen name="(tabs)" />
       ) : (
-        <>
-          <Stack.Screen name="login" />
-        </>
+        <Stack.Screen name="login" />
       )}
       <Stack.Screen name="register" />
       <Stack.Screen name="forgot-password" />

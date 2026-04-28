@@ -15,7 +15,7 @@ type PDF = {
   file_url: string;
 };
 
-const getPdfJsViewerHTML = (url: string, title: string) => `
+const getPdfJsViewerHTML = (url: string, title: string, watermark: string) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -23,11 +23,7 @@ const getPdfJsViewerHTML = (url: string, title: string) => `
   <title>${title}</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
     html, body {
       width: 100%;
       height: auto;
@@ -101,9 +97,7 @@ const getPdfJsViewerHTML = (url: string, title: string) => `
       animation: spin 1s linear infinite;
       margin: 0 auto 16px;
     }
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
     #error-message {
       display: none;
       position: fixed;
@@ -133,6 +127,7 @@ const getPdfJsViewerHTML = (url: string, title: string) => `
     const loading = document.getElementById('loading');
     const errorMsg = document.getElementById('error-message');
     const pdfUrl = "${url}";
+    const watermarkText = "${watermark}";
     
     document.addEventListener('contextmenu', function(e) {
       e.preventDefault();
@@ -169,10 +164,10 @@ const getPdfJsViewerHTML = (url: string, title: string) => `
           
           const watermark = document.createElement('div');
           watermark.className = 'watermark';
-          const watermarkText = document.createElement('div');
-          watermarkText.className = 'watermark-text';
-          watermarkText.textContent = 'NEET ZYME';
-          watermark.appendChild(watermarkText);
+          const watermarkTextEl = document.createElement('div');
+          watermarkTextEl.className = 'watermark-text';
+          watermarkTextEl.textContent = watermarkText;
+          watermark.appendChild(watermarkTextEl);
           
           wrapper.appendChild(canvas);
           wrapper.appendChild(watermark);
@@ -205,6 +200,9 @@ export default function PdfViewerScreen() {
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Always show "NEET ZYME" watermark
+  const watermarkDisplay = 'NEET ZYME';
 
   useEffect(() => {
     fetchPdf();
@@ -259,7 +257,7 @@ export default function PdfViewerScreen() {
     );
   }
 
-  const htmlContent = getPdfJsViewerHTML(pdf.file_url, pdf.title);
+  const htmlContent = getPdfJsViewerHTML(pdf.file_url, pdf.title, watermarkDisplay);
 
   return (
     <SafeAreaProvider>
@@ -331,11 +329,20 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.background,
     padding: 20,
   },
-  errorText: {
+errorText: {
     fontSize: 16,
     color: COLORS.text,
     textAlign: 'center',
     marginBottom: 20,
+  },
+  errorCode: {
+    fontSize: 12,
+    color: COLORS.textSecondary,
+    marginBottom: 4,
+  },
+  errorDesc: {
+    fontSize: 10,
+    color: COLORS.textLight,
   },
   backButton: {
     paddingHorizontal: 20,
