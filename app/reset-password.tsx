@@ -9,17 +9,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
-import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
-import { Lock, Eye, EyeOff, ArrowLeft } from 'lucide-react-native';
-import { COLORS, SHADOWS } from '@/constants/colors';
+import { useRouter, useLocalSearchParams, Stack, useRootNavigation } from 'expo-router';
+import * as Linking from 'expo-linking';
+import { Lock, Eye, EyeOff, ArrowLeft, KeyRound } from 'lucide-react-native';
+import { COLORS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useAuth } from '@/lib/authContext';
+
+const API_URL = 'http://172.21.188.45:3000';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
   const params = useLocalSearchParams<{ token?: string }>();
-  const { resetPassword } = useAuth();
+  
+  const [tokenInput, setTokenInput] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -27,15 +31,26 @@ export default function ResetPasswordScreen() {
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
 
-  const token = params.token || '';
+  // Get token from deep link if present
+  const urlToken = params.token || '';
+  const token = tokenInput.trim() || urlToken;
 
   useEffect(() => {
-    if (!token) {
-      setError('Invalid reset link');
+    // Handle deep link if token comes in URL
+    if (urlToken && !tokenInput) {
+      setTokenInput(urlToken);
     }
-  }, [token]);
+  }, [urlToken]);
 
   async function handleReset() {
+    setError('');
+    setMessage('');
+
+    if (!token) {
+      setError('Please enter the reset code from your email');
+      return;
+    }
+
     if (!password || !confirmPassword) {
       setError('Please fill in all fields');
       return;
@@ -52,17 +67,28 @@ export default function ResetPasswordScreen() {
     }
 
     setLoading(true);
-    setError('');
-    setMessage('');
 
     try {
-      await resetPassword(token, password);
-      setMessage('Password reset successful!');
+      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, newPassword: password }),
+      });
+      
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Password reset failed');
+      }
+
+      setMessage('Password reset successful! Redirecting to login...');
+      
       setTimeout(() => {
-        router.replace('/login' as any);
+        router.replace('/login');
       }, 2000);
+      
     } catch (e: any) {
-      setError(e.message || 'Password reset failed');
+      setError(e.message || 'Password reset failed. Please check your reset code.');
     } finally {
       setLoading(false);
     }
@@ -78,28 +104,50 @@ export default function ResetPasswordScreen() {
         <ScrollView 
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
           <TouchableOpacity 
             style={styles.backButton} 
-            onPress={() => router.push('/login' as any)}
+            onPress={() => router.push('/login')}
           >
             <ArrowLeft size={22} color={COLORS.text} strokeWidth={2.5} />
           </TouchableOpacity>
 
           <View style={styles.header}>
-            <Text style={styles.title}>New Password</Text>
+            <Text style={styles.title}>Reset Password</Text>
             <Text style={styles.subtitle}>
-              Enter your new password below
+              Enter the reset code from your email
             </Text>
           </View>
 
           <View style={styles.form}>
+            {/* Token Input - Always Visible */}
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Reset Code</Text>
+              <View style={styles.inputContainer}>
+                <KeyRound size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <TextInput
+                  style={[styles.input, isWideDevice && styles.inputWide]}
+                  placeholder="Paste reset code from email"
+                  placeholderTextColor={COLORS.textLight}
+                  value={tokenInput}
+                  onChangeText={setTokenInput}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+              </View>
+              <Text style={styles.hintText}>
+                Check your email for the reset code (check spam too)
+              </Text>
+            </View>
+
+            {/* Password Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>New Password</Text>
               <View style={styles.inputContainer}>
                 <Lock size={18} color={COLORS.textSecondary} strokeWidth={2} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Enter new password"
                   placeholderTextColor={COLORS.textLight}
                   value={password}
@@ -119,12 +167,13 @@ export default function ResetPasswordScreen() {
               </View>
             </View>
 
+            {/* Confirm Password Input */}
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password</Text>
               <View style={styles.inputContainer}>
                 <Lock size={18} color={COLORS.textSecondary} strokeWidth={2} />
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Confirm new password"
                   placeholderTextColor={COLORS.textLight}
                   value={confirmPassword}
@@ -134,18 +183,17 @@ export default function ResetPasswordScreen() {
               </View>
             </View>
 
-            {message ? (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{message}</Text>
-              </View>
-            ) : null}
-
+            {/* Error Message */}
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+            {/* Success Message */}
+            {message ? <Text style={styles.successText}>{message}</Text> : null}
+
+            {/* Reset Button */}
             <TouchableOpacity
-              style={[styles.button, (loading || !token) && styles.buttonDisabled]}
+              style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleReset}
-              disabled={loading || !token}
+              disabled={loading}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
@@ -160,24 +208,29 @@ export default function ResetPasswordScreen() {
   );
 }
 
+const isWideDevice = Platform.OS === 'android' && Platform.constants.ReactNativeVersion?.minor >= 74;
+
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   keyboardView: { flex: 1 },
-  scrollContent: { flexGrow: 1, padding: 24 },
-  backButton: {
-    position: 'absolute',
-    top: 20,
-    left: 16,
-    zIndex: 10,
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 12,
-    ...SHADOWS.md,
+  scrollContent: { 
+    flexGrow: 1, 
+    padding: 24,
+    paddingTop: 16,
   },
-  header: { marginTop: 50, marginBottom: 30 },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: COLORS.surface,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  header: { marginBottom: 32 },
   title: { fontSize: 28, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
   subtitle: { fontSize: 16, color: COLORS.textSecondary, lineHeight: 22 },
-  form: { gap: 16 },
+  form: { gap: 20 },
   inputGroup: { gap: 8 },
   label: { fontSize: 14, fontWeight: '600', color: COLORS.text },
   inputContainer: {
@@ -196,14 +249,13 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     color: COLORS.text 
   },
-  eyeButton: { padding: 4 },
-  successBox: {
-    backgroundColor: COLORS.tagFreeBg,
-    padding: 14,
-    borderRadius: 12,
+  inputWide: {
+    minWidth: 200,
   },
-  successText: { color: COLORS.tagFree, fontSize: 14, textAlign: 'center' },
+  eyeButton: { padding: 4 },
+  hintText: { fontSize: 12, color: COLORS.textSecondary, marginTop: 4 },
   errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
+  successText: { color: COLORS.primary, fontSize: 14, textAlign: 'center' },
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,

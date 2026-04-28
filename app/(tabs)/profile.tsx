@@ -14,6 +14,7 @@ import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, 
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 type ProfileData = {
   id: number;
@@ -26,7 +27,7 @@ type ProfileData = {
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, refreshUser, initialized } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [logoutLoading, setLogoutLoading] = useState(false);
@@ -36,6 +37,13 @@ export default function ProfileScreen() {
       fetchProfile();
     }
   }, [user]);
+
+  useFocusEffect(() => {
+    if (user && initialized) {
+      refreshUser();
+      fetchProfile();
+    }
+  });
 
   async function fetchProfile() {
     try {
@@ -113,7 +121,11 @@ export default function ProfileScreen() {
         </View>
 
         {/* NEET Target Card */}
-        <TouchableOpacity style={styles.neetCard} activeOpacity={0.8}>
+        <TouchableOpacity 
+          style={styles.neetCard} 
+          activeOpacity={0.8}
+          onPress={() => router.push('/set-target')}
+        >
           <View style={styles.neetCardLeft}>
             <TrendingUp size={28} color={COLORS.primary} strokeWidth={2} />
             <View style={styles.neetCardText}>

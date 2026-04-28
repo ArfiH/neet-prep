@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { api } from '@/lib/api';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const USER_DATA_KEY = 'user_data';
@@ -22,6 +23,7 @@ type AuthContextType = {
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +45,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       if (token && userData) {
         setUser(JSON.parse(userData));
+        // Initialize API client with auth token
+        await api.init();
       }
     } catch (e) {
       console.error('Error loading auth:', e);
@@ -67,6 +71,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
+    // Initialize API client with auth token
+    await api.init();
   }
 
   async function register(email: string, password: string, name?: string) {
@@ -82,6 +88,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
+    // Initialize API client with auth token
+    await api.init();
   }
 
   async function logout() {
@@ -115,8 +123,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  async function refreshUser() {
+    try {
+      await api.init();
+      const profileData = await api.getProfile();
+      if (profileData) {
+        setUser(profileData);
+        await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(profileData));
+      }
+    } catch (e) {
+      console.error('Error refreshing user:', e);
+    }
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, register, logout, forgotPassword, resetPassword }}>
+    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, register, logout, forgotPassword, resetPassword, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

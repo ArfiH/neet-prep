@@ -8,12 +8,31 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "infoPlist": {
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": ["myapp"]
+          }
+        ]
+      }
     },
     "android": {
       "package": "com.ahmad.neetzyme",
       "versionCode": 1,
-      "icon": "./assets/images/icon.png"
+      "icon": "./assets/images/icon.png",
+      "intentFilters": [
+        {
+          "action": "VIEW",
+          "autoVerify": true,
+          "data": [
+            {
+              "scheme": "myapp"
+            }
+          ],
+          "category": ["BROWSER", "DEFAULT"]
+        }
+      ]
     },
     "web": {
       "bundler": "metro",

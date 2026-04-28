@@ -90,6 +90,12 @@ export default function ForgotPasswordScreen() {
             {message ? (
               <View style={styles.successBox}>
                 <Text style={styles.successText}>{message}</Text>
+                <TouchableOpacity 
+                  style={styles.haveCodeButton}
+                  onPress={() => router.push('/reset-password')}
+                >
+                  <Text style={styles.haveCodeText}>Already have a reset code? Enter it here</Text>
+                </TouchableOpacity>
               </View>
             ) : null}
 
@@ -180,4 +186,13 @@ const styles = StyleSheet.create({
   },
   backToLoginText: { fontSize: 15, color: COLORS.textSecondary },
   linkText: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
+  haveCodeButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  haveCodeText: { fontSize: 14, fontWeight: '600', color: '#fff' },
 });
