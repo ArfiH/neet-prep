@@ -4,42 +4,80 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
-  Image,
+  ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, Star, CreditCard } from 'lucide-react-native';
+import { useAuth } from '@/lib/authContext';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, Star, CreditCard, TrendingUp } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 
-const MENU_SECTIONS = [
-  {
-    title: 'Study',
-    items: [
-      { icon: BookOpen, label: 'My Purchased PDFs', sublabel: 'Access your library', color: COLORS.primary, route: '/(tabs)/pdfs' },
-      { icon: GraduationCap, label: 'Saved Predictions', sublabel: 'Your college predictions', color: '#2563EB', route: '/(tabs)/colleges' },
-    ],
-  },
-  {
-    title: 'Account',
-    items: [
-      { icon: CreditCard, label: 'Purchase History', sublabel: 'View past transactions', color: '#D97706', route: null },
-      { icon: Bell, label: 'Notifications', sublabel: 'Manage alerts', color: '#7C3AED', route: null },
-      { icon: Shield, label: 'Privacy & Security', sublabel: 'Data & account security', color: '#059669', route: null },
-    ],
-  },
-  {
-    title: 'Support',
-    items: [
-      { icon: HelpCircle, label: 'Help & FAQ', sublabel: 'Common questions', color: '#0EA5E9', route: null },
-      { icon: Star, label: 'Rate the App', sublabel: 'Share your feedback', color: '#F59E0B', route: null },
-    ],
-  },
-];
+type ProfileData = {
+  id: number;
+  email: string;
+  name: string | null;
+  neet_rank: number | null;
+  category: string | null;
+  purchases_count: number;
+};
 
 export default function ProfileScreen() {
   const router = useRouter();
+  const { user, logout } = useAuth();
+  const [profile, setProfile] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [logoutLoading, setLogoutLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
+
+  async function fetchProfile() {
+    try {
+      const data = await api.getProfile();
+      setProfile(data);
+    } catch (e) {
+      console.log('Error fetching profile:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleLogout() {
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Sign Out',
+          style: 'destructive',
+          onPress: async () => {
+            setLogoutLoading(true);
+            try {
+              await logout();
+              router.replace('/login');
+            } catch (e) {
+              console.log('Logout error:', e);
+            } finally {
+              setLogoutLoading(false);
+            }
+          },
+        },
+      ]
+    );
+  }
+
+  const userName = profile?.name || user?.name || 'Guest User';
+  const userEmail = profile?.email || user?.email || 'No email';
+  const userRank = profile?.neet_rank || user?.neet_rank || null;
+  const userCategory = profile?.category || user?.category || 'General';
+  const pdfsOwned = profile?.purchases_count || 0;
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -50,79 +88,163 @@ export default function ProfileScreen() {
             <View style={styles.avatar}>
               <User size={40} color="#fff" strokeWidth={1.5} />
             </View>
-            <View style={styles.editBadge}>
-              <Text style={styles.editBadgeText}>Edit</Text>
-            </View>
           </View>
-          <Text style={styles.profileName}>Medical Student</Text>
-          <Text style={styles.profileEmail}>student@example.com</Text>
+          <Text style={styles.profileName}>{userName}</Text>
+          <Text style={styles.profileEmail}>{userEmail}</Text>
 
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>0</Text>
+              <Text style={styles.statValue}>{pdfsOwned}</Text>
               <Text style={styles.statLabel}>PDFs Owned</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>0</Text>
-              <Text style={styles.statLabel}>Predictions</Text>
+              <Text style={styles.statValue}>
+                {userRank ? `#${userRank}` : '-'}
+              </Text>
+              <Text style={styles.statLabel}>NEET Rank</Text>
             </View>
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>NEET</Text>
-              <Text style={styles.statLabel}>Exam Target</Text>
+              <Text style={styles.statValue}>{userCategory}</Text>
+              <Text style={styles.statLabel}>Category</Text>
             </View>
           </View>
         </View>
 
-        {/* NEET Info Card */}
-        <View style={styles.neetCard}>
+        {/* NEET Target Card */}
+        <TouchableOpacity style={styles.neetCard} activeOpacity={0.8}>
           <View style={styles.neetCardLeft}>
-            <GraduationCap size={28} color={COLORS.primary} strokeWidth={2} />
+            <TrendingUp size={28} color={COLORS.primary} strokeWidth={2} />
             <View style={styles.neetCardText}>
-              <Text style={styles.neetCardTitle}>Set Your NEET Target</Text>
-              <Text style={styles.neetCardSub}>Update your target rank & category</Text>
+              <Text style={styles.neetCardTitle}>
+                {userRank ? 'Update NEET Target' : 'Set NEET Target'}
+              </Text>
+              <Text style={styles.neetCardSub}>
+                {userRank
+                  ? `Current: Rank #${userRank} (${userCategory})`
+                  : 'Add your target rank & category'}
+              </Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.setTargetBtn}>
-            <Text style={styles.setTargetBtnText}>Set</Text>
-          </TouchableOpacity>
+          <ChevronRight size={20} color={COLORS.textSecondary} strokeWidth={2} />
+        </TouchableOpacity>
+
+        {/* Study Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Study</Text>
+          <View style={styles.menuCard}>
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemBorder]}
+              onPress={() => router.push('/(tabs)/pdfs' as any)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: COLORS.primary + '18' }]}>
+                <BookOpen size={18} color={COLORS.primary} strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>My Purchased PDFs</Text>
+                <Text style={styles.menuSublabel}>{pdfsOwned} PDFs in library</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.menuItem}
+              onPress={() => router.push('/(tabs)/colleges' as any)}
+              activeOpacity={0.75}
+            >
+              <View style={[styles.menuIcon, { backgroundColor: '#2563EB18' }]}>
+                <GraduationCap size={18} color="#2563EB" strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>College Predictions</Text>
+                <Text style={styles.menuSublabel}>Check your chances</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Menu Sections */}
-        {MENU_SECTIONS.map((section) => (
-          <View key={section.title} style={styles.section}>
-            <Text style={styles.sectionTitle}>{section.title}</Text>
-            <View style={styles.menuCard}>
-              {section.items.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <TouchableOpacity
-                    key={item.label}
-                    style={[styles.menuItem, idx < section.items.length - 1 && styles.menuItemBorder]}
-                    onPress={() => item.route && router.push(item.route as any)}
-                    activeOpacity={0.75}
-                  >
-                    <View style={[styles.menuIcon, { backgroundColor: item.color + '18' }]}>
-                      <Icon size={18} color={item.color} strokeWidth={2} />
-                    </View>
-                    <View style={styles.menuText}>
-                      <Text style={styles.menuLabel}>{item.label}</Text>
-                      <Text style={styles.menuSublabel}>{item.sublabel}</Text>
-                    </View>
-                    <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
+        {/* Account Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Account</Text>
+          <View style={styles.menuCard}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75}>
+              <View style={[styles.menuIcon, { backgroundColor: '#D9770618' }]}>
+                <CreditCard size={18} color="#D97706" strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Purchase History</Text>
+                <Text style={styles.menuSublabel}>View past transactions</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75}>
+              <View style={[styles.menuIcon, { backgroundColor: '#7C3AED18' }]}>
+                <Bell size={18} color="#7C3AED" strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Notifications</Text>
+                <Text style={styles.menuSublabel}>Manage alerts</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.75}>
+              <View style={[styles.menuIcon, { backgroundColor: '#05966918' }]}>
+                <Shield size={18} color="#059669" strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Privacy & Security</Text>
+                <Text style={styles.menuSublabel}>Data & account</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
           </View>
-        ))}
+        </View>
+
+        {/* Support Section */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Support</Text>
+          <View style={styles.menuCard}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75}>
+              <View style={[styles.menuIcon, { backgroundColor: '#0EA5E918' }]}>
+                <HelpCircle size={18} color="#0EA5E9" strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Help & FAQ</Text>
+                <Text style={styles.menuSublabel}>Common questions</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.75}>
+              <View style={[styles.menuIcon, { backgroundColor: '#F59E0B18' }]}>
+                <Star size={18} color="#F59E0B" strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Rate the App</Text>
+                <Text style={styles.menuSublabel}>Share feedback</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.textLight} strokeWidth={2} />
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Sign Out */}
         <View style={styles.section}>
-          <TouchableOpacity style={styles.signOutBtn} activeOpacity={0.85}>
-            <LogOut size={18} color='#EF4444' strokeWidth={2} />
-            <Text style={styles.signOutText}>Sign Out</Text>
+          <TouchableOpacity
+            style={styles.signOutBtn}
+            onPress={handleLogout}
+            disabled={logoutLoading}
+            activeOpacity={0.85}
+          >
+            {logoutLoading ? (
+              <ActivityIndicator color="#EF4444" />
+            ) : (
+              <>
+                <LogOut size={18} color="#EF4444" strokeWidth={2} />
+                <Text style={styles.signOutText}>Sign Out</Text>
+              </>
+            )}
           </TouchableOpacity>
         </View>
 
@@ -154,16 +276,6 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: 'rgba(255,255,255,0.5)',
   },
-  editBadge: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 10,
-  },
-  editBadgeText: { fontSize: 11, fontWeight: '700', color: COLORS.primary },
 
   profileName: { fontSize: 20, fontWeight: '700', color: '#fff' },
   profileEmail: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
@@ -196,13 +308,6 @@ const styles = StyleSheet.create({
   neetCardText: { flex: 1 },
   neetCardTitle: { fontSize: 14, fontWeight: '700', color: COLORS.text },
   neetCardSub: { fontSize: 12, color: COLORS.textSecondary, marginTop: 2 },
-  setTargetBtn: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 10,
-  },
-  setTargetBtnText: { fontSize: 13, fontWeight: '700', color: '#fff' },
 
   section: { paddingHorizontal: 16, marginBottom: 12 },
   sectionTitle: { fontSize: 13, fontWeight: '700', color: COLORS.textSecondary, marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.5 },

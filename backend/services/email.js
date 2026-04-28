@@ -8,8 +8,10 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+const APP_BASE_URL = process.env.APP_BASE_URL || 'http://172.21.188.45:3000';
+
 const sendPasswordResetEmail = async (email, resetToken) => {
-  const resetUrl = `neetzyme://reset-password?token=${resetToken}`;
+  const resetUrl = `${APP_BASE_URL}/reset-password?token=${resetToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -28,6 +30,10 @@ const sendPasswordResetEmail = async (email, resetToken) => {
                    text-decoration: none; border-radius: 8px; display: inline-block; 
                    margin: 20px 0; font-weight: bold; }
           .footer { padding: 20px; text-align: center; font-size: 12px; color: #666; }
+          .token-box { background: #fff; border: 2px dashed #16A34A; padding: 15px; 
+                      text-align: center; margin: 15px 0; border-radius: 8px; }
+          .token { font-family: monospace; font-size: 16px; color: #16A34A; 
+                   word-break: break-all; }
         </style>
       </head>
       <body>
@@ -38,11 +44,15 @@ const sendPasswordResetEmail = async (email, resetToken) => {
           <div class="content">
             <h2>Reset Your Password</h2>
             <p>Hello,</p>
-            <p>We received a request to reset your password. Click the button below to create a new password:</p>
+            <p>We received a request to reset your password.</p>
+            <p><strong>Option 1:</strong> Click the button below:</p>
             <a href="${resetUrl}" class="button">Reset Password</a>
-            <p>Or copy and paste this link in your browser:</p>
-            <p style="word-break: break-all; color: #16A34A;">${resetUrl}</p>
-            <p><strong>This link expires in 30 minutes.</strong></p>
+            <p style="margin-top: 20px;"><strong>Option 2:</strong> If the button doesn't work, copy this reset code:</p>
+            <div class="token-box">
+              <p class="token">${resetToken}</p>
+            </div>
+            <p>Open the NEET Zyme app, go to Reset Password, and enter the code above.</p>
+            <p><strong>This code expires in 30 minutes.</strong></p>
             <p>If you didn't request a password reset, please ignore this email.</p>
           </div>
           <div class="footer">

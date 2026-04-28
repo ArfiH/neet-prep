@@ -15,6 +15,8 @@ type User = {
 type AuthContextType = {
   user: User | null;
   loading: boolean;
+  initialized: boolean;
+  isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -27,6 +29,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialized, setInitialized] = useState(false);
 
   useEffect(() => {
     loadStoredAuth();
@@ -45,8 +48,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.error('Error loading auth:', e);
     } finally {
       setLoading(false);
+      setInitialized(true);
     }
   }
+
+  const isLoggedIn = !!user && !!user.id;
 
   async function login(email: string, password: string) {
     const response = await fetch('http://172.21.188.45:3000/api/auth/login', {
@@ -110,7 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, forgotPassword, resetPassword }}>
+    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, register, logout, forgotPassword, resetPassword }}>
       {children}
     </AuthContext.Provider>
   );
