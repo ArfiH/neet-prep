@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { api } from '@/lib/api';
 import { COLORS, SHADOWS } from '@/constants/colors';
+import { useAuth } from '@/lib/authContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -72,11 +73,9 @@ const getPdfJsViewerHTML = (url: string, title: string, watermark: string) => `
       z-index: 10;
     }
     .watermark-text {
-      font-size: 36px;
+      font-size: 20px;
       font-weight: 800;
       color: rgba(0, 0, 0, 0.1);
-      text-transform: uppercase;
-      letter-spacing: 4px;
       white-space: nowrap;
     }
     #loading {
@@ -200,13 +199,29 @@ export default function PdfViewerScreen() {
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-
-  // Always show "NEET ZYME" watermark
-  const watermarkDisplay = 'NEET ZYME';
+  const { user, logout, refreshUser, initialized } = useAuth();
+  const [watermarkDisplay, setWatermarkDisplay] = useState<string>("NEET ZYME");
+  
+  useEffect(() => {
+    if (user) {
+      fetchProfile();
+    }
+  }, [user]);
 
   useEffect(() => {
     fetchPdf();
   }, [id]);
+
+  async function fetchProfile() {
+    try {
+      const data = await api.getProfile();
+      setWatermarkDisplay(data?.email);
+    } catch (e) {
+      console.log('Error fetching profile:', e);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   async function fetchPdf() {
     try {
