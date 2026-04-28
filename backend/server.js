@@ -6,6 +6,7 @@ const { testConnection } = require('./config/db');
 const authRoutes = require('./routes/auth');
 const pdfRoutes = require('./routes/pdfs');
 const collegeRoutes = require('./routes/colleges');
+const passwordResetRoutes = require('./routes/passwordReset');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use('/api/auth', authRoutes);
 app.use('/api/pdfs', pdfRoutes);
 app.use('/api/colleges', collegeRoutes);
+app.use('/api/auth', passwordResetRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -73,6 +73,20 @@ class ApiClient {
     await AsyncStorage.removeItem(USER_DATA_KEY);
   }
 
+  async forgotPassword(email: string) {
+    return this.request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async resetPassword(token: string, newPassword: string) {
+    return this.request<{ message: string }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ token, newPassword }),
+    });
+  }
+
   async getProfile() {
     return this.request<any>('/auth/profile', { method: 'GET' });
   }
