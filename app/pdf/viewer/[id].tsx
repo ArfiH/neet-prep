@@ -6,7 +6,6 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { api } from '@/lib/api';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { useAuth } from '@/lib/authContext';
 import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
 
 const { width, height } = Dimensions.get('window');
@@ -201,16 +200,9 @@ export default function PdfViewerScreen() {
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user } = useAuth();
-  const [watermarkDisplay, setWatermarkDisplay] = useState<string>("NEET ZYME");
+  const [watermarkDisplay] = useState<string>("NEET ZYME");
   const [showAdOverlay, setShowAdOverlay] = useState(false);
   
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    }
-  }, [user]);
-
   useEffect(() => {
     fetchPdf();
   }, [id]);
@@ -225,26 +217,6 @@ export default function PdfViewerScreen() {
     const result = await showInterstitialAd(id);
     if (result.canViewPdf) {
       setShowAdOverlay(false);
-    }
-  }
-
-  async function fetchProfile() {
-    try {
-      const data = await api.getProfile();
-      const name = data?.name || '';
-      const email = user?.email || data?.email || '';
-      
-      if (name && email) {
-        setWatermarkDisplay(`${name}\n${email}`);
-      } else if (name) {
-        setWatermarkDisplay(name);
-      } else if (email) {
-        setWatermarkDisplay(email);
-      }
-    } catch (e) {
-      console.log('Error fetching profile:', e);
-    } finally {
-      setLoading(false);
     }
   }
 

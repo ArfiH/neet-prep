@@ -10,7 +10,7 @@ import {
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, Star, CreditCard, TrendingUp } from 'lucide-react-native';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, Star, CreditCard, TrendingUp } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
@@ -241,7 +241,8 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Sign Out */}
+        {/* Sign In / Sign Out - conditional based on auth state */}
+        {user ? (
         <View style={styles.section}>
           <TouchableOpacity
             style={styles.signOutBtn}
@@ -259,6 +260,18 @@ export default function ProfileScreen() {
             )}
           </TouchableOpacity>
         </View>
+        ) : (
+        <View style={styles.section}>
+          <TouchableOpacity
+            style={styles.signInBtn}
+            onPress={() => router.push('/login')}
+            activeOpacity={0.85}
+          >
+            <LogIn size={18} color="#fff" strokeWidth={2} />
+            <Text style={styles.signInText}>Sign In</Text>
+          </TouchableOpacity>
+        </View>
+        )}
 
         <Text style={styles.version}>Neet Zyme v1.0.0</Text>
         <View style={{ height: 24 }} />
@@ -348,6 +361,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   signOutText: { fontSize: 15, fontWeight: '700', color: '#EF4444' },
+  signInBtn: {
+    backgroundColor: COLORS.primary,
+    borderRadius: 16,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 8,
+  },
+  signInText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   version: { textAlign: 'center', fontSize: 12, color: COLORS.textLight, marginBottom: 8 },
 });
