@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { View, StyleSheet, ActivityIndicator, Text, Dimensions, TouchableOpacity } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
@@ -7,6 +7,7 @@ import { ArrowLeft } from 'lucide-react-native';
 import { api } from '@/lib/api';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { useAuth } from '@/lib/authContext';
+import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
 
 const { width, height } = Dimensions.get('window');
 
@@ -14,6 +15,7 @@ type PDF = {
   id: string;
   title: string;
   file_url: string;
+  is_free: boolean;
 };
 
 const getPdfJsViewerHTML = (url: string, title: string, watermark: string) => `
@@ -199,8 +201,9 @@ export default function PdfViewerScreen() {
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { user, logout, refreshUser, initialized } = useAuth();
+  const { user } = useAuth();
   const [watermarkDisplay, setWatermarkDisplay] = useState<string>("NEET ZYME");
+  const [showAdOverlay, setShowAdOverlay] = useState(false);
   
   useEffect(() => {
     if (user) {
@@ -212,10 +215,32 @@ export default function PdfViewerScreen() {
     fetchPdf();
   }, [id]);
 
+  useEffect(() => {
+    if (pdf && pdf.is_free && !hasWatchedAd(id)) {
+      setShowAdOverlay(true);
+    }
+  }, [pdf, id]);
+
+  async function handleWatchAd() {
+    const result = await showInterstitialAd(id);
+    if (result.canViewPdf) {
+      setShowAdOverlay(false);
+    }
+  }
+
   async function fetchProfile() {
     try {
       const data = await api.getProfile();
-      setWatermarkDisplay(data?.email);
+      const name = data?.name || '';
+      const email = user?.email || data?.email || '';
+      
+      if (name && email) {
+        setWatermarkDisplay(`${name}\n${email}`);
+      } else if (name) {
+        setWatermarkDisplay(name);
+      } else if (email) {
+        setWatermarkDisplay(email);
+      }
     } catch (e) {
       console.log('Error fetching profile:', e);
     } finally {
@@ -283,6 +308,28 @@ export default function PdfViewerScreen() {
         <View style={styles.titleContainer}>
           <Text style={styles.title} numberOfLines={1}>{pdf.title}</Text>
         </View>
+        {showAdOverlay && (
+          <View style={styles.adOverlay}>
+            <View style={styles.adOverlayContent}>
+              <Text style={styles.adOverlayTitle}>Watch Ad to View PDF</Text>
+              <Text style={styles.adOverlayText}>
+                This free PDF requires watching an ad first.
+              </Text>
+              <TouchableOpacity 
+                style={styles.watchAdButton} 
+                onPress={handleWatchAd}
+              >
+                <Text style={styles.watchAdButtonText}>Watch Ad</Text>
+              </TouchableOpacity>
+              <TouchableOpacity 
+                style={styles.cancelButton} 
+                onPress={() => router.back()}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
         <View style={styles.webviewContainer}>
           <WebView
             originWhitelist={['*']}
@@ -393,6 +440,55 @@ errorText: {
     fontWeight: '600',
     color: COLORS.text,
     textAlign: 'center',
+  },
+  adOverlay: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0,0,0,0.9)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 100,
+  },
+  adOverlayContent: {
+    backgroundColor: '#fff',
+    padding: 30,
+    borderRadius: 16,
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  adOverlayTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: COLORS.text,
+    marginBottom: 12,
+  },
+  adOverlayText: {
+    fontSize: 14,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: 24,
+  },
+  watchAdButton: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    paddingHorizontal: 40,
+    borderRadius: 12,
+  },
+  watchAdButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  cancelButton: {
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  cancelButtonText: {
+    color: COLORS.textSecondary,
+    fontSize: 14,
   },
   webviewContainer: {
     flex: 1,

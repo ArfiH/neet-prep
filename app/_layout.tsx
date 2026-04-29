@@ -7,6 +7,7 @@ import { AuthProvider, useAuth } from '@/lib/authContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import * as Linking from 'expo-linking';
+import { initAdMob } from '@/lib/adService';
 
 function AuthRouter() {
   const { loading, initialized, isLoggedIn } = useAuth();
@@ -81,6 +82,10 @@ function AuthRouter() {
 
 export default function RootLayout() {
   useFrameworkReady();
+
+  useEffect(() => {
+    initAdMob();
+  }, []);
 
   return (
     <SafeAreaProvider>
