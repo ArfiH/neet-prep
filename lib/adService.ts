@@ -1,8 +1,8 @@
 import { Platform } from 'react-native';
-import { MobileAds, InterstitialAd, AdEventType, TestIds } from 'react-native-google-mobile-ads';
+import { MobileAds, InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
 
-const ANDROID_AD_UNIT_ID = TestIds.INTERSTITIAL;
-const IOS_AD_UNIT_ID = TestIds.INTERSTITIAL;
+const ANDROID_AD_UNIT_ID = 'ca-app-pub-1317710744152870/6183406216';
+const IOS_AD_UNIT_ID = 'ca-app-pub-1317710744152870/6183406216';
 
 let interstitial: InterstitialAd | null = null;
 let interstitialLoaded = false;
