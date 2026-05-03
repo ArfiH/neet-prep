@@ -45,7 +45,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
       if (token && userData) {
         setUser(JSON.parse(userData));
-        // Initialize API client with auth token
         await api.init();
       }
     } catch (e) {
@@ -59,68 +58,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isLoggedIn = !!user && !!user.id;
 
   async function login(email: string, password: string) {
-    const response = await fetch('http://172.21.188.45:3000/api/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Login failed');
-    }
+    const data = await api.login(email, password);
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
-    // Initialize API client with auth token
     await api.init();
   }
 
   async function register(email: string, password: string, name?: string) {
-    const response = await fetch('http://172.21.188.45:3000/api/auth/register', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password, name }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Registration failed');
-    }
+    const data = await api.register(email, password, name);
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
-    // Initialize API client with auth token
     await api.init();
   }
 
   async function logout() {
-    await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
-    await AsyncStorage.removeItem(USER_DATA_KEY);
+    await api.logout();
     setUser(null);
   }
 
   async function forgotPassword(email: string): Promise<string> {
-    const response = await fetch('http://172.21.188.45:3000/api/auth/forgot-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Failed to send reset email');
-    }
+    const data = await api.forgotPassword(email);
     return data.message;
   }
 
   async function resetPassword(token: string, newPassword: string) {
-    const response = await fetch('http://172.21.188.45:3000/api/auth/reset-password', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token, newPassword }),
-    });
-    const data = await response.json();
-    if (!response.ok) {
-      throw new Error(data.error || 'Password reset failed');
-    }
+    await api.resetPassword(token, newPassword);
   }
 
   async function refreshUser() {

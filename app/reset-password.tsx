@@ -17,7 +17,7 @@ import { Lock, Eye, EyeOff, ArrowLeft, KeyRound } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-const API_URL = 'http://172.21.188.45:3000';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
 export default function ResetPasswordScreen() {
   const router = useRouter();
@@ -69,7 +69,7 @@ export default function ResetPasswordScreen() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/api/auth/reset-password`, {
+      const response = await fetch(`${API_BASE_URL}/auth/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, newPassword: password }),

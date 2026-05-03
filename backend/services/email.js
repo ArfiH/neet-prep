@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
 });
 
 const APP_SCHEME = 'myapp';
-const APP_BASE_URL = process.env.APP_BASE_URL || 'http://172.21.188.45:3000';
+const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:8081';
 
 const sendPasswordResetEmail = async (email, resetToken) => {
   const deepLinkUrl = `${APP_SCHEME}://reset-password?token=${resetToken}`;
