@@ -59,7 +59,7 @@ export default function ForgotPasswordScreen() {
             style={styles.backButton} 
             onPress={() => router.replace('/login' as any)}
           >
-            <ArrowLeft size={22} color={COLORS.text} strokeWidth={2.5} />
+            <ArrowLeft size={22} color={COLORS.fg} strokeWidth={2.5} />
           </TouchableOpacity>
 
           <View style={styles.header}>
@@ -73,11 +73,11 @@ export default function ForgotPasswordScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputContainer}>
-                <Mail size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <Mail size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -142,11 +142,11 @@ const styles = StyleSheet.create({
     ...SHADOWS.md,
   },
   header: { marginTop: 50, marginBottom: 30 },
-  title: { fontSize: 28, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: COLORS.textSecondary, lineHeight: 22 },
+  title: { fontSize: 28, fontWeight: '700', color: COLORS.fg, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: COLORS.muted, lineHeight: 22 },
   form: { gap: 16 },
   inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  label: { fontSize: 14, fontWeight: '600', color: COLORS.fg },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, 
     paddingLeft: 12,
     fontSize: 16, 
-    color: COLORS.text 
+    color: COLORS.fg 
   },
   successBox: {
     backgroundColor: COLORS.tagFreeBg,
@@ -184,7 +184,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 16,
   },
-  backToLoginText: { fontSize: 15, color: COLORS.textSecondary },
+  backToLoginText: { fontSize: 15, color: COLORS.muted },
   linkText: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
   haveCodeButton: {
     marginTop: 12,

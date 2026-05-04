@@ -1,48 +1,39 @@
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  ScrollView,
-  ActivityIndicator,
-  Dimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, BookOpen, Lock, Download, User, FileText, Tag, ShoppingCart, CircleCheck as CheckCircle } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const { width } = Dimensions.get('window');
 
 type PDF = {
   id: string;
   title: string;
   description: string;
   subject: string;
-  author: string;
   price: number;
   is_free: boolean;
-  cover_image_url: string;
-  file_url: string;
   pages_count: number;
-  tags: string[];
-  downloads: number;
-  created_at: string;
+  file_url: string;
 };
 
-const SAMPLE_CONTENTS = [
-  'Chapter 1: Introduction & Fundamentals',
-  'Chapter 2: Core Concepts & Definitions',
-  'Chapter 3: Important Diagrams & Illustrations',
-  'Chapter 4: Previous Year Questions Analysis',
-  'Chapter 5: Practice Questions with Solutions',
-  'Chapter 6: Quick Revision Notes',
-  'Chapter 7: High-Yield Topics for NEET',
-];
+const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
+const serifFont = Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' });
+
+function getTileBg(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return COLORS.tileAnatomy;
+  if (lower.includes('phys')) return COLORS.tilePhysics;
+  if (lower.includes('chem')) return COLORS.tileChemistry;
+  if (lower.includes('bot')) return COLORS.tileBotany;
+  if (lower.includes('zoo')) return COLORS.tileZoology;
+  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.tilePYQ;
+  if (subject === 'Biology') return COLORS.tileBotany;
+  if (subject === 'Physics') return COLORS.tilePhysics;
+  if (subject === 'Chemistry') return COLORS.tileChemistry;
+  return COLORS.tileAnatomy;
+}
 
 export default function PDFDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -55,17 +46,21 @@ export default function PDFDetailScreen() {
   }, [id]);
 
   async function fetchPdf() {
-    const pdf = await api.getPdfById(id);
-    if (pdf) {
-      setPdf(pdf);
-      addRecentlyViewed(id);
+    try {
+      const data = await api.getPdfById(id);
+      if (data) {
+        setPdf(data);
+        addRecentlyViewed(id);
+      }
+    } catch (e) {
+      // ignore
     }
     setLoading(false);
   }
 
   function handleReadPdf() {
     if (!pdf?.file_url) {
-      console.log('PDF file not available. Please contact support.');
+      console.log('PDF file not available.');
       return;
     }
     router.push(`/pdf/viewer/${pdf.id}`);
@@ -73,7 +68,7 @@ export default function PDFDetailScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
+      <SafeAreaView style={styles.loadingScreen}>
         <ActivityIndicator size="large" color={COLORS.primary} />
       </SafeAreaView>
     );
@@ -81,8 +76,8 @@ export default function PDFDetailScreen() {
 
   if (!pdf) {
     return (
-      <SafeAreaView style={styles.loadingScreen} edges={['top']}>
-        <Text style={{ color: COLORS.text }}>PDF not found.</Text>
+      <SafeAreaView style={styles.loadingScreen}>
+        <Text style={{ color: COLORS.fg }}>PDF not found.</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: COLORS.primary, marginTop: 12 }}>Go back</Text>
         </TouchableOpacity>
@@ -90,114 +85,79 @@ export default function PDFDetailScreen() {
     );
   }
 
+  const tileBg = getTileBg(pdf.subject);
+  const subjectLabel = pdf.subject.toUpperCase();
+  const availLabel = pdf.is_free ? 'FREE' : `₹${pdf.price}`;
+
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      {/* Back Button */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <ArrowLeft size={22} color={COLORS.text} strokeWidth={2.5} />
-      </TouchableOpacity>
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Top Bar */}
+        <View style={styles.topbar}>
+          <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+            <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
+          </TouchableOpacity>
+          <Text style={styles.topbarText}>PDF DETAIL</Text>
+        </View>
 
-      <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Hero Image */}
-        <View style={styles.heroContainer}>
-          <Image
-            source={{ uri: pdf.cover_image_url || 'https://images.pexels.com/photos/4855428/pexels-photo-4855428.jpeg' }}
-            style={styles.heroImage}
-          />
-          <View style={styles.heroOverlay} />
-          <View style={styles.heroContent}>
-            <View style={[styles.subjectBadge]}>
-              <Text style={styles.subjectBadgeText}>{pdf.subject}</Text>
-            </View>
+        {/* Hero Card */}
+        <View style={[styles.pdfHero, { backgroundColor: tileBg }]}>
+          <View style={styles.badge}>
+            <Text style={styles.badgeText}>— {subjectLabel} · {availLabel}</Text>
+          </View>
+          <Text style={styles.heroTitle}>{pdf.title}</Text>
+          <Text style={styles.heroDesc} numberOfLines={3}>{pdf.description || 'No description available.'}</Text>
+          <View style={styles.rewardStamp}>
+            <Text style={styles.rewardStampText}>{pdf.is_free ? '+50 XP' : `₹${pdf.price}`}</Text>
           </View>
         </View>
 
-        {/* Main Info */}
-        <View style={styles.mainCard}>
-          <Text style={styles.title}>{pdf.title}</Text>
+        {/* Summary */}
+        <View style={styles.summary}>
+          <Text style={styles.summaryLabel}>SUMMARY</Text>
+          <View style={styles.summaryCard}>
+            <Text style={styles.summaryCardTitle}>What you'll cover</Text>
+            <Text style={styles.summaryCardDesc}>{pdf.description || 'Comprehensive study material aligned with the latest NEET syllabus.'}</Text>
+          </View>
+
+          {/* Meta Pills */}
           <View style={styles.metaRow}>
-            <View style={styles.metaItem}>
-              <User size={13} color={COLORS.textSecondary} strokeWidth={2} />
-              <Text style={styles.metaText}>{pdf.author || 'Unknown Author'}</Text>
+            <View style={styles.metaPill}>
+              <BookOpen size={12} color={COLORS.muted} strokeWidth={1.2} />
+              <Text style={styles.metaPillText}>{pdf.pages_count} pages</Text>
             </View>
-            <View style={styles.metaItem}>
-              <FileText size={13} color={COLORS.textSecondary} strokeWidth={2} />
-              <Text style={styles.metaText}>{pdf.pages_count} pages</Text>
+            <View style={styles.metaPill}>
+              <Clock size={12} color={COLORS.muted} strokeWidth={1.2} />
+              <Text style={styles.metaPillText}>~{Math.ceil(pdf.pages_count / 2)} min read</Text>
             </View>
-            <View style={styles.metaItem}>
-              <Download size={13} color={COLORS.textSecondary} strokeWidth={2} />
-              <Text style={styles.metaText}>{pdf.downloads} downloads</Text>
+            <View style={styles.metaPill}>
+              <ImageIcon size={12} color={COLORS.muted} strokeWidth={1.2} />
+              <Text style={styles.metaPillText}>Diagrams</Text>
             </View>
-          </View>
-
-          {/* Tags */}
-          {pdf.tags && pdf.tags.length > 0 && (
-            <View style={styles.tagsRow}>
-              {pdf.tags.map((tag) => (
-                <View key={tag} style={styles.tag}>
-                  <Text style={styles.tagText}>#{tag}</Text>
-                </View>
-              ))}
+            <View style={styles.metaPill}>
+              <CheckCircle size={12} color={COLORS.muted} strokeWidth={1.2} />
+              <Text style={styles.metaPillText}>NEET 2024 aligned</Text>
             </View>
-          )}
-
-          {/* Description */}
-          <View style={styles.descSection}>
-            <Text style={styles.sectionLabel}>About this PDF</Text>
-            <Text style={styles.description}>{pdf.description || 'No description available.'}</Text>
-          </View>
-
-          {/* Table of Contents Preview */}
-          <View style={styles.tocSection}>
-            <Text style={styles.sectionLabel}>Contents Preview</Text>
-            {SAMPLE_CONTENTS.map((chapter, idx) => (
-              <View key={idx} style={styles.tocItem}>
-                <View style={styles.tocNumber}>
-                  <Text style={styles.tocNumberText}>{idx + 1}</Text>
-                </View>
-                <Text style={styles.tocText}>{chapter}</Text>
-              </View>
-            ))}
           </View>
         </View>
 
-        <View style={{ height: 120 }} />
-      </ScrollView>
-
-      {/* Bottom CTA */}
-      <View style={styles.bottomBar}>
-        <View style={styles.priceBlock}>
-          {pdf.is_free ? (
-            <>
-              <Text style={styles.freeLabel}>FREE</Text>
-              <Text style={styles.freeHint}>Watch ad to access</Text>
-            </>
-          ) : (
-            <>
-              <Text style={styles.price}>₹{pdf.price}</Text>
-              <Text style={styles.priceHint}>One-time purchase</Text>
-            </>
-          )}
-        </View>
-
+        {/* CTA */}
         <TouchableOpacity
-          style={[styles.ctaBtn, pdf.is_free ? styles.freeCta : styles.paidCta]}
+          style={pdf.is_free ? styles.startBtn : styles.startBtnPaid}
           onPress={handleReadPdf}
-          activeOpacity={0.85}
         >
           {pdf.is_free ? (
-            <>
-              <BookOpen size={18} color="#fff" strokeWidth={2.5} />
-              <Text style={styles.ctaBtnText}>Read Free PDF</Text>
-            </>
+            <Text style={styles.startBtnText}>Start reading — Free</Text>
           ) : (
             <>
-              <ShoppingCart size={18} color="#fff" strokeWidth={2.5} />
-              <Text style={styles.ctaBtnText}>Buy Now ₹{pdf.price}</Text>
+              <ShoppingCart size={16} color="#fff" strokeWidth={2} />
+              <Text style={styles.startBtnText}>Buy Now — ₹{pdf.price}</Text>
             </>
           )}
         </TouchableOpacity>
-      </View>
+
+        <View style={{ height: 20 }} />
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -206,102 +166,28 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
 
-  backBtn: {
-    position: 'absolute',
-    top: 54,
-    left: 16,
-    zIndex: 10,
-    backgroundColor: '#fff',
-    padding: 8,
-    borderRadius: 12,
-    ...SHADOWS.md,
-  },
+  topbar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 22, paddingTop: 8, paddingBottom: 6 },
+  backCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.stage, alignItems: 'center', justifyContent: 'center' },
+  topbarText: { fontSize: 12, fontWeight: '600', color: COLORS.muted, fontFamily: monoFont, letterSpacing: 0.14 },
 
-  container: { flex: 1 },
+  pdfHero: { marginHorizontal: 14, marginVertical: 8, paddingVertical: 20, paddingHorizontal: 18, borderRadius: 24, position: 'relative' },
+  badge: { alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: 'rgba(0,0,0,0.08)' },
+  badgeText: { fontSize: 10, fontFamily: monoFont, letterSpacing: 0.14, color: COLORS.fg },
+  heroTitle: { fontSize: 26, fontWeight: '700', color: COLORS.fg, lineHeight: 30, letterSpacing: -0.01, marginTop: 12, marginBottom: 6 },
+  heroDesc: { fontSize: 12.5, color: COLORS.muted, lineHeight: 20, maxWidth: 280 },
+  rewardStamp: { position: 'absolute', right: 16, top: 16, paddingHorizontal: 8, paddingVertical: 5, borderRadius: 999, backgroundColor: 'rgba(255,255,255,0.75)' },
+  rewardStampText: { fontSize: 10, fontWeight: '700', fontFamily: monoFont, color: COLORS.primaryDark, letterSpacing: 0.06 },
 
-  heroContainer: { height: 240, position: 'relative' },
-  heroImage: { width: '100%', height: '100%', resizeMode: 'cover' },
-  heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.25)',
-  },
-  heroContent: {
-    position: 'absolute',
-    bottom: 16,
-    left: 16,
-  },
-  subjectBadge: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 5,
-    borderRadius: 8,
-  },
-  subjectBadgeText: { fontSize: 12, fontWeight: '700', color: '#fff' },
+  summary: { paddingHorizontal: 22, paddingTop: 4, paddingBottom: 10 },
+  summaryLabel: { fontSize: 10.5, fontWeight: '700', fontFamily: monoFont, letterSpacing: 0.16, color: COLORS.muted, marginTop: 10, marginBottom: 10 },
+  summaryCard: { padding: 14, borderRadius: 14, backgroundColor: COLORS.stage, borderWidth: 1, borderColor: COLORS.border, marginBottom: 12 },
+  summaryCardTitle: { fontSize: 13, fontWeight: '600', color: COLORS.fg, marginBottom: 6 },
+  summaryCardDesc: { fontSize: 12, color: COLORS.muted, lineHeight: 18.6 },
+  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  metaPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 999, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  metaPillText: { fontSize: 10.5, fontFamily: monoFont, color: COLORS.muted },
 
-  mainCard: {
-    backgroundColor: '#fff',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
-    marginTop: -20,
-    padding: 20,
-  },
-  title: { fontSize: 20, fontWeight: '700', color: COLORS.text, lineHeight: 28 },
-  metaRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 10 },
-  metaItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  metaText: { fontSize: 12, color: COLORS.textSecondary },
-
-  tagsRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 12 },
-  tag: { backgroundColor: COLORS.primarySurface, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  tagText: { fontSize: 11, color: COLORS.primary, fontWeight: '600' },
-
-  descSection: { marginTop: 20 },
-  sectionLabel: { fontSize: 14, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  description: { fontSize: 14, color: COLORS.textSecondary, lineHeight: 22 },
-
-  tocSection: { marginTop: 20 },
-  tocItem: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 10 },
-  tocNumber: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: COLORS.primarySurface,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  tocNumberText: { fontSize: 12, fontWeight: '700', color: COLORS.primary },
-  tocText: { flex: 1, fontSize: 13, color: COLORS.text, lineHeight: 19 },
-
-  bottomBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    backgroundColor: '#fff',
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    paddingBottom: 28,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderLight,
-    ...SHADOWS.lg,
-  },
-  priceBlock: {},
-  price: { fontSize: 22, fontWeight: '700', color: COLORS.text },
-  priceHint: { fontSize: 11, color: COLORS.textSecondary, marginTop: 1 },
-  freeLabel: { fontSize: 22, fontWeight: '700', color: COLORS.primary },
-  freeHint: { fontSize: 11, color: COLORS.textSecondary, marginTop: 1 },
-
-  ctaBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 14,
-  },
-  freeCta: { backgroundColor: COLORS.primary },
-  paidCta: { backgroundColor: '#D97706' },
-  ctaBtnText: { fontSize: 15, fontWeight: '700', color: '#fff' },
+  startBtn: { marginHorizontal: 18, marginVertical: 10, paddingVertical: 14, borderRadius: 999, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
+  startBtnPaid: { backgroundColor: COLORS.fg },
+  startBtnText: { fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: 0.04 },
 });

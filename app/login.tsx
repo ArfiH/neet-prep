@@ -64,11 +64,11 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputContainer}>
-                <Mail size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <Mail size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -81,11 +81,11 @@ export default function LoginScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Password</Text>
               <View style={styles.inputContainer}>
-                <Lock size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <Lock size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your password"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -95,9 +95,9 @@ export default function LoginScreen() {
                   style={styles.eyeButton}
                 >
                   {showPassword ? (
-                    <EyeOff size={18} color={COLORS.textSecondary} />
+                    <EyeOff size={18} color={COLORS.muted} />
                   ) : (
-                    <Eye size={18} color={COLORS.textSecondary} />
+                    <Eye size={18} color={COLORS.muted} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -142,11 +142,11 @@ const styles = StyleSheet.create({
   keyboardView: { flex: 1 },
   scrollContent: { flexGrow: 1, padding: 24 },
   header: { marginTop: 40, marginBottom: 40 },
-  title: { fontSize: 28, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: COLORS.textSecondary },
+  title: { fontSize: 28, fontWeight: '700', color: COLORS.fg, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: COLORS.muted },
   form: { gap: 16 },
   inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  label: { fontSize: 14, fontWeight: '600', color: COLORS.fg },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14, 
     paddingLeft: 12,
     fontSize: 16, 
-    color: COLORS.text 
+    color: COLORS.fg 
   },
   eyeButton: { padding: 4 },
   forgotButton: { alignSelf: 'flex-end', marginTop: -4 },
@@ -181,6 +181,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginTop: 32,
   },
-  footerText: { fontSize: 15, color: COLORS.textSecondary },
+  footerText: { fontSize: 15, color: COLORS.muted },
   linkText: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
 });

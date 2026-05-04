@@ -1,17 +1,7 @@
-import {
-  View,
-  Text,
-  ScrollView,
-  StyleSheet,
-  TouchableOpacity,
-  Image,
-  FlatList,
-  TextInput,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Search, ListFilter as Filter, BookOpen, Lock } from 'lucide-react-native';
+import { BookOpen } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -21,23 +11,66 @@ type PDF = {
   title: string;
   description: string;
   subject: string;
-  author: string;
   price: number;
   is_free: boolean;
-  cover_image_url: string;
   pages_count: number;
-  tags: string[];
-  downloads: number;
 };
 
-const SUBJECTS = ['All', 'Biology', 'Chemistry', 'Physics'];
+const SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
+
+function getTileBg(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return COLORS.tileAnatomy;
+  if (lower.includes('phys')) return COLORS.tilePhysics;
+  if (lower.includes('chem')) return COLORS.tileChemistry;
+  if (lower.includes('bot')) return COLORS.tileBotany;
+  if (lower.includes('zoo')) return COLORS.tileZoology;
+  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.tilePYQ;
+  if (subject === 'Biology') return COLORS.tileBotany;
+  if (subject === 'Physics') return COLORS.tilePhysics;
+  if (subject === 'Chemistry') return COLORS.tileChemistry;
+  return COLORS.tileAnatomy;
+}
+
+function getGlyphColor(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return COLORS.glyphAnatomy;
+  if (lower.includes('phys')) return COLORS.glyphPhysics;
+  if (lower.includes('chem')) return COLORS.glyphChemistry;
+  if (lower.includes('bot')) return COLORS.glyphBotany;
+  if (lower.includes('zoo')) return COLORS.glyphZoology;
+  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.glyphPYQ;
+  if (subject === 'Biology') return COLORS.glyphBotany;
+  if (subject === 'Physics') return COLORS.glyphPhysics;
+  if (subject === 'Chemistry') return COLORS.glyphChemistry;
+  return COLORS.glyphAnatomy;
+}
+
+function getGlyphLetter(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return 'A';
+  if (lower.includes('phys')) return 'P';
+  if (lower.includes('chem')) return 'C';
+  if (lower.includes('bot')) return 'B';
+  if (lower.includes('zoo')) return 'Z';
+  if (lower.includes('pyq') || lower.includes('prev')) return 'PY';
+  if (subject === 'Biology') return 'B';
+  if (subject === 'Physics') return 'P';
+  if (subject === 'Chemistry') return 'C';
+  return subject.charAt(0).toUpperCase();
+}
+
+function getMetaLine(item: PDF): string {
+  return `${item.pages_count} pages`;
+}
+
+const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
 export default function PDFsScreen() {
   const router = useRouter();
   const [pdfs, setPdfs] = useState<PDF[]>([]);
   const [filtered, setFiltered] = useState<PDF[]>([]);
-  const [activeSubject, setActiveSubject] = useState('All');
-  const [search, setSearch] = useState('');
+  const [activeSubject, setActiveSubject] = useState('Biology');
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
 
@@ -47,248 +80,144 @@ export default function PDFsScreen() {
 
   useEffect(() => {
     applyFilters();
-  }, [pdfs, activeSubject, search, activeFilter]);
+  }, [pdfs, activeSubject, activeFilter]);
 
   async function fetchPdfs() {
     setLoading(true);
-    const pdfs = await api.getPdfs();
-    if (pdfs) {
-      setPdfs(pdfs);
-      setFiltered(pdfs);
+    try {
+      const data = await api.getPdfs();
+      if (data) {
+        setPdfs(data);
+      }
+    } catch (e) {
+      // ignore
     }
     setLoading(false);
   }
 
   function applyFilters() {
     let result = [...pdfs];
-    if (activeSubject !== 'All') {
-      result = result.filter((p) => p.subject === activeSubject);
-    }
+    result = result.filter((p) => p.subject === activeSubject);
     if (activeFilter === 'free') result = result.filter((p) => p.is_free);
     if (activeFilter === 'paid') result = result.filter((p) => !p.is_free);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      result = result.filter(
-        (p) => p.title.toLowerCase().includes(q) || p.subject.toLowerCase().includes(q) || p.author.toLowerCase().includes(q)
-      );
-    }
     setFiltered(result);
   }
 
-  const renderPDF = ({ item }: { item: PDF }) => (
-    <TouchableOpacity
-      style={styles.pdfCard}
-      onPress={() => router.push(`/pdf/${item.id}` as any)}
-      activeOpacity={0.88}
-    >
-      <Image
-        source={{ uri: item.cover_image_url || 'https://images.pexels.com/photos/4855428/pexels-photo-4855428.jpeg' }}
-        style={styles.pdfImage}
-      />
-      <View style={styles.pdfInfo}>
-        <View style={styles.pdfTopRow}>
-          <View style={[styles.subjectBadge]}>
-            <Text style={styles.subjectBadgeText}>{item.subject}</Text>
-          </View>
-          <View style={[styles.priceBadge, item.is_free ? styles.freeBadge : styles.paidBadge]}>
-            {item.is_free ? (
-              <Text style={[styles.priceBadgeText, { color: COLORS.tagFree }]}>FREE</Text>
-            ) : (
-              <>
-                <Lock size={9} color={COLORS.tagPaid} strokeWidth={2.5} />
-                <Text style={[styles.priceBadgeText, { color: COLORS.tagPaid }]}> ₹{item.price}</Text>
-              </>
-            )}
-          </View>
-        </View>
-        <Text style={styles.pdfTitle} numberOfLines={2}>{item.title}</Text>
-        <Text style={styles.pdfAuthor} numberOfLines={1}>by {item.author}</Text>
-        <View style={styles.pdfMeta}>
-          <Text style={styles.pdfMetaText}>{item.pages_count} pages</Text>
-          <View style={styles.dot} />
-          <Text style={styles.pdfMetaText}>{item.downloads} downloads</Text>
-        </View>
-      </View>
-    </TouchableOpacity>
-  );
+  const freeCount = pdfs.filter((p) => p.is_free).length;
+  const paidCount = pdfs.filter((p) => !p.is_free).length;
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>Read PDFs</Text>
-        <Text style={styles.headerSubtitle}>NEET study materials</Text>
-      </View>
-
-      {/* Search Bar */}
-      <View style={styles.searchContainer}>
-        <View style={styles.searchBar}>
-          <Search size={16} color={COLORS.textLight} strokeWidth={2} />
-          <TextInput
-            style={styles.searchInput}
-            placeholder="Search by title, subject, author..."
-            placeholderTextColor={COLORS.textLight}
-            value={search}
-            onChangeText={setSearch}
-          />
+    <SafeAreaView style={styles.safeArea}>
+      <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Header */}
+        <View style={styles.head}>
+          <Text style={styles.headTitle}>Good morning</Text>
+          <Text style={styles.headSub}>
+            {filtered.length} PDF{filtered.length !== 1 ? 's' : ''} ready
+            <Text style={styles.pillFree}>{freeCount} FREE</Text>
+            <Text style={styles.pillPaid}>{paidCount} PAID</Text>
+          </Text>
         </View>
-      </View>
 
-      {/* Filter Pills */}
-      <View style={styles.filterRow}>
-        {(['all', 'free', 'paid'] as const).map((f) => (
-          <TouchableOpacity
-            key={f}
-            style={[styles.filterPill, activeFilter === f && styles.filterPillActive]}
-            onPress={() => setActiveFilter(f)}
-          >
-            <Text style={[styles.filterPillText, activeFilter === f && styles.filterPillTextActive]}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      
-{/* Subject Tabs */}
-      <View style={styles.subjectSection}>
-        <Text style={styles.subjectSectionTitle}>Subjects</Text>
-        <View style={styles.subjectGrid}>
-          {SUBJECTS.map((subject) => (
+        {/* Subject Bar */}
+        <View style={styles.subjectBar}>
+          {SUBJECTS.map((subj) => (
             <TouchableOpacity
-              key={subject}
-              style={[styles.subjectChip, activeSubject === subject && styles.subjectChipActive]}
-              onPress={() => setActiveSubject(subject)}
-              activeOpacity={0.7}
+              key={subj}
+              style={[styles.subj, activeSubject === subj && styles.subjActive]}
+              onPress={() => setActiveSubject(subj)}
             >
-              <Text style={[styles.subjectChipText, activeSubject === subject && styles.subjectChipTextActive]}>
-                {subject}
+              <Text style={[styles.subjText, activeSubject === subj && styles.subjTextActive]}>{subj}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Availability Bar */}
+        <View style={styles.availBar}>
+          {(['all', 'free', 'paid'] as const).map((avail) => (
+            <TouchableOpacity
+              key={avail}
+              style={[styles.avail, activeFilter === avail && styles.availActive]}
+              onPress={() => setActiveFilter(avail)}
+            >
+              <Text style={[styles.availText, activeFilter === avail && styles.availTextActive]}>
+                {avail.charAt(0).toUpperCase() + avail.slice(1)}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
-      </View>
 
-      {loading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={COLORS.primary} />
-          <Text style={styles.loadingText}>Loading PDFs...</Text>
-        </View>
-      ) : filtered.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <BookOpen size={48} color={COLORS.border} strokeWidth={1.5} />
-          <Text style={styles.emptyTitle}>No PDFs found</Text>
-          <Text style={styles.emptySubtitle}>Try adjusting your filters</Text>
-        </View>
-      ) : (
-        <FlatList
-          data={filtered}
-          keyExtractor={(item) => item.id}
-          renderItem={renderPDF}
-          contentContainerStyle={styles.listContent}
-          showsVerticalScrollIndicator={false}
-        />
-      )}
+        {/* PDF Grid */}
+        {loading ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="large" color={COLORS.primary} />
+          </View>
+        ) : filtered.length === 0 ? (
+          <View style={styles.emptyContainer}>
+            <BookOpen size={40} color={COLORS.border} strokeWidth={1.5} />
+            <Text style={styles.emptyTitle}>No PDFs found</Text>
+            <Text style={styles.emptySubtitle}>Try adjusting your filters</Text>
+          </View>
+        ) : (
+          <View style={styles.pdfs}>
+            {filtered.map((item) => (
+              <TouchableOpacity
+                key={item.id}
+                style={[styles.tile, { backgroundColor: getTileBg(item.subject) }]}
+                onPress={() => router.push(`/pdf/${item.id}` as any)}
+                activeOpacity={0.88}
+              >
+                <View style={[styles.glyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                  <Text style={styles.glyphText}>{getGlyphLetter(item.subject)}</Text>
+                </View>
+                <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.tileMeta} numberOfLines={1}>{getMetaLine(item)}</Text>
+                {item.is_free ? (
+                  <Text style={styles.freeTag}>FREE</Text>
+                ) : (
+                  <Text style={styles.paidTag}>₹{item.price}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
+      </ScrollView>
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
-  header: {
-    backgroundColor: COLORS.primary,
-    paddingHorizontal: 20,
-    paddingTop: 16,
-    paddingBottom: 20,
-  },
-  headerTitle: { fontSize: 24, fontWeight: '700', color: '#fff' },
-  headerSubtitle: { fontSize: 13, color: 'rgba(255,255,255,0.8)', marginTop: 2 },
 
-  searchContainer: { paddingHorizontal: 16, paddingVertical: 12, backgroundColor: '#fff' },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: COLORS.surface,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: COLORS.text },
+  head: { paddingHorizontal: 22, paddingTop: 14, paddingBottom: 6 },
+  headTitle: { fontSize: 18, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
+  headSub: { fontSize: 12, color: COLORS.muted, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  pillFree: { fontSize: 10, fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, backgroundColor: COLORS.primaryLight, color: COLORS.primaryDark, fontWeight: '600' },
+  pillPaid: { fontSize: 10, fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, backgroundColor: '#fef3e0', color: '#b5651d', fontWeight: '600' },
 
-  filterRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    paddingBottom: 10,
-    gap: 8,
-    backgroundColor: '#fff',
-  },
-  filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  filterPillActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  filterPillText: { fontSize: 13, fontWeight: '600', color: COLORS.textSecondary },
-  filterPillTextActive: { color: '#fff' },
+  subjectBar: { flexDirection: 'row', paddingHorizontal: 14, paddingBottom: 8, gap: 6 },
+  subj: { flex: 1, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface, alignItems: 'center' },
+  subjActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  subjText: { fontSize: 11, fontWeight: '600', color: COLORS.muted },
+  subjTextActive: { color: '#fff' },
 
-  subjectSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 12 },
-  subjectSectionTitle: { fontSize: 16, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
-  subjectGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  subjectChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 8,
-    backgroundColor: COLORS.surface,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  subjectChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
-  subjectChipText: { fontSize: 13, fontWeight: '500', color: COLORS.textSecondary },
-  subjectChipTextActive: { color: '#fff' },
+  availBar: { flexDirection: 'row', paddingHorizontal: 14, paddingBottom: 6, gap: 6 },
+  avail: { flex: 1, paddingVertical: 7, borderRadius: 8, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface, alignItems: 'center' },
+  availActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  availText: { fontSize: 10.5, fontWeight: '600', color: COLORS.muted },
+  availTextActive: { color: '#fff' },
 
-  loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12 },
-  loadingText: { fontSize: 14, color: COLORS.textSecondary },
-  emptyContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 10, padding: 40 },
-  emptyTitle: { fontSize: 18, fontWeight: '600', color: COLORS.text },
-  emptySubtitle: { fontSize: 14, color: COLORS.textSecondary },
+  pdfs: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
+  tile: { width: '48%', borderRadius: 18, padding: 12, minHeight: 116, position: 'relative', flexDirection: 'column', gap: 4 },
+  glyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  glyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17 },
+  tileMeta: { fontSize: 10.5, color: COLORS.muted, opacity: 0.7 },
+  freeTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primary, color: '#fff', letterSpacing: 0.06 },
+  paidTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.fg, color: '#fff', letterSpacing: 0.06 },
 
-  listContent: { padding: 16, gap: 12 },
-
-  pdfCard: {
-    backgroundColor: '#fff',
-    borderRadius: 16,
-    flexDirection: 'row',
-    overflow: 'hidden',
-    ...SHADOWS.sm,
-  },
-  pdfImage: { width: 100, height: 120, resizeMode: 'cover' },
-  pdfInfo: { flex: 1, padding: 12 },
-  pdfTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
-  subjectBadge: {
-    backgroundColor: COLORS.primarySurface,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  subjectBadgeText: { fontSize: 10, fontWeight: '600', color: COLORS.primary },
-  priceBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  freeBadge: { backgroundColor: COLORS.tagFreeBg },
-  paidBadge: { backgroundColor: COLORS.tagPaidBg },
-  priceBadgeText: { fontSize: 11, fontWeight: '700' },
-  pdfTitle: { fontSize: 14, fontWeight: '600', color: COLORS.text, lineHeight: 20 },
-  pdfAuthor: { fontSize: 11, color: COLORS.textSecondary, marginTop: 3 },
-  pdfMeta: { flexDirection: 'row', alignItems: 'center', marginTop: 8, gap: 6 },
-  pdfMetaText: { fontSize: 11, color: COLORS.textLight },
-  dot: { width: 3, height: 3, borderRadius: 2, backgroundColor: COLORS.border },
+  loadingContainer: { paddingVertical: 60, alignItems: 'center' },
+  emptyContainer: { paddingVertical: 60, alignItems: 'center', gap: 8 },
+  emptyTitle: { fontSize: 16, fontWeight: '600', color: COLORS.fg },
+  emptySubtitle: { fontSize: 13, color: COLORS.muted },
 });

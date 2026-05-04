@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Hop as Home, BookOpen, GraduationCap, User, HomeIcon } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -9,7 +9,7 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: COLORS.primary,
-        tabBarInactiveTintColor: COLORS.textLight,
+        tabBarInactiveTintColor: COLORS.muted,
         tabBarStyle: styles.tabBar,
         tabBarLabelStyle: styles.tabLabel,
         tabBarIconStyle: { marginTop: 2 },
@@ -18,28 +18,28 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: 'HOME',
           tabBarIcon: ({ color, size }) => <HomeIcon size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="pdfs"
         options={{
-          title: 'PDFs',
+          title: 'PDF',
           tabBarIcon: ({ color, size }) => <BookOpen size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="colleges"
         options={{
-          title: 'Colleges',
+          title: 'COLLEGE',
           tabBarIcon: ({ color, size }) => <GraduationCap size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: 'PROFILE',
           tabBarIcon: ({ color, size }) => <User size={size} color={color} strokeWidth={2} />,
         }}
       />
@@ -47,18 +47,27 @@ export default function TabLayout() {
   );
 }
 
+const monoFont = Platform.select({
+  ios: 'Menlo',
+  android: 'monospace',
+  default: 'monospace',
+});
+
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: COLORS.surface,
     borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingBottom: 8,
-    paddingTop: 6,
+    borderTopColor: COLORS.border,
+    paddingBottom: 26,
+    paddingTop: 8,
+    paddingHorizontal: 10,
     height: 70,
   },
   tabLabel: {
-    fontSize: 11,
+    fontSize: 8.5,
     fontWeight: '600',
     marginTop: 2,
+    fontFamily: monoFont,
+    letterSpacing: 0.06,
   },
 });

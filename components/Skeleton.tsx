@@ -34,7 +34,7 @@ export function Skeleton({ width = '100%', height = 20, borderRadius = 8, style 
   return (
     <Animated.View
       style={[
-        { width, height, borderRadius, backgroundColor: COLORS.skeleton },
+        { width, height, borderRadius, backgroundColor: COLORS.border },
         { opacity },
         style,
       ]}
@@ -42,15 +42,12 @@ export function Skeleton({ width = '100%', height = 20, borderRadius = 8, style 
   );
 }
 
-export function PdfCardSkeleton() {
+export function PdfTileSkeleton() {
   return (
-    <View style={styles.pdfCard}>
-      <Skeleton height={110} borderRadius={0} style={{ borderTopLeftRadius: 14, borderTopRightRadius: 14 }} />
-      <View style={styles.pdfCardBody}>
-        <Skeleton width={60} height={10} style={{ marginBottom: 6 }} />
-        <Skeleton width="90%" height={14} style={{ marginBottom: 4 }} />
-        <Skeleton width="60%" height={10} />
-      </View>
+    <View style={styles.pdfTile}>
+      <Skeleton width={28} height={28} borderRadius={8} style={{ marginBottom: 8 }} />
+      <Skeleton width="80%" height={13} style={{ marginBottom: 6 }} />
+      <Skeleton width="50%" height={10} />
     </View>
   );
 }
@@ -58,7 +55,7 @@ export function PdfCardSkeleton() {
 export function CollegeRowSkeleton() {
   return (
     <View style={styles.collegeRow}>
-      <Skeleton width={56} height={56} borderRadius={10} />
+      <Skeleton width={56} height={56} borderRadius={12} />
       <View style={styles.collegeRowInfo}>
         <Skeleton width="70%" height={14} style={{ marginBottom: 6 }} />
         <Skeleton width="50%" height={12} style={{ marginBottom: 8 }} />
@@ -68,38 +65,23 @@ export function CollegeRowSkeleton() {
   );
 }
 
-export function StatCardSkeleton() {
-  return (
-    <View style={styles.statCard}>
-      <Skeleton width={40} height={20} style={{ marginBottom: 4 }} />
-      <Skeleton width={50} height={10} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
-  pdfCard: {
-    width: 160,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    marginRight: 12,
-    overflow: 'hidden',
+  pdfTile: {
+    width: '48%',
+    backgroundColor: COLORS.stage,
+    borderRadius: 18,
+    padding: 12,
+    minHeight: 116,
   },
-  pdfCardBody: { padding: 10 },
   collegeRow: {
-    backgroundColor: '#fff',
+    backgroundColor: COLORS.surface,
     borderRadius: 14,
     padding: 12,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 10,
+    borderWidth: 1,
+    borderColor: COLORS.border,
   },
   collegeRowInfo: { flex: 1, marginLeft: 12 },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#fff',
-    borderRadius: 14,
-    padding: 14,
-    alignItems: 'center',
-  },
 });

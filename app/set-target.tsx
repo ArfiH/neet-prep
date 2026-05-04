@@ -59,7 +59,7 @@ export default function SetTargetScreen() {
     setSaving(true);
     try {
       await api.updateProfile({
-        neet_rank: rankNum || null,
+        neet_rank: rankNum || undefined,
         category,
       });
       
@@ -100,7 +100,7 @@ export default function SetTargetScreen() {
             style={styles.backButton} 
             onPress={() => router.back()}
           >
-            <ArrowLeft size={22} color={COLORS.text} strokeWidth={2.5} />
+            <ArrowLeft size={22} color={COLORS.fg} strokeWidth={2.5} />
           </TouchableOpacity>
 
           <View style={styles.header}>
@@ -118,11 +118,11 @@ export default function SetTargetScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Target NEET Rank</Text>
               <View style={styles.inputContainer}>
-                <GraduationCap size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <GraduationCap size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your target rank"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={rank}
                   onChangeText={setRank}
                   keyboardType="number-pad"
@@ -206,12 +206,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
-  title: { fontSize: 24, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  subtitle: { fontSize: 14, color: COLORS.textSecondary, textAlign: 'center', lineHeight: 20 },
+  title: { fontSize: 24, fontWeight: '700', color: COLORS.fg, marginBottom: 8 },
+  subtitle: { fontSize: 14, color: COLORS.muted, textAlign: 'center', lineHeight: 20 },
   
   form: { gap: 24, marginBottom: 24 },
   inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  label: { fontSize: 14, fontWeight: '600', color: COLORS.fg },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -226,9 +226,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14, 
     paddingLeft: 12,
     fontSize: 16, 
-    color: COLORS.text 
+    color: COLORS.fg 
   },
-  hintText: { fontSize: 12, color: COLORS.textSecondary, marginTop: 4 },
+  hintText: { fontSize: 12, color: COLORS.muted, marginTop: 4 },
   
   categoryGrid: {
     flexDirection: 'row',
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.primary,
     borderColor: COLORS.primary,
   },
-  categoryText: { fontSize: 14, fontWeight: '500', color: COLORS.text },
+  categoryText: { fontSize: 14, fontWeight: '500', color: COLORS.fg },
   categoryTextSelected: { color: '#fff' },
   
   button: {

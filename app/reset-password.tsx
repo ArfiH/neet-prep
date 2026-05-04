@@ -110,7 +110,7 @@ export default function ResetPasswordScreen() {
             style={styles.backButton} 
             onPress={() => router.push('/login')}
           >
-            <ArrowLeft size={22} color={COLORS.text} strokeWidth={2.5} />
+            <ArrowLeft size={22} color={COLORS.fg} strokeWidth={2.5} />
           </TouchableOpacity>
 
           <View style={styles.header}>
@@ -125,11 +125,11 @@ export default function ResetPasswordScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Reset Code</Text>
               <View style={styles.inputContainer}>
-                <KeyRound size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <KeyRound size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Paste reset code from email"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={tokenInput}
                   onChangeText={setTokenInput}
                   autoCapitalize="none"
@@ -145,11 +145,11 @@ export default function ResetPasswordScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>New Password</Text>
               <View style={styles.inputContainer}>
-                <Lock size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <Lock size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Enter new password"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -159,9 +159,9 @@ export default function ResetPasswordScreen() {
                   style={styles.eyeButton}
                 >
                   {showPassword ? (
-                    <EyeOff size={18} color={COLORS.textSecondary} />
+                    <EyeOff size={18} color={COLORS.muted} />
                   ) : (
-                    <Eye size={18} color={COLORS.textSecondary} />
+                    <Eye size={18} color={COLORS.muted} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -171,11 +171,11 @@ export default function ResetPasswordScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Confirm Password</Text>
               <View style={styles.inputContainer}>
-                <Lock size={18} color={COLORS.textSecondary} strokeWidth={2} />
+                <Lock size={18} color={COLORS.muted} strokeWidth={2} />
                 <TextInput
                   style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Confirm new password"
-                  placeholderTextColor={COLORS.textLight}
+                  placeholderTextColor={COLORS.muted}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showPassword}
@@ -208,7 +208,7 @@ export default function ResetPasswordScreen() {
   );
 }
 
-const isWideDevice = Platform.OS === 'android' && Platform.constants.ReactNativeVersion?.minor >= 74;
+const isWideDevice = false;
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
@@ -228,11 +228,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   header: { marginBottom: 32 },
-  title: { fontSize: 28, fontWeight: '700', color: COLORS.text, marginBottom: 8 },
-  subtitle: { fontSize: 16, color: COLORS.textSecondary, lineHeight: 22 },
+  title: { fontSize: 28, fontWeight: '700', color: COLORS.fg, marginBottom: 8 },
+  subtitle: { fontSize: 16, color: COLORS.muted, lineHeight: 22 },
   form: { gap: 20 },
   inputGroup: { gap: 8 },
-  label: { fontSize: 14, fontWeight: '600', color: COLORS.text },
+  label: { fontSize: 14, fontWeight: '600', color: COLORS.fg },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -247,13 +247,13 @@ const styles = StyleSheet.create({
     paddingVertical: 14, 
     paddingLeft: 12,
     fontSize: 16, 
-    color: COLORS.text 
+    color: COLORS.fg 
   },
   inputWide: {
     minWidth: 200,
   },
   eyeButton: { padding: 4 },
-  hintText: { fontSize: 12, color: COLORS.textSecondary, marginTop: 4 },
+  hintText: { fontSize: 12, color: COLORS.muted, marginTop: 4 },
   errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
   successText: { color: COLORS.primary, fontSize: 14, textAlign: 'center' },
   button: {

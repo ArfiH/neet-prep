@@ -79,7 +79,7 @@ export default function CollegeDetailScreen() {
   if (!college) {
     return (
       <SafeAreaView style={styles.loadingScreen} edges={['top']}>
-        <Text style={{ color: COLORS.text }}>College not found.</Text>
+        <Text style={{ color: COLORS.fg }}>College not found.</Text>
         <TouchableOpacity onPress={() => router.back()}>
           <Text style={{ color: COLORS.primary, marginTop: 12 }}>Go back</Text>
         </TouchableOpacity>
@@ -92,7 +92,7 @@ export default function CollegeDetailScreen() {
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-        <ArrowLeft size={22} color={COLORS.text} strokeWidth={2.5} />
+        <ArrowLeft size={22} color={COLORS.fg} strokeWidth={2.5} />
       </TouchableOpacity>
 
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
@@ -115,7 +115,7 @@ export default function CollegeDetailScreen() {
         <View style={styles.mainCard}>
           <Text style={styles.collegeName}>{college.name}</Text>
           <View style={styles.locationRow}>
-            <MapPin size={14} color={COLORS.textSecondary} strokeWidth={2} />
+            <MapPin size={14} color={COLORS.muted} strokeWidth={2} />
             <Text style={styles.locationText}>
               {college.city ? `${college.city}, ` : ''}{college.state}
             </Text>
@@ -276,16 +276,16 @@ const styles = StyleSheet.create({
     marginTop: -20,
     padding: 20,
   },
-  collegeName: { fontSize: 20, fontWeight: '700', color: COLORS.text, lineHeight: 28 },
+  collegeName: { fontSize: 20, fontWeight: '700', color: COLORS.fg, lineHeight: 28 },
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
-  locationText: { fontSize: 13, color: COLORS.textSecondary },
+  locationText: { fontSize: 13, color: COLORS.muted },
   dot: { width: 3, height: 3, borderRadius: 2, backgroundColor: COLORS.border, marginHorizontal: 2 },
   accredBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 5,
     marginTop: 8,
-    backgroundColor: COLORS.primarySurface,
+    backgroundColor: COLORS.primaryLight,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
@@ -302,13 +302,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 4,
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    borderColor: COLORS.border,
   },
-  statValue: { fontSize: 13, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
-  statLabel: { fontSize: 10, color: COLORS.textSecondary, textAlign: 'center' },
+  statValue: { fontSize: 13, fontWeight: '700', color: COLORS.fg, textAlign: 'center' },
+  statLabel: { fontSize: 10, color: COLORS.muted, textAlign: 'center' },
 
   section: { marginTop: 24 },
-  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.text, marginBottom: 12 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.fg, marginBottom: 12 },
 
   cutoffTable: {
     backgroundColor: COLORS.surface,
@@ -331,9 +331,9 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
   },
-  cutoffYear: { flex: 1, fontSize: 12, fontWeight: '700', color: COLORS.text, textAlign: 'center' },
-  cutoffRank: { flex: 1, fontSize: 12, color: COLORS.textSecondary, textAlign: 'center' },
-  cutoffNote: { fontSize: 11, color: COLORS.textLight, marginTop: 6, textAlign: 'center' },
+  cutoffYear: { flex: 1, fontSize: 12, fontWeight: '700', color: COLORS.fg, textAlign: 'center' },
+  cutoffRank: { flex: 1, fontSize: 12, color: COLORS.muted, textAlign: 'center' },
+  cutoffNote: { fontSize: 11, color: COLORS.muted, marginTop: 6, textAlign: 'center' },
 
   feeCard: {
     backgroundColor: COLORS.surface,
@@ -341,19 +341,19 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    borderColor: COLORS.border,
   },
   feeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
   feeDot: { width: 10, height: 10, borderRadius: 5 },
-  feeLabel: { flex: 1, fontSize: 13, color: COLORS.textSecondary },
-  feeValue: { fontSize: 13, fontWeight: '700', color: COLORS.text },
+  feeLabel: { flex: 1, fontSize: 13, color: COLORS.muted },
+  feeValue: { fontSize: 13, fontWeight: '700', color: COLORS.fg },
   feeTotalRow: {
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     paddingTop: 12,
     marginTop: 0,
   },
-  feeTotalLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.text },
+  feeTotalLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.fg },
   feeTotalValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
 
   contactCard: {
@@ -362,9 +362,9 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: COLORS.borderLight,
+    borderColor: COLORS.border,
   },
   contactRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  contactText: { flex: 1, fontSize: 13, color: COLORS.text },
-  noContact: { fontSize: 13, color: COLORS.textLight, textAlign: 'center', paddingVertical: 8 },
+  contactText: { flex: 1, fontSize: 13, color: COLORS.fg },
+  noContact: { fontSize: 13, color: COLORS.muted, textAlign: 'center', paddingVertical: 8 },
 });
