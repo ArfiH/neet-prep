@@ -18,6 +18,12 @@ type PDF = {
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
 
+function getUniqueSubjects(pdfs: PDF[]): string[] {
+  const subjects = pdfs.map((p) => p.subject);
+  const unique = [...new Set(subjects)];
+  return unique.sort();
+}
+
 function getTileBg(subject: string): string {
   const lower = subject.toLowerCase();
   if (lower.includes('anat')) return COLORS.tileAnatomy;
@@ -70,7 +76,7 @@ export default function PDFsScreen() {
   const router = useRouter();
   const [pdfs, setPdfs] = useState<PDF[]>([]);
   const [filtered, setFiltered] = useState<PDF[]>([]);
-  const [activeSubject, setActiveSubject] = useState('Biology');
+  const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
 
@@ -97,42 +103,49 @@ export default function PDFsScreen() {
 
   function applyFilters() {
     let result = [...pdfs];
-    result = result.filter((p) => p.subject === activeSubject);
+    if (activeSubject) {
+      result = result.filter((p) => p.subject === activeSubject);
+    }
     if (activeFilter === 'free') result = result.filter((p) => p.is_free);
     if (activeFilter === 'paid') result = result.filter((p) => !p.is_free);
     setFiltered(result);
   }
 
-  const freeCount = pdfs.filter((p) => p.is_free).length;
-  const paidCount = pdfs.filter((p) => !p.is_free).length;
+  const freeCount = filtered.filter((p) => p.is_free).length;
+  const paidCount = filtered.filter((p) => !p.is_free).length;
+  const uniqueSubjects = getUniqueSubjects(pdfs);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View style={styles.head}>
-          <Text style={styles.headTitle}>Good morning</Text>
-          <Text style={styles.headSub}>
-            {filtered.length} PDF{filtered.length !== 1 ? 's' : ''} ready
+          <Text style={styles.headTitle}>Browse PDFs</Text>
+        <View style={styles.headSub}>
+          <Text style={styles.headSubText}>{filtered.length} PDF{filtered.length !== 1 ? 's' : ''} ready</Text>
+          <View style={styles.pillRow}>
             <Text style={styles.pillFree}>{freeCount} FREE</Text>
             <Text style={styles.pillPaid}>{paidCount} PAID</Text>
-          </Text>
+          </View>
+        </View>
         </View>
 
         {/* Subject Bar */}
+        <Text style={styles.barLabel}>Subjects</Text>
         <View style={styles.subjectBar}>
-          {SUBJECTS.map((subj) => (
+          {uniqueSubjects.map((subj) => (
             <TouchableOpacity
               key={subj}
               style={[styles.subj, activeSubject === subj && styles.subjActive]}
-              onPress={() => setActiveSubject(subj)}
+              onPress={() => setActiveSubject(activeSubject === subj ? null : subj)}
             >
-              <Text style={[styles.subjText, activeSubject === subj && styles.subjTextActive]}>{subj}</Text>
+              <Text style={[styles.subjText, activeSubject === subj && styles.subjTextActive]} numberOfLines={1}>{subj}</Text>
             </TouchableOpacity>
           ))}
         </View>
 
         {/* Availability Bar */}
+        <Text style={styles.barLabel}>Availability</Text>
         <View style={styles.availBar}>
           {(['all', 'free', 'paid'] as const).map((avail) => (
             <TouchableOpacity
@@ -190,13 +203,17 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
 
   head: { paddingHorizontal: 22, paddingTop: 14, paddingBottom: 6 },
-  headTitle: { fontSize: 18, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
-  headSub: { fontSize: 12, color: COLORS.muted, marginTop: 4, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headTitle: { fontSize: 24, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
+  headSub: { flexDirection: 'row', alignItems: 'center', marginTop: 4, gap: 8 },
+  headSubText: { fontSize: 12, color: COLORS.muted },
+  pillRow: { flexDirection: 'row', gap: 6 },
   pillFree: { fontSize: 10, fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, backgroundColor: COLORS.primaryLight, color: COLORS.primaryDark, fontWeight: '600' },
   pillPaid: { fontSize: 10, fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, backgroundColor: '#fef3e0', color: '#b5651d', fontWeight: '600' },
 
+  barLabel: { fontSize: 10.5, fontWeight: '700', fontFamily: monoFont, letterSpacing: 0.16, color: COLORS.muted, textTransform: 'uppercase', paddingHorizontal: 14, paddingTop: 10, paddingBottom: 8 },
+
   subjectBar: { flexDirection: 'row', paddingHorizontal: 14, paddingBottom: 8, gap: 6 },
-  subj: { flex: 1, paddingVertical: 9, borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface, alignItems: 'center' },
+  subj: { flex: 1, paddingVertical: 9, paddingHorizontal: 6, borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center' },
   subjActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   subjText: { fontSize: 11, fontWeight: '600', color: COLORS.muted },
   subjTextActive: { color: '#fff' },

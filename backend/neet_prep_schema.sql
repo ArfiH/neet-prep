@@ -76,7 +76,7 @@ INSERT INTO `colleges` (`id`, `name`, `state`, `city`, `type`, `total_seats`, `t
 CREATE TABLE `cutoffs` (
   `id` int(11) NOT NULL,
   `college_id` int(11) NOT NULL,
-  `YEAR` int(11) NOT NULL,
+  `year` int(11) NOT NULL,
   `general_rank` int(11) DEFAULT 999999,
   `obc_rank` int(11) DEFAULT 999999,
   `sc_rank` int(11) DEFAULT 999999,
@@ -88,7 +88,7 @@ CREATE TABLE `cutoffs` (
 -- Dumping data for table `cutoffs`
 --
 
-INSERT INTO `cutoffs` (`id`, `college_id`, `YEAR`, `general_rank`, `obc_rank`, `sc_rank`, `st_rank`, `created_at`) VALUES
+INSERT INTO `cutoffs` (`id`, `college_id`, `year`, `general_rank`, `obc_rank`, `sc_rank`, `st_rank`, `created_at`) VALUES
 (1, 1, 2024, 50, 200, 600, 800, '2026-04-27 15:42:32'),
 (2, 1, 2023, 70, 250, 700, 900, '2026-04-27 16:18:46'),
 (3, 2, 2024, 200, 600, 1500, 2000, '2026-04-27 16:18:46'),
@@ -156,7 +156,7 @@ CREATE TABLE `purchases` (
   `pdf_id` int(11) NOT NULL,
   `razorpay_order_id` varchar(100) DEFAULT NULL,
   `amount` decimal(10,2) DEFAULT NULL,
-  `STATUS` enum('pending','completed','failed') DEFAULT 'pending',
+  `status` enum('pending','completed','failed') DEFAULT 'pending',
   `purchased_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `expires_at` timestamp NULL DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -172,7 +172,7 @@ CREATE TABLE `users` (
   `email` varchar(255) DEFAULT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `password_hash` varchar(255) NOT NULL,
-  `NAME` varchar(255) DEFAULT NULL,
+  `name` varchar(255) DEFAULT NULL,
   `neet_rank` int(11) DEFAULT NULL,
   `category` enum('General','OBC','SC','ST') DEFAULT 'General',
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
@@ -194,10 +194,10 @@ ALTER TABLE `colleges`
 --
 ALTER TABLE `cutoffs`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `unique_cutoff` (`college_id`,`YEAR`),
+  ADD UNIQUE KEY `unique_cutoff` (`college_id`,`year`),
   ADD KEY `idx_cutoffs_college` (`college_id`),
-  ADD KEY `idx_cutoffs_year` (`YEAR`),
-  ADD KEY `idx_cutoffs_ranks` (`YEAR`,`general_rank`,`obc_rank`,`sc_rank`,`st_rank`);
+  ADD KEY `idx_cutoffs_year` (`year`),
+  ADD KEY `idx_cutoffs_ranks` (`year`,`general_rank`,`obc_rank`,`sc_rank`,`st_rank`);
 
 --
 -- Indexes for table `pdfs`

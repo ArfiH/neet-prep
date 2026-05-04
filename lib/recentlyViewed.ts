@@ -19,7 +19,7 @@ export async function addRecentlyViewed(pdfId: string): Promise<void> {
   try {
     let ids = await getRecentlyViewedIds();
     ids = ids.filter((id) => id !== pdfId);
-    ids.unshift(pdfId);
+    ids.unshift(String(pdfId));
     if (ids.length > MAX_RECENT) {
       ids = ids.slice(0, MAX_RECENT);
     }

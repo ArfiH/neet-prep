@@ -218,7 +218,7 @@ const styles = StyleSheet.create({
 
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   catPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface },
-  catPillActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primaryLight },
+  catPillActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary },
   catPillText: { fontSize: 13, fontWeight: '600', color: COLORS.muted },
   catPillTextActive: { color: '#fff' },
 

@@ -1,0 +1,981 @@
+
+<!doctype html>
+<html lang="en">
+<head><script>(function(){
+  function makeStore(){
+    var data = {};
+    var api = {
+      getItem: function(k){ return Object.prototype.hasOwnProperty.call(data, k) ? data[k] : null; },
+      setItem: function(k, v){ data[k] = String(v); },
+      removeItem: function(k){ delete data[k]; },
+      clear: function(){ data = {}; },
+      key: function(i){ return Object.keys(data)[i] || null; }
+    };
+    Object.defineProperty(api, 'length', { get: function(){ return Object.keys(data).length; } });
+    return api;
+  }
+  function tryShim(name){
+    var works = false;
+    try { works = !!window[name] && typeof window[name].getItem === 'function'; void window[name].length; }
+    catch (_) { works = false; }
+    if (works) return;
+    try { Object.defineProperty(window, name, { configurable: true, value: makeStore() }); }
+    catch (_) { try { window[name] = makeStore(); } catch (__) {} }
+  }
+  tryShim('localStorage');
+  tryShim('sessionStorage');
+})();</script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>NEET Zyme — gamified PDF viewer for NEET prep</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --stage: #f4f5f7;
+      --bg: #ffffff;
+      --surface: #ffffff;
+      --fg: #1a1d23;
+      --muted: #5f6570;
+      --border: #e2e4e8;
+      --accent: oklch(52% 0.14 150);
+      --accent-light: oklch(88% 0.06 150);
+      --accent-dark: oklch(40% 0.12 150);
+
+      --tile-anat: #e6f4ea;
+      --tile-phys: #e8f0fe;
+      --tile-chem: #fef3e0;
+      --tile-bot: #f0e6f6;
+      --tile-zoo: #e0f7f2;
+      --tile-prev: #fce4ec;
+
+      --sans: 'Inter', -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+      --serif: 'Instrument Serif', 'Iowan Old Style', Georgia, serif;
+      --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse 70% 40% at 50% 0%, rgba(82,168,120,0.08), transparent 70%), var(--stage);
+      color: var(--fg);
+      font: 14px/1.5 var(--sans);
+    }
+
+    .stage-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 20px 36px;
+      font: 11px/1 var(--mono);
+      color: var(--muted);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+    .stage-bar .word {
+      font-family: var(--mono);
+      font-weight: 600;
+      font-size: 18px;
+      color: var(--fg);
+      letter-spacing: 0.04em;
+      text-transform: none;
+    }
+    .stage-bar .word span { color: var(--accent); }
+
+    .phones {
+      display: flex;
+      gap: 32px;
+      justify-content: center;
+      padding: 12px 32px 56px;
+      flex-wrap: wrap;
+    }
+
+    .phone {
+      width: 360px;
+      height: 780px;
+      background: #1a1d23;
+      border-radius: 56px;
+      padding: 12px;
+      box-shadow: 0 24px 48px rgba(0,0,0,0.12), 0 4px 12px rgba(0,0,0,0.06), inset 0 0 0 1.5px rgba(255,255,255,0.06);
+      flex-shrink: 0;
+      position: relative;
+    }
+    .phone::before {
+      content: '';
+      position: absolute;
+      top: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 116px;
+      height: 30px;
+      background: #1a1d23;
+      border-radius: 999px;
+      z-index: 5;
+    }
+    .screen {
+      width: 100%;
+      height: 100%;
+      background: var(--bg);
+      border-radius: 44px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 26px 6px;
+      font: 600 14px/1 var(--sans);
+    }
+    .status .right {
+      display: flex;
+      gap: 5px;
+      align-items: center;
+      font-size: 12px;
+    }
+    .status svg { width: 16px; height: 12px; }
+
+    .tabbar {
+      margin-top: auto;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      padding: 8px 10px 26px;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+    }
+    .tab {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 3px;
+      font: 600 8.5px/1 var(--mono);
+      color: var(--muted);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .tab svg { width: 22px; height: 22px; color: var(--muted); }
+    .tab.active { color: var(--accent); }
+    .tab.active svg { color: var(--accent); }
+
+    /* ==================== PHONE 1 — HOME ==================== */
+    .home {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .home .scroll {
+      flex: 1;
+      overflow-y: auto;
+      padding-bottom: 8px;
+    }
+
+    .home .greeting {
+      padding: 4px 22px 0;
+    }
+    .home .greeting h2 {
+      font: 700 22px/1.2 var(--sans);
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .home .greeting p {
+      font: 12.5px/1.4 var(--sans);
+      color: var(--muted);
+      margin: 2px 0 0;
+    }
+
+    .home .stats {
+      display: flex;
+      gap: 8px;
+      padding: 14px 22px 6px;
+    }
+    .home .stat {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 14px;
+      background: var(--stage);
+      border: 1px solid var(--border);
+    }
+    .home .stat .num {
+      font: 700 18px/1 var(--sans);
+      color: var(--accent-dark);
+    }
+    .home .stat .label {
+      font: 10px/1.3 var(--mono);
+      color: var(--muted);
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 22px 8px;
+    }
+    .section-head h3 {
+      font: 700 15px/1 var(--sans);
+      letter-spacing: -0.01em;
+      margin: 0;
+    }
+    .section-head a {
+      font: 600 10.5px/1 var(--mono);
+      color: var(--accent);
+      text-decoration: none;
+      letter-spacing: 0.04em;
+    }
+
+    .recent-scroll {
+      display: flex;
+      gap: 10px;
+      padding: 0 22px 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .recent-scroll::-webkit-scrollbar { display: none; }
+    .recent-card {
+      min-width: 140px;
+      padding: 12px;
+      border-radius: 16px;
+      position: relative;
+      flex-shrink: 0;
+    }
+    .recent-card .glyph {
+      width: 26px;
+      height: 26px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font: 700 11px/1 var(--mono);
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .recent-card .title {
+      font: 600 12px/1.3 var(--sans);
+      margin: 0;
+    }
+    .recent-card .meta {
+      font: 10px/1.3 var(--mono);
+      opacity: 0.6;
+      margin-top: 3px;
+    }
+
+    .featured-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 0 22px 6px;
+    }
+    .featured-card {
+      border-radius: 16px;
+      padding: 14px 12px;
+      position: relative;
+      min-height: 130px;
+      display: flex;
+      flex-direction: column;
+    }
+    .featured-card .glyph {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font: 700 11px/1 var(--mono);
+      color: #fff;
+      margin-bottom: 8px;
+    }
+    .featured-card .title {
+      font: 700 13px/1.3 var(--sans);
+      margin: 0;
+    }
+    .featured-card .meta {
+      font: 10px/1.4 var(--sans);
+      opacity: 0.7;
+      margin-top: 3px;
+    }
+    .featured-card .badge {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font: 700 9px/1 var(--mono);
+      padding: 3px 6px;
+      border-radius: 999px;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .featured-card .badge.free { background: var(--accent); color: #fff; }
+    .featured-card .badge.paid { background: var(--fg); color: #fff; }
+
+    .quick-cats {
+      display: flex;
+      gap: 8px;
+      padding: 4px 22px 8px;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+    .quick-cats::-webkit-scrollbar { display: none; }
+    .quick-cat {
+      flex-shrink: 0;
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      font: 600 11px/1 var(--sans);
+      color: var(--muted);
+      text-decoration: none;
+      transition: all 0.15s ease;
+    }
+    .quick-cat:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .quick-cat.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    /* ==================== PHONE 2 — PDF LIST ==================== */
+    .pdf-list {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .pdf-list .head {
+      padding: 14px 22px 6px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .pdf-list .head h2 {
+      margin: 0;
+      font: 700 18px/1.2 var(--sans);
+      letter-spacing: -0.01em;
+    }
+
+    .pdf-list .sub {
+      padding: 0 22px 8px;
+      font: 12px/1.4 var(--sans);
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .pdf-list .sub .pill-free {
+      font: 10px/1 var(--mono);
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: var(--accent-light);
+      color: var(--accent-dark);
+      font-weight: 600;
+    }
+    .pdf-list .sub .pill-paid {
+      font: 10px/1 var(--mono);
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: #fef3e0;
+      color: #b5651d;
+      font-weight: 600;
+    }
+
+    .subject-bar {
+      padding: 4px 14px 8px;
+      display: flex;
+      gap: 6px;
+    }
+    .subject-bar .subj {
+      flex: 1;
+      padding: 9px 0;
+      border-radius: 10px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      text-align: center;
+      font: 600 11px/1 var(--sans);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .subject-bar .subj:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .subject-bar .subj.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .avail-bar {
+      padding: 0 14px 6px;
+      display: flex;
+      gap: 6px;
+      transition: opacity 0.2s ease;
+    }
+    .avail-bar .avail {
+      flex: 1;
+      padding: 7px 0;
+      border-radius: 8px;
+      border: 1.5px solid var(--border);
+      background: var(--surface);
+      text-align: center;
+      font: 600 10.5px/1 var(--sans);
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .avail-bar .avail:hover { border-color: var(--accent); color: var(--accent-dark); }
+    .avail-bar .avail.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    .pdfs {
+      padding: 0 14px 12px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      overflow: hidden;
+      flex: 1;
+    }
+    .p {
+      border-radius: 18px;
+      padding: 12px;
+      min-height: 116px;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+    }
+    .p.hidden {
+      opacity: 0;
+      pointer-events: none;
+      position: absolute;
+      transform: scale(0.95);
+    }
+    .p .glyph {
+      width: 28px;
+      height: 28px;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+      font: 700 11px/1 var(--mono);
+    }
+    .p .title {
+      font: 700 13px/1.3 var(--sans);
+      margin: 0;
+    }
+    .p .meta-line {
+      font: 10.5px/1.4 var(--sans);
+      opacity: 0.7;
+    }
+    .p .free-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font: 700 9px/1 var(--mono);
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+    .p .paid-tag {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font: 700 9px/1 var(--mono);
+      padding: 3px 6px;
+      border-radius: 999px;
+      background: var(--fg);
+      color: #fff;
+      letter-spacing: 0.06em;
+    }
+
+    .p.p1 { background: var(--tile-anat); }
+    .p.p1 .glyph { background: #4caf78; color: #fff; }
+    .p.p2 { background: var(--tile-phys); }
+    .p.p2 .glyph { background: #4a86e9; color: #fff; }
+    .p.p3 { background: var(--tile-chem); }
+    .p.p3 .glyph { background: #e9a04a; color: #fff; }
+    .p.p4 { background: var(--tile-bot); }
+    .p.p4 .glyph { background: #9b59b6; color: #fff; }
+    .p.p5 { background: var(--tile-zoo); }
+    .p.p5 .glyph { background: #2ab7a9; color: #fff; }
+    .p.p6 { background: var(--tile-prev); }
+    .p.p6 .glyph { background: #e74c6f; color: #fff; }
+
+    /* ==================== PHONE 3 — PDF DETAIL ==================== */
+    .pdf-detail {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+    }
+    .pdf-detail .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 22px 6px;
+      font: 600 12px/1 var(--sans);
+      color: var(--muted);
+    }
+    .pdf-detail .topbar .back {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: var(--border);
+      display: grid;
+      place-items: center;
+    }
+
+    .pdf-hero {
+      margin: 8px 14px 12px;
+      padding: 20px 18px 22px;
+      border-radius: 24px;
+      background: linear-gradient(160deg, var(--tile-anat) 0%, oklch(82% 0.10 150) 100%);
+      position: relative;
+      overflow: hidden;
+    }
+    .pdf-hero .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font: 10px/1 var(--mono);
+      padding: 4px 8px;
+      border-radius: 999px;
+      background: rgba(0,0,0,0.08);
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--fg);
+    }
+    .pdf-hero h2 {
+      font: 700 26px/1.1 var(--sans);
+      margin: 12px 0 6px;
+      letter-spacing: -0.01em;
+    }
+    .pdf-hero h2 em {
+      font-family: var(--serif);
+      font-style: italic;
+      color: var(--accent-dark);
+    }
+    .pdf-hero .desc {
+      font: 12.5px/1.55 var(--sans);
+      color: var(--muted);
+      margin: 0;
+      max-width: 28ch;
+    }
+
+    .pdf-summary {
+      padding: 4px 22px 10px;
+      flex: 1;
+    }
+    .pdf-summary h3 {
+      font: 700 10.5px/1 var(--mono);
+      letter-spacing: 0.16em;
+      color: var(--muted);
+      margin: 10px 0 10px;
+      text-transform: uppercase;
+    }
+    .pdf-summary .summary-card {
+      padding: 14px;
+      border-radius: 14px;
+      background: var(--stage);
+      border: 1px solid var(--border);
+      margin-bottom: 12px;
+    }
+    .pdf-summary .summary-card h4 {
+      font: 600 13px/1.3 var(--sans);
+      margin: 0 0 6px;
+    }
+    .pdf-summary .summary-card p {
+      font: 12px/1.55 var(--sans);
+      color: var(--muted);
+      margin: 0;
+    }
+    .pdf-summary .meta-row {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-top: 12px;
+    }
+    .pdf-summary .meta-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font: 10.5px/1 var(--mono);
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    .pdf-summary .meta-pill svg { width: 12px; height: 12px; }
+
+    .pdf-detail .start {
+      margin: 4px 18px 10px;
+      padding: 14px;
+      border-radius: 999px;
+      background: var(--accent);
+      color: #fff;
+      text-align: center;
+      font: 600 14px/1 var(--sans);
+      letter-spacing: 0.04em;
+    }
+
+    @media (max-width: 1180px) {
+      .phones { gap: 18px; }
+      .phone { width: 320px; height: 700px; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="stage-bar" data-od-id="stage-bar">
+    <span>HI-FI PROTOTYPE · IPHONE</span>
+    <span class="word">NEET<span>Zyme</span></span>
+    <span>3 SCREENS · LIGHT MODE</span>
+  </div>
+
+  <div class="phones" data-od-id="phones">
+
+    <!-- Phone 1 — Home Screen -->
+    <div class="phone" data-od-id="phone-cover">
+      <div class="screen home">
+        <div class="status">
+          <span>9:41</span>
+          <span class="right">
+            <svg viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="0.5"/><rect x="4.5" y="4" width="3" height="8" rx="0.5"/><rect x="9" y="2" width="3" height="10" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/></svg>
+            5G
+            <svg viewBox="0 0 22 12" fill="currentColor"><rect x="0" y="0" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="19" y="3" width="2.5" height="5" rx="1" opacity="0.4"/><rect x="1.5" y="1.5" width="12" height="8" rx="1"/></svg>
+          </span>
+        </div>
+
+        <div class="scroll">
+          <div class="greeting">
+            <h2>Good morning, Arfi</h2>
+            <p>Continue where you left off</p>
+          </div>
+
+          <div class="stats">
+            <div class="stat">
+              <div class="num">24</div>
+              <div class="label">PDFs read</div>
+            </div>
+            <div class="stat">
+              <div class="num">48h</div>
+              <div class="label">Study time</div>
+            </div>
+            <div class="stat">
+              <div class="num">18</div>
+              <div class="label">Days streak</div>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h3>Recently viewed</h3>
+            <a href="#">See all</a>
+          </div>
+
+          <div class="recent-scroll">
+            <div class="recent-card" style="background: var(--tile-anat);">
+              <div class="glyph" style="background: #4caf78;">A</div>
+              <p class="title">Human Anatomy</p>
+              <p class="meta">Ch 1–4 · Skeletal system</p>
+            </div>
+            <div class="recent-card" style="background: var(--tile-bot);">
+              <div class="glyph" style="background: #9b59b6;">B</div>
+              <p class="title">Plant Physio</p>
+              <p class="meta">Ch 5–7 · Photosynthesis</p>
+            </div>
+            <div class="recent-card" style="background: var(--tile-phys);">
+              <div class="glyph" style="background: #4a86e9;">P</div>
+              <p class="title">Optics</p>
+              <p class="meta">Ray diagrams · Lenses</p>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h3>Featured PDFs</h3>
+            <a href="#">Browse</a>
+          </div>
+
+          <div class="featured-grid">
+            <div class="featured-card" style="background: var(--tile-zoo);">
+              <div class="glyph" style="background: #2ab7a9;">Z</div>
+              <p class="title">Animal Kingdom</p>
+              <p class="meta">Classification · Ch 5</p>
+              <span class="badge free">FREE</span>
+            </div>
+            <div class="featured-card" style="background: var(--tile-chem);">
+              <div class="glyph" style="background: #e9a04a;">C</div>
+              <p class="title">Org Chemistry</p>
+              <p class="meta">Reactions · Named rxns</p>
+              <span class="badge paid">₹199</span>
+            </div>
+            <div class="featured-card" style="background: var(--tile-prev);">
+              <div class="glyph" style="background: #e74c6f;">PY</div>
+              <p class="title">PYQ 2024</p>
+              <p class="meta">Full paper · 180 Qs</p>
+              <span class="badge paid">₹299</span>
+            </div>
+            <div class="featured-card" style="background: var(--tile-anat);">
+              <div class="glyph" style="background: #4caf78;">A</div>
+              <p class="title">Skeletal Sys</p>
+              <p class="meta">Bones · Joints</p>
+              <span class="badge free">FREE</span>
+            </div>
+          </div>
+
+          <div class="section-head">
+            <h3>Quick categories</h3>
+          </div>
+
+          <div class="quick-cats">
+            <a href="#" class="quick-cat active">Biology</a>
+            <a href="#" class="quick-cat">Physics</a>
+            <a href="#" class="quick-cat">Chemistry</a>
+            <a href="#" class="quick-cat">PYQs</a>
+          </div>
+        </div>
+
+        <div class="tabbar" data-od-id="tabbar-cover">
+          <div class="tab active">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l8-7 8 7"/><path d="M5 9v8a1 1 0 001 1h4v-5h2v5h4a1 1 0 001-1V9"/></svg>
+            Home
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8l4 4v12H5z"/><path d="M13 3v4h4"/><line x1="8" y1="12" x2="14" y2="12"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+            PDF
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M11 3L3 6.5l8 3.5 8-3.5L11 3z"/><path d="M5 8.5V14l6 2.5 6-2.5V8.5"/><line x1="19" y1="10" x2="19" y2="17"/></svg>
+            College
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="8" r="4"/><path d="M3 19c0-4 4-7 8-7s8 3 8 7"/></svg>
+            Profile
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone 2 — PDF List -->
+    <div class="phone" data-od-id="phone-list">
+      <div class="screen pdf-list">
+        <div class="status">
+          <span>9:41</span>
+          <span class="right">
+            <svg viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="0.5"/><rect x="4.5" y="4" width="3" height="8" rx="0.5"/><rect x="9" y="2" width="3" height="10" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/></svg>
+            5G
+            <svg viewBox="0 0 22 12" fill="currentColor"><rect x="0" y="0" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="19" y="3" width="2.5" height="5" rx="1" opacity="0.4"/><rect x="1.5" y="1.5" width="12" height="8" rx="1"/></svg>
+          </span>
+        </div>
+
+        <div class="head">
+          <h2>Good morning, Arfi</h2>
+        </div>
+
+        <div class="sub">
+          6 PDFs ready
+          <span class="pill-free">3 FREE</span>
+          <span class="pill-paid">3 PAID</span>
+        </div>
+
+        <div class="subject-bar" data-od-id="subject-bar">
+          <div class="subj" data-subject="biology">Biology</div>
+          <div class="subj" data-subject="physics">Physics</div>
+          <div class="subj" data-subject="chemistry">Chemistry</div>
+        </div>
+
+        <div class="avail-bar" data-od-id="avail-bar">
+          <div class="avail active" data-avail="all">All</div>
+          <div class="avail" data-avail="free">Free</div>
+          <div class="avail" data-avail="paid">Paid</div>
+        </div>
+
+        <div class="pdfs" data-od-id="pdf-grid">
+          <div class="p p1" data-subject="biology" data-avail="free">
+            <div class="glyph">A</div>
+            <p class="title">Human Anatomy</p>
+            <div class="meta-line">Ch 1–4 · Skeletal system</div>
+            <span class="free-tag">FREE</span>
+          </div>
+          <div class="p p2" data-subject="physics" data-avail="paid">
+            <div class="glyph">P</div>
+            <p class="title">Optics</p>
+            <div class="meta-line">Ray diagrams · Lenses</div>
+            <span class="paid-tag">₹149</span>
+          </div>
+          <div class="p p3" data-subject="chemistry" data-avail="paid">
+            <div class="glyph">C</div>
+            <p class="title">Organic Chemistry</p>
+            <div class="meta-line">Reactions · Named rxns</div>
+            <span class="paid-tag">₹199</span>
+          </div>
+          <div class="p p4" data-subject="biology" data-avail="free">
+            <div class="glyph">B</div>
+            <p class="title">Plant Physiology</p>
+            <div class="meta-line">Photosynthesis · Respiration</div>
+            <span class="free-tag">FREE</span>
+          </div>
+          <div class="p p5" data-subject="biology" data-avail="free">
+            <div class="glyph">Z</div>
+            <p class="title">Animal Kingdom</p>
+            <div class="meta-line">Classification · Ch 5</div>
+            <span class="free-tag">FREE</span>
+          </div>
+          <div class="p p6" data-subject="chemistry" data-avail="paid">
+            <div class="glyph">PY</div>
+            <p class="title">PYQ 2024 Solved</p>
+            <div class="meta-line">Full paper · 180 Qs</div>
+            <span class="paid-tag">₹299</span>
+          </div>
+        </div>
+
+        <div class="tabbar" data-od-id="tabbar-list">
+          <div class="tab active">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l8-7 8 7"/><path d="M5 9v8a1 1 0 001 1h4v-5h2v5h4a1 1 0 001-1V9"/></svg>
+            Home
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8l4 4v12H5z"/><path d="M13 3v4h4"/><line x1="8" y1="12" x2="14" y2="12"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+            PDF
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M11 3L3 6.5l8 3.5 8-3.5L11 3z"/><path d="M5 8.5V14l6 2.5 6-2.5V8.5"/><line x1="19" y1="10" x2="19" y2="17"/></svg>
+            College
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="8" r="4"/><path d="M3 19c0-4 4-7 8-7s8 3 8 7"/></svg>
+            Profile
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Phone 3 — PDF Detail -->
+    <div class="phone" data-od-id="phone-detail">
+      <div class="screen pdf-detail">
+        <div class="status">
+          <span>9:41</span>
+          <span class="right">
+            <svg viewBox="0 0 16 12" fill="currentColor"><rect x="0" y="6" width="3" height="6" rx="0.5"/><rect x="4.5" y="4" width="3" height="8" rx="0.5"/><rect x="9" y="2" width="3" height="10" rx="0.5"/><rect x="13.5" y="0" width="3" height="12" rx="0.5" opacity="0.3"/></svg>
+            5G
+            <svg viewBox="0 0 22 12" fill="currentColor"><rect x="0" y="0" width="18" height="11" rx="2" stroke="currentColor" stroke-width="1" fill="none"/><rect x="19" y="3" width="2.5" height="5" rx="1" opacity="0.4"/><rect x="1.5" y="1.5" width="12" height="8" rx="1"/></svg>
+          </span>
+        </div>
+
+        <div class="topbar">
+          <div class="back">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="#5f6570" stroke-width="1.6"><path d="M9 2L4 7l5 5"/></svg>
+          </div>
+          PDF DETAIL · 01 / 06
+        </div>
+
+        <div class="pdf-hero" data-od-id="pdf-hero">
+          <span class="badge">— ANATOMY · FREE</span>
+          <h2>Human Anatomy — <em>Skeletal System</em></h2>
+          <p class="desc">Chapters 1–4 covering bone classification, joints, axial & appendicular skeleton. 42 pages with labelled diagrams.</p>
+        </div>
+
+        <div class="pdf-summary" data-od-id="pdf-summary">
+          <h3>Summary</h3>
+          <div class="summary-card">
+            <h4>What you'll cover</h4>
+            <p>Comprehensive breakdown of the skeletal system — bone types, joint classification, axial and appendicular divisions. Includes clinical correlations for NEET high-yield topics.</p>
+          </div>
+          <div class="meta-row">
+            <span class="meta-pill">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 3h8v8H2z"/><path d="M2 3l4-2 4 2"/></svg>
+              42 pages
+            </span>
+            <span class="meta-pill">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="6" cy="6" r="5"/><path d="M6 3v3l2 1"/></svg>
+              ~25 min read
+            </span>
+            <span class="meta-pill">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="10" height="8" rx="1"/><path d="M4 5h4"/></svg>
+              18 diagrams
+            </span>
+            <span class="meta-pill">
+              <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 8l3-3 2 2 5-5"/><circle cx="10" cy="2" r="1"/></svg>
+              NEET 2024 aligned
+            </span>
+          </div>
+        </div>
+
+        <div class="start">Start reading — Free</div>
+
+        <div class="tabbar" data-od-id="tabbar-detail">
+          <div class="tab active">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 11l8-7 8 7"/><path d="M5 9v8a1 1 0 001 1h4v-5h2v5h4a1 1 0 001-1V9"/></svg>
+            Home
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M5 3h8l4 4v12H5z"/><path d="M13 3v4h4"/><line x1="8" y1="12" x2="14" y2="12"/><line x1="8" y1="15" x2="12" y2="15"/></svg>
+            PDF
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.3"><path d="M11 3L3 6.5l8 3.5 8-3.5L11 3z"/><path d="M5 8.5V14l6 2.5 6-2.5V8.5"/><line x1="19" y1="10" x2="19" y2="17"/></svg>
+            College
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 22 22" fill="none" stroke="currentColor" stroke-width="1.6"><circle cx="11" cy="8" r="4"/><path d="M3 19c0-4 4-7 8-7s8 3 8 7"/></svg>
+            Profile
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function filterGrid() {
+      var activeSubj = document.querySelector('[data-od-id="subject-bar"] .subj.active');
+      var activeAvail = document.querySelector('[data-od-id="avail-bar"] .avail.active');
+      var availBar = document.querySelector('[data-od-id="avail-bar"]');
+      if (!activeAvail) return;
+      if (!activeSubj) {
+        availBar.style.opacity = '0.35';
+        availBar.style.pointerEvents = 'none';
+        document.querySelectorAll('[data-od-id="pdf-grid"] .p').forEach(function(tile) {
+          tile.classList.remove('hidden');
+        });
+        return;
+      }
+      availBar.style.opacity = '1';
+      availBar.style.pointerEvents = 'auto';
+      var subj = activeSubj.getAttribute('data-subject');
+      var avail = activeAvail.getAttribute('data-avail');
+      document.querySelectorAll('[data-od-id="pdf-grid"] .p').forEach(function(tile) {
+        var tSubj = tile.getAttribute('data-subject');
+        var tAvail = tile.getAttribute('data-avail');
+        var matchSubj = (tSubj === subj);
+        var matchAvail = (avail === 'all') || (tAvail === avail);
+        if (matchSubj && matchAvail) {
+          tile.classList.remove('hidden');
+        } else {
+          tile.classList.add('hidden');
+        }
+      });
+    }
+    document.querySelectorAll('[data-od-id="subject-bar"] .subj').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        btn.parentElement.querySelectorAll('.subj').forEach(function(s) { s.classList.remove('active'); });
+        btn.classList.add('active');
+        filterGrid();
+      });
+    });
+    document.querySelectorAll('[data-od-id="avail-bar"] .avail').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        btn.parentElement.querySelectorAll('.avail').forEach(function(s) { s.classList.remove('active'); });
+        btn.classList.add('active');
+        filterGrid();
+      });
+    });
+    filterGrid();
+  </script>
+
+</body>
+</html>

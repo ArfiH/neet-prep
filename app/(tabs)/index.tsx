@@ -1,77 +1,172 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { BookOpen, GraduationCap, Clock, ChevronRight } from 'lucide-react-native';
-import { COLORS, SHADOWS } from '@/constants/colors';
+import { COLORS } from '@/constants/colors';
+import { api } from '@/lib/api';
+import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
+
+type PDF = {
+  id: string;
+  title: string;
+  description: string;
+  subject: string;
+  price: number;
+  is_free: boolean;
+  pages_count: number;
+  downloads: number;
+};
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
+function getTileBg(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return COLORS.tileAnatomy;
+  if (lower.includes('phys')) return COLORS.tilePhysics;
+  if (lower.includes('chem')) return COLORS.tileChemistry;
+  if (lower.includes('bot')) return COLORS.tileBotany;
+  if (lower.includes('zoo')) return COLORS.tileZoology;
+  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.tilePYQ;
+  if (subject === 'Biology') return COLORS.tileBotany;
+  if (subject === 'Physics') return COLORS.tilePhysics;
+  if (subject === 'Chemistry') return COLORS.tileChemistry;
+  return COLORS.tileAnatomy;
+}
+
+function getGlyphColor(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return COLORS.glyphAnatomy;
+  if (lower.includes('phys')) return COLORS.glyphPhysics;
+  if (lower.includes('chem')) return COLORS.glyphChemistry;
+  if (lower.includes('bot')) return COLORS.glyphBotany;
+  if (lower.includes('zoo')) return COLORS.glyphZoology;
+  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.glyphPYQ;
+  if (subject === 'Biology') return COLORS.glyphBotany;
+  if (subject === 'Physics') return COLORS.glyphPhysics;
+  if (subject === 'Chemistry') return COLORS.glyphChemistry;
+  return COLORS.glyphAnatomy;
+}
+
+function getGlyphLetter(subject: string): string {
+  const lower = subject.toLowerCase();
+  if (lower.includes('anat')) return 'A';
+  if (lower.includes('phys')) return 'Phy';
+  if (lower.includes('chem')) return 'Chem';
+  if (lower.includes('bot')) return 'Bio';
+  if (lower.includes('zoo')) return 'Z';
+  if (lower.includes('pyq') || lower.includes('prev')) return 'PY';
+  if (subject === 'Biology') return 'Bio';
+  if (subject === 'Physics') return 'Phy';
+  if (subject === 'Chemistry') return 'Chem';
+  if (subject === 'Practice') return 'Prac';
+  return subject.charAt(0).toUpperCase();
+}
+
 export default function HomeScreen() {
   const router = useRouter();
+  const [pdfs, setPdfs] = useState<PDF[]>([]);
+  const [recentPdfs, setRecentPdfs] = useState<PDF[]>([]);
+
+  useEffect(() => {
+    fetchPdfs();
+  }, []);
+
+  useEffect(() => {
+    if (pdfs.length > 0) {
+      loadRecentPdfs();
+    }
+  }, [pdfs]);
+
+  async function fetchPdfs() {
+    try {
+      const data = await api.getPdfs();
+      if (data) setPdfs(data);
+    } catch (e) {}
+  }
+
+  async function loadRecentPdfs() {
+    try {
+      const ids = await getRecentlyViewedIds();
+      if (ids.length > 0) {
+        const recents = ids
+          .map((id) => pdfs.find((p: PDF) => String(p.id) === String(id)))
+          .filter(Boolean) as PDF[];
+        setRecentPdfs(recents.slice(0, 3));
+      }
+    } catch (e) {}
+  }
+
+  const featured = [...pdfs].sort((a, b) => b.downloads - a.downloads).slice(0, 4);
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Logo Row */}
-        <View style={styles.logoRow}>
-          <View style={styles.logoMark}>
-            <BookOpen size={20} color="#fff" strokeWidth={1.8} />
+        {/* Greeting */}
+        <View style={styles.greeting}>
+          <Text style={styles.greetingTitle}>Good morning, Arfi</Text>
+          <Text style={styles.greetingSub}>Continue where you left off</Text>
+        </View>
+
+        {/* Stats */}
+        <View style={styles.stats}>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>{pdfs.length}</Text>
+            <Text style={styles.statLabel}>PDFs read</Text>
           </View>
-          <Text style={styles.logoText}>NEET <Text style={styles.logoAccent}>Zyme</Text></Text>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>48h</Text>
+            <Text style={styles.statLabel}>Study time</Text>
+          </View>
+          <View style={styles.stat}>
+            <Text style={styles.statNum}>18</Text>
+            <Text style={styles.statLabel}>Days streak</Text>
+          </View>
         </View>
 
-        {/* Eyebrow Pill */}
-        <View style={styles.eyebrow}>
-          <View style={styles.dot} />
-          <Text style={styles.eyebrowText}>NEET MEDICAL EXAM PREP</Text>
-        </View>
-
-        {/* H1 Heading */}
-        <Text style={styles.heading}>Read free or buy PDFs.{'\n'}<Text style={styles.headingAccent}>Track</Text> your rank.</Text>
-
-        {/* Lede */}
-        <Text style={styles.lede}>NEET Zyme turns NEET prep into a daily habit. Access curated study material, track your progress, and see which colleges match your rank.</Text>
-
-        {/* Feature List */}
-        <View style={styles.features}>
-          <View style={styles.feat}>
-            <View style={styles.chip}>
-              <BookOpen size={14} color={COLORS.primaryDark} strokeWidth={1.4} />
+        {/* Recently Viewed */}
+        {recentPdfs.length > 0 && (
+          <>
+            <View style={styles.sectionHead}>
+              <Text style={styles.sectionTitle}>Recently viewed</Text>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/pdfs')}>
+                <Text style={styles.sectionLink}>See all</Text>
+              </TouchableOpacity>
             </View>
-            <Text style={styles.featText}><Text style={styles.featBold}>Free PDFs</Text> — Starter chapters across all subjects</Text>
-          </View>
-          <View style={styles.feat}>
-            <View style={styles.chip}>
-              <GraduationCap size={14} color={COLORS.primaryDark} strokeWidth={1.4} />
-            </View>
-            <Text style={styles.featText}><Text style={styles.featBold}>Paid PDFs</Text> — Full question banks & solved papers</Text>
-          </View>
-          <View style={styles.feat}>
-            <View style={styles.chip}>
-              <Clock size={14} color={COLORS.primaryDark} strokeWidth={1.4} />
-            </View>
-            <Text style={styles.featText}><Text style={styles.featBold}>View Colleges</Text> — Match based on your NEET rank</Text>
-          </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.recentScroll} contentContainerStyle={styles.recentScrollInner}>
+              {recentPdfs.map((item) => (
+                <TouchableOpacity key={item.id} style={[styles.recentCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
+                  <View style={[styles.recentGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                    <Text style={styles.recentGlyphText}>{getGlyphLetter(item.subject)}</Text>
+                  </View>
+                  <Text style={styles.recentTitle} numberOfLines={1}>{item.title}</Text>
+                  <Text style={styles.recentMeta} numberOfLines={1}>{item.description?.slice(0, 30) || 'Ch 1–4'}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
+
+        {/* Featured PDFs */}
+        <View style={styles.sectionHead}>
+          <Text style={styles.sectionTitle}>Featured PDFs</Text>
+          <TouchableOpacity onPress={() => router.push('/(tabs)/pdfs')}>
+            <Text style={styles.sectionLink}>Browse</Text>
+          </TouchableOpacity>
         </View>
-
-        {/* CTA Button */}
-        <TouchableOpacity style={styles.ctaBtn} onPress={() => router.push('/(tabs)/pdfs')}>
-          <Text style={styles.ctaText}>Get Started — It's Free</Text>
-        </TouchableOpacity>
-
-        {/* Tip */}
-        <View style={styles.tip}>
-          <Text style={styles.tipText}><Text style={styles.tipBold}>Tip: </Text>Swipe to see the PDF library and a sample detail screen. Tap any tile to explore.</Text>
+        <View style={styles.featuredGrid}>
+          {featured.map((item) => (
+            <TouchableOpacity key={item.id} style={[styles.featuredCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
+              <View style={[styles.featuredGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                <Text style={styles.featuredGlyphText}>{getGlyphLetter(item.subject)}</Text>
+              </View>
+              <Text style={styles.featuredTitle} numberOfLines={1}>{item.title}</Text>
+              <Text style={styles.featuredMeta} numberOfLines={1}>{item.downloads.toLocaleString()} views</Text>
+              <View style={[styles.featuredBadge, item.is_free ? styles.badgeFree : styles.badgePaid]}>
+                <Text style={styles.badgeText}>{item.is_free ? 'FREE' : `₹${item.price}`}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
         </View>
-
-        {/* Next Peek */}
-        <TouchableOpacity style={styles.nextPeek} onPress={() => router.push('/(tabs)/pdfs')}>
-          <View style={styles.swatch}>
-            <BookOpen size={16} color={COLORS.primaryDark} strokeWidth={1.2} />
-          </View>
-          <Text style={styles.nextPeekText}>NEXT — PDF LIBRARY</Text>
-          <ChevronRight size={14} color={COLORS.muted} />
-        </TouchableOpacity>
       </ScrollView>
     </SafeAreaView>
   );
@@ -79,36 +174,37 @@ export default function HomeScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
-  container: { flex: 1, backgroundColor: COLORS.background },
+  container: { flex: 1 },
 
-  logoRow: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 24, paddingTop: 36, marginBottom: 24 },
-  logoMark: { width: 36, height: 36, borderRadius: 10, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
-  logoText: { fontSize: 18, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
-  logoAccent: { color: COLORS.primary },
+  greeting: { paddingHorizontal: 22, paddingTop: 4 },
+  greetingTitle: { fontSize: 22, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
+  greetingSub: { fontSize: 12.5, color: COLORS.muted, marginTop: 2 },
 
-  eyebrow: { flexDirection: 'row', alignItems: 'center', gap: 6, alignSelf: 'flex-start', marginLeft: 24, paddingVertical: 5, paddingHorizontal: 8, borderRadius: 999, borderWidth: 1, borderColor: COLORS.border, marginBottom: 24 },
-  dot: { width: 6, height: 6, borderRadius: 3, backgroundColor: COLORS.primary },
-  eyebrowText: { fontSize: 10, fontFamily: monoFont, letterSpacing: 0.18, color: COLORS.muted },
+  stats: { flexDirection: 'row', gap: 8, paddingHorizontal: 22, paddingTop: 14, paddingBottom: 6 },
+  stat: { flex: 1, paddingVertical: 10, paddingHorizontal: 12, borderRadius: 14, backgroundColor: COLORS.stage, borderWidth: 1, borderColor: COLORS.border },
+  statNum: { fontSize: 18, fontWeight: '700', color: COLORS.primaryDark },
+  statLabel: { fontSize: 10, fontFamily: monoFont, color: COLORS.muted, letterSpacing: 0.04, textTransform: 'uppercase', marginTop: 2 },
 
-  heading: { fontSize: 34, fontWeight: '700', color: COLORS.fg, lineHeight: 38, letterSpacing: -0.02, paddingHorizontal: 24, marginBottom: 14 },
-  headingAccent: { fontFamily: Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' }), fontStyle: 'italic', color: COLORS.primary },
+  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 22, paddingTop: 16, paddingBottom: 8 },
+  sectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
+  sectionLink: { fontSize: 10.5, fontFamily: monoFont, fontWeight: '600', color: COLORS.primary, letterSpacing: 0.04 },
 
-  lede: { fontSize: 13.5, lineHeight: 22, color: COLORS.muted, paddingHorizontal: 24, marginBottom: 20, maxWidth: 280 },
+  recentScroll: { marginBottom: 6 },
+  recentScrollInner: { paddingHorizontal: 22, gap: 10 },
+  recentCard: { minWidth: 140, padding: 12, borderRadius: 16, position: 'relative' },
+  recentGlyph: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  recentGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  recentTitle: { fontSize: 12, fontWeight: '600', color: COLORS.fg },
+  recentMeta: { fontSize: 10, fontFamily: monoFont, color: COLORS.muted, opacity: 0.6, marginTop: 3 },
 
-  features: { gap: 10, paddingHorizontal: 24, marginBottom: 20 },
-  feat: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  chip: { width: 28, height: 28, borderRadius: 8, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-  featText: { fontSize: 13, lineHeight: 20, color: COLORS.fg },
-  featBold: { fontWeight: '600' },
-
-  ctaBtn: { marginHorizontal: 24, paddingVertical: 16, borderRadius: 999, backgroundColor: COLORS.primary, alignItems: 'center', marginBottom: 16, ...SHADOWS.md },
-  ctaText: { fontSize: 15, fontWeight: '600', color: '#fff', letterSpacing: 0.02 },
-
-  tip: { borderTopWidth: 1, borderStyle: 'dashed', borderColor: COLORS.border, paddingTop: 12, marginHorizontal: 24, marginBottom: 16 },
-  tipText: { fontSize: 10.5, lineHeight: 15, fontFamily: monoFont, color: COLORS.muted },
-  tipBold: { color: COLORS.fg, fontWeight: '500' },
-
-  nextPeek: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.stage, borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingVertical: 12, paddingHorizontal: 22 },
-  swatch: { width: 32, height: 32, borderRadius: 8, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center' },
-  nextPeekText: { flex: 1, fontSize: 10, fontFamily: monoFont, letterSpacing: 0.14, color: COLORS.muted },
+  featuredGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 22, gap: 10 },
+  featuredCard: { width: '48%', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 12, position: 'relative', minHeight: 130, flexDirection: 'column' },
+  featuredGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
+  featuredGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  featuredTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg },
+  featuredMeta: { fontSize: 10, color: COLORS.muted, opacity: 0.7, marginTop: 3 },
+  featuredBadge: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999 },
+  badgeFree: { backgroundColor: COLORS.primary },
+  badgePaid: { backgroundColor: COLORS.fg },
+  badgeText: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: '#fff', letterSpacing: 0.06, textTransform: 'uppercase' },
 });
