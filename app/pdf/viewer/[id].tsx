@@ -6,6 +6,7 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
 import { usePreventScreenCapture } from 'expo-screen-capture';
 import { api } from '@/lib/api';
+import { useAuth } from '@/lib/authContext';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
 
@@ -92,10 +93,14 @@ export default function PdfViewerScreen() {
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [watermarkDisplay] = useState<string>("NEET ZYME");
   const [showAdOverlay, setShowAdOverlay] = useState(false);
 
   usePreventScreenCapture();
+  const { user } = useAuth();
+
+  const watermarkEmail = user?.email || 'NEET ZYME';
+  const watermarkPhone = user?.phone ? ` | ${user.phone}` : '';
+  const watermarkText = `${watermarkEmail}${watermarkPhone}`;
 
   useEffect(() => {
     fetchPdf();
@@ -160,7 +165,7 @@ export default function PdfViewerScreen() {
     );
   }
 
-  const htmlContent = getPdfJsViewerHTML(pdf.file_url, pdf.title, watermarkDisplay);
+  const htmlContent = getPdfJsViewerHTML(pdf.file_url, pdf.title, watermarkText);
 
   return (
     <SafeAreaProvider>

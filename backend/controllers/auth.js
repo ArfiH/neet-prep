@@ -70,6 +70,7 @@ const login = async (req, res) => {
       user: {
         id: user.id,
         email: user.email,
+        phone: user.phone,
         name: user.name,
         neet_rank: user.neet_rank,
         category: user.category,
@@ -84,7 +85,7 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, email, name, neet_rank, category, created_at FROM users WHERE id = ?',
+      'SELECT id, email, phone, name, neet_rank, category, created_at FROM users WHERE id = ?',
       [req.userId]
     );
 

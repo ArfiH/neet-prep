@@ -8,6 +8,7 @@ const USER_DATA_KEY = 'user_data';
 type User = {
   id: number;
   email: string;
+  phone: string | null;
   name: string | null;
   neet_rank: number | null;
   category: string | null;
