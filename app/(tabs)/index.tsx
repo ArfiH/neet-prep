@@ -1,5 +1,5 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform } from 'react-native';
-import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animated } from 'react-native';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { api } from '@/lib/api';
@@ -18,6 +18,17 @@ type PDF = {
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
+
+function Indicator({ scrollX, contentWidth, layoutWidth }: { scrollX: Animated.Value; contentWidth: number; layoutWidth: number }) {
+  const scrollable = contentWidth - layoutWidth;
+  const indicatorWidth = Math.max(24, (layoutWidth / contentWidth) * (layoutWidth - 44));
+  const translateX = scrollX.interpolate({
+    inputRange: [0, Math.max(1, scrollable)],
+    outputRange: [0, Math.max(0, layoutWidth - 44 - indicatorWidth)],
+    extrapolate: 'clamp',
+  });
+  return <Animated.View style={[styles.scrollIndicator, { width: indicatorWidth, transform: [{ translateX }] }]} />;
+}
 
 function getTileBg(subject: string): string {
   const lower = subject.toLowerCase();
@@ -50,15 +61,15 @@ function getGlyphColor(subject: string): string {
 function getGlyphLetter(subject: string): string {
   const lower = subject.toLowerCase();
   if (lower.includes('anat')) return 'A';
-  if (lower.includes('phys')) return 'Phy';
-  if (lower.includes('chem')) return 'Chem';
-  if (lower.includes('bot')) return 'Bio';
+  if (lower.includes('phys')) return 'P';
+  if (lower.includes('chem')) return 'C';
+  if (lower.includes('bot')) return 'B';
   if (lower.includes('zoo')) return 'Z';
   if (lower.includes('pyq') || lower.includes('prev')) return 'PY';
-  if (subject === 'Biology') return 'Bio';
-  if (subject === 'Physics') return 'Phy';
-  if (subject === 'Chemistry') return 'Chem';
-  if (subject === 'Practice') return 'Prac';
+  if (subject === 'Biology') return 'B';
+  if (subject === 'Physics') return 'P';
+  if (subject === 'Chemistry') return 'C';
+  if (subject === 'Practice') return 'Que';
   return subject.charAt(0).toUpperCase();
 }
 
@@ -66,6 +77,9 @@ export default function HomeScreen() {
   const router = useRouter();
   const [pdfs, setPdfs] = useState<PDF[]>([]);
   const [recentPdfs, setRecentPdfs] = useState<PDF[]>([]);
+  const scrollX = useRef(new Animated.Value(0)).current;
+  const contentWidth = useRef(0);
+  const layoutWidth = useRef(0);
 
   useEffect(() => {
     fetchPdfs();
@@ -132,7 +146,19 @@ export default function HomeScreen() {
                 <Text style={styles.sectionLink}>See all</Text>
               </TouchableOpacity>
             </View>
-            <ScrollView horizontal showsHorizontalScrollIndicator={true} style={styles.recentScroll} contentContainerStyle={styles.recentScrollInner}>
+            <Animated.ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              onScroll={Animated.event(
+                [{ nativeEvent: { contentOffset: { x: scrollX } } }],
+                { useNativeDriver: false }
+              )}
+              scrollEventThrottle={16}
+              onContentSizeChange={(w) => { contentWidth.current = w; }}
+              onLayout={(e) => { layoutWidth.current = e.nativeEvent.layout.width; }}
+              style={styles.recentScroll}
+              contentContainerStyle={styles.recentScrollInner}
+            >
               {recentPdfs.map((item) => (
                 <TouchableOpacity key={item.id} style={[styles.recentCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
                   <View style={[styles.recentGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
@@ -142,7 +168,12 @@ export default function HomeScreen() {
                   <Text style={styles.recentMeta} numberOfLines={1}>{item.description?.slice(0, 30) || 'Ch 1–4'}</Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </Animated.ScrollView>
+            {contentWidth.current > layoutWidth.current && (
+              <View style={styles.scrollTrack}>
+                <Indicator scrollX={scrollX} contentWidth={contentWidth.current} layoutWidth={layoutWidth.current} />
+              </View>
+            )}
           </>
         )}
 
@@ -191,6 +222,8 @@ const styles = StyleSheet.create({
 
   recentScroll: { marginBottom: 6 },
   recentScrollInner: { paddingHorizontal: 22, gap: 10 },
+  scrollTrack: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.border, marginHorizontal: 22, marginBottom: 12, overflow: 'hidden' },
+  scrollIndicator: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.primary },
   recentCard: { minWidth: 140, padding: 12, borderRadius: 16, position: 'relative' },
   recentGlyph: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   recentGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },

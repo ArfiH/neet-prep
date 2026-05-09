@@ -26,7 +26,11 @@ const getPdfById = async (req, res) => {
       return res.status(404).json({ error: 'PDF not found' });
     }
 
-    await pool.query('UPDATE pdfs SET downloads = downloads + 1 WHERE id = ?', [id]);
+    try {
+      await pool.query('UPDATE pdfs SET downloads = downloads + 1 WHERE id = ?', [id]);
+    } catch (counterErr) {
+      console.warn('Download counter update failed (non-critical):', counterErr.message);
+    }
 
     res.json(parsePdf(pdfs[0]));
   } catch (error) {

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart } from 'lucide-react-native';
@@ -83,7 +83,7 @@ export default function PDFDetailScreen() {
 
   function handleReadPdf() {
     if (!pdf?.file_url) {
-      console.log('PDF file not available.');
+      Alert.alert('Unavailable', 'This PDF file is not uploaded yet.');
       return;
     }
     router.push(`/pdf/viewer/${pdf.id}`);
