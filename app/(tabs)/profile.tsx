@@ -104,21 +104,29 @@ export default function ProfileScreen() {
               <Text style={styles.statValue}>{pdfsOwned}</Text>
               <Text style={styles.statLabel}>PDFs Owned</Text>
             </View>
-            <View style={styles.statDivider} />
+            
+            {/* Your NEET Rank */}
+            {/* <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{userRank ? `#${userRank}` : '-'}</Text>
               <Text style={styles.statLabel}>NEET Rank</Text>
-            </View>
+            </View> */}
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{userCategory}</Text>
-              <Text style={styles.statLabel}>Category</Text>
+              <Text style={styles.statValue}>8</Text>
+              <Text style={styles.statLabel}>PDFs Read</Text>
+            </View>
+            
+            <View style={styles.statDivider} />
+            <View style={styles.statItem}>
+              <Text style={styles.statValue}>18</Text>
+              <Text style={styles.statLabel}>Days Streak</Text>
             </View>
           </View>
         </View>
 
         {/* NEET Target Card */}
-        <TouchableOpacity style={styles.neetCard} activeOpacity={0.8} onPress={() => router.push('/set-target')}>
+        {/* <TouchableOpacity style={styles.neetCard} activeOpacity={0.8} onPress={() => router.push('/set-target')}>
           <View style={styles.neetCardLeft}>
             <TrendingUp size={24} color={COLORS.primaryDark} strokeWidth={2} />
             <View style={styles.neetCardText}>
@@ -129,7 +137,7 @@ export default function ProfileScreen() {
             </View>
           </View>
           <ChevronRight size={18} color={COLORS.muted} strokeWidth={2} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
 
         {/* Study Section */}
         <View style={styles.section}>

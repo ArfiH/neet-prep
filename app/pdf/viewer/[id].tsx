@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { WebView } from 'react-native-webview';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { ArrowLeft } from 'lucide-react-native';
+import { usePreventScreenCapture } from 'expo-screen-capture';
 import { api } from '@/lib/api';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
@@ -93,6 +94,8 @@ export default function PdfViewerScreen() {
   const [error, setError] = useState<string | null>(null);
   const [watermarkDisplay] = useState<string>("NEET ZYME");
   const [showAdOverlay, setShowAdOverlay] = useState(false);
+
+  usePreventScreenCapture();
 
   useEffect(() => {
     fetchPdf();

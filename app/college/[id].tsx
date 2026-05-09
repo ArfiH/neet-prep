@@ -199,7 +199,11 @@ export default function CollegeDetailScreen() {
                 <View style={[styles.feeRow, styles.feeTotalRow]}>
                   <Text style={styles.feeTotalLabel}>Total Annual Cost</Text>
                   <Text style={styles.feeTotalValue}>
-                    ₹{(college.tuition_fee_annual + college.hostel_fee_annual + (college.other_charges || 0)).toLocaleString()}
+                    ₹{(
+                      Number(college.tuition_fee_annual || 0) +
+                      Number(college.hostel_fee_annual || 0) +
+                      Number(college.other_charges || 0)
+                    ).toFixed(2)}
                   </Text>
                 </View>
               ) : null}
