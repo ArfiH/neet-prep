@@ -39,13 +39,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function loadStoredAuth() {
     try {
-      const [token, userData] = await Promise.all([
-        AsyncStorage.getItem(AUTH_TOKEN_KEY),
-        AsyncStorage.getItem(USER_DATA_KEY),
-      ]);
-      if (token && userData) {
-        setUser(JSON.parse(userData));
+      const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+      if (token) {
         await api.init();
+        try {
+          const profileData = await api.getProfile();
+          if (profileData) {
+            setUser(profileData);
+            await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(profileData));
+            return;
+          }
+        } catch {}
+        setUser(null);
+        await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
       }
     } catch (e) {
       console.error('Error loading auth:', e);

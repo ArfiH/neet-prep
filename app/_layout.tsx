@@ -14,6 +14,12 @@ function AuthRouter() {
   const router = useRouter();
 
   useEffect(() => {
+    if (initialized && !loading && !isLoggedIn) {
+      router.replace('/login');
+    }
+  }, [initialized, loading, isLoggedIn]);
+
+  useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
       const url = event.url;
       console.log('Deep link received:', url);
@@ -61,13 +67,21 @@ function AuthRouter() {
     );
   }
 
+  if (!isLoggedIn) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="login" />
+        <Stack.Screen name="register" />
+        <Stack.Screen name="forgot-password" />
+        <Stack.Screen name="reset-password" />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+    );
+  }
+
   return (
     <Stack screenOptions={{ headerShown: false }}>
-      {isLoggedIn ? (
-        <Stack.Screen name="(tabs)" />
-      ) : (
-        <Stack.Screen name="login" />
-      )}
+      <Stack.Screen name="(tabs)" />
       <Stack.Screen name="register" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="reset-password" />
