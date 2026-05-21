@@ -31,22 +31,25 @@ app.use((err, req, res, next) => {
   res.status(500).json({ error: 'Something went wrong!' });
 });
 
-// Get local IP for physical device access
-const networkInterfaces = require('os').networkInterfaces();
-let localIP = 'localhost';
-for (const interfaceName of Object.keys(networkInterfaces)) {
-  for (const iface of networkInterfaces[interfaceName]) {
-    if (iface.family === 'IPv4' && !iface.internal) {
-      localIP = iface.address;
-      break;
-    }
-  }
-}
-
 // Start server
 app.listen(PORT, '0.0.0.0', async () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`🚀 Server running on http://${localIP}:${PORT} (for physical device)`);
+  if (process.env.NODE_ENV !== 'production') {
+    // Get local IP for physical device access (dev only)
+    const networkInterfaces = require('os').networkInterfaces();
+    let localIP = 'localhost';
+    for (const interfaceName of Object.keys(networkInterfaces)) {
+      for (const iface of networkInterfaces[interfaceName]) {
+        if (iface.family === 'IPv4' && !iface.internal) {
+          localIP = iface.address;
+          break;
+        }
+      }
+    }
+    console.log(`🚀 Server running on http://localhost:${PORT}`);
+    console.log(`🚀 Server running on http://${localIP}:${PORT} (for physical device)`);
+  } else {
+    console.log(`🚀 Server running on port ${PORT} (production)`);
+  }
   await testConnection();
 });
 

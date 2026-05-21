@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const HOME_CACHE_KEY = 'home_cache';
-const CACHE_EXPIRY_MS = 5 * 60 * 1000; // 5 minutes
+const CACHE_EXPIRY_MS = 60 * 60 * 1000; // 60 minutes
 
 export type CachedHomeData = {
   featuredPdfs: any[];
