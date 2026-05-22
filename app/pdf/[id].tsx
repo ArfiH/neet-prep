@@ -1,11 +1,14 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
-import { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert, AppState } from 'react-native';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart } from 'lucide-react-native';
+import * as Linking from 'expo-linking';
+import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart, Eye } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as WebBrowser from 'expo-web-browser';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { api } from '@/lib/api';
+import { api, API_BASE_URL } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
+import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PDF = {
@@ -61,12 +64,65 @@ function darkenColor(hex: string, amount: number): string {
 export default function PDFDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { user } = useAuth();
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
+  const [purchased, setPurchased] = useState(false);
+  const [paying, setPaying] = useState(false);
+
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const deepLinkHandledRef = useRef(false);
 
   useEffect(() => {
     fetchPdf();
   }, [id]);
+
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handler = ({ url }: { url: string }) => {
+      if (deepLinkHandledRef.current) return;
+      if (!url.includes('razorpay-callback')) return;
+      deepLinkHandledRef.current = true;
+      if (pollingRef.current) clearInterval(pollingRef.current);
+      const query = url.split('?')[1];
+      const params: Record<string, string> = {};
+      if (query) {
+        query.split('&').forEach((p) => {
+          const [k, v] = p.split('=');
+          if (k) params[k] = decodeURIComponent(v || '');
+        });
+      }
+      if (params.success === 'true') {
+        setPurchased(true);
+        setPaying(false);
+        Alert.alert('Purchase successful', 'You can now read this PDF.', [
+          { text: 'Read PDF', onPress: () => router.replace(`/pdf/viewer/${id}`) },
+        ]);
+      } else {
+        setPaying(false);
+        const errorMsg = params.error || 'The payment was not completed.';
+        Alert.alert('Payment failed', errorMsg, [
+          { text: 'OK', onPress: () => router.back() },
+        ]);
+      }
+    };
+    const sub = Linking.addEventListener('url', handler);
+    return () => sub.remove();
+  }, []);
+
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && deepLinkHandledRef.current === false && pollingRef.current) {
+        checkPurchase();
+      }
+    });
+    return () => sub.remove();
+  }, []);
 
   async function fetchPdf() {
     try {
@@ -74,6 +130,14 @@ export default function PDFDetailScreen() {
       if (data) {
         setPdf(data);
         addRecentlyViewed(id);
+        if (!data.is_free) {
+          try {
+            const { hasPurchased } = await api.checkPdfPurchase(id);
+            setPurchased(hasPurchased);
+          } catch {
+            // not authed or error — treat as not purchased
+          }
+        }
       }
     } catch (e) {
       // ignore
@@ -81,12 +145,60 @@ export default function PDFDetailScreen() {
     setLoading(false);
   }
 
-  function handleReadPdf() {
+  async function checkPurchase() {
+    try {
+      const { hasPurchased } = await api.checkPdfPurchase(id);
+      if (hasPurchased) {
+        deepLinkHandledRef.current = true;
+        if (pollingRef.current) clearInterval(pollingRef.current);
+        setPurchased(true);
+        setPaying(false);
+        Alert.alert('Purchase successful', 'You can now read this PDF.', [
+          { text: 'Read PDF', onPress: () => router.replace(`/pdf/viewer/${id}`) },
+        ]);
+      }
+    } catch {
+      // ignore polling errors
+    }
+  }
+
+  async function handleBuyPdf() {
     if (!pdf?.file_url) {
       Alert.alert('Unavailable', 'This PDF file is not uploaded yet.');
       return;
     }
-    router.push(`/pdf/viewer/${pdf.id}`);
+    if (purchased) {
+      router.replace(`/pdf/viewer/${pdf.id}`);
+      return;
+    }
+    try {
+      setPaying(true);
+      deepLinkHandledRef.current = false;
+      const { order_id, key_id } = await api.createRazorpayOrder(pdf.id);
+      const callbackUrl = `${API_BASE_URL}/pdfs/payment-callback`;
+      const checkoutUrl = `https://api.razorpay.com/v1/checkout/embedded?key_id=${key_id}&order_id=${order_id}&callback_url=${encodeURIComponent(callbackUrl)}`;
+      await WebBrowser.openBrowserAsync(checkoutUrl);
+      pollingRef.current = setInterval(checkPurchase, 2000);
+    } catch (error: any) {
+      if (error?.message) {
+        Alert.alert('Payment failed', error.message);
+      } else {
+        Alert.alert('Payment failed', 'Something went wrong. Please try again.');
+      }
+      setPaying(false);
+    }
+  }
+
+  function handleReadOrBuy() {
+    if (pdf?.is_free || purchased) {
+      if (!pdf?.file_url) {
+        Alert.alert('Unavailable', 'This PDF file is not uploaded yet.');
+        return;
+      }
+      router.replace(`/pdf/viewer/${pdf.id}`);
+    } else {
+      handleBuyPdf();
+    }
   }
 
   if (loading) {
@@ -177,11 +289,19 @@ export default function PDFDetailScreen() {
 
         {/* CTA */}
         <TouchableOpacity
-          style={pdf.is_free ? styles.startBtn : styles.startBtnPaid}
-          onPress={handleReadPdf}
+          style={paying ? styles.startBtnDisabled : (pdf.is_free || purchased ? styles.startBtn : styles.startBtnPaid)}
+          onPress={handleReadOrBuy}
+          disabled={paying}
         >
-          {pdf.is_free ? (
+          {paying ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : pdf.is_free ? (
             <Text style={styles.startBtnText}>Start reading — Free</Text>
+          ) : purchased ? (
+            <>
+              <Eye size={16} color="#fff" strokeWidth={2} />
+              <Text style={styles.startBtnText}>Read PDF</Text>
+            </>
           ) : (
             <>
               <ShoppingCart size={16} color="#fff" strokeWidth={2} />
@@ -221,6 +341,7 @@ const styles = StyleSheet.create({
   metaPillText: { fontSize: 10.5, fontFamily: monoFont, color: COLORS.muted },
 
   startBtn: { marginHorizontal: 18, marginVertical: 10, paddingVertical: 14, borderRadius: 999, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  startBtnDisabled: { marginHorizontal: 18, marginVertical: 10, paddingVertical: 14, borderRadius: 999, backgroundColor: COLORS.muted, alignItems: 'center', justifyContent: 'center' },
   startBtnPaid: { marginHorizontal: 18, marginVertical: 10, paddingVertical: 14, borderRadius: 999, backgroundColor: COLORS.fg, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   startBtnText: { fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: 0.04 },
 });

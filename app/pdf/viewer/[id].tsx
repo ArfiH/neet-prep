@@ -132,6 +132,20 @@ export default function PdfViewerScreen() {
         setLoading(false);
         return;
       }
+      if (!pdfData.is_free) {
+        try {
+          const { hasPurchased } = await api.checkPdfPurchase(id);
+          if (!hasPurchased) {
+            setError('Please purchase this PDF to view it.');
+            setLoading(false);
+            return;
+          }
+        } catch {
+          setError('Please purchase this PDF to view it.');
+          setLoading(false);
+          return;
+        }
+      }
       setPdf(pdfData);
       setLoading(false);
     } catch (err) {

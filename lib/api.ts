@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
+export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const USER_DATA_KEY = 'user_data';
@@ -123,6 +123,20 @@ class ApiClient {
 
   async getPurchasedPdfs() {
     return this.request<any[]>('/pdfs/user/purchased', { method: 'GET' });
+  }
+
+  async createRazorpayOrder(pdfId: string) {
+    return this.request<{ order_id: string; amount: number; key_id: string }>('/pdfs/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ pdfId }),
+    });
+  }
+
+  async verifyPayment(data: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) {
+    return this.request<{ success: boolean; pdf_id: string; message: string }>('/pdfs/verify-payment', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
   }
 
   // College methods

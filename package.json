@@ -21,6 +21,7 @@
     "@supabase/supabase-js": "^2.58.0",
     "expo": "^54.0.33",
     "expo-blur": "~15.0.8",
+    "expo-build-properties": "~1.0.10",
     "expo-camera": "~17.0.10",
     "expo-constants": "~18.0.13",
     "expo-dev-client": "~6.0.20",
@@ -53,6 +54,8 @@
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.1.10",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~10.0.0",
     "sharp": "^0.34.5",
     "typescript": "~5.9.2"
   }
