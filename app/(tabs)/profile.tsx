@@ -14,7 +14,8 @@ import { useAuth } from '@/lib/authContext';
 import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useEffect, useState } from 'react';
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from 'expo-router';
 
 type ProfileData = {
   id: number;
@@ -33,13 +34,15 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (user) {
-      fetchProfile();
-    } else {
-      setLoading(false);
-    }
-  }, [user]);
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        fetchProfile();
+      } else {
+        setLoading(false);
+      }
+    }, [user])
+  );
 
   async function fetchProfile() {
     try {

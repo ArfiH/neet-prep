@@ -136,9 +136,9 @@ export default function ResetPasswordScreen() {
                   autoCorrect={false}
                 />
               </View>
-              <Text style={styles.hintText}>
+              {/* <Text style={styles.hintText}>
                 Check your email for the reset code (check spam too)
-              </Text>
+              </Text> */}
             </View>
 
             {/* Password Input */}
