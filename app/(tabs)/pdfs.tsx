@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useEffect, useState, useCallback } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { BookOpen } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
@@ -79,10 +79,17 @@ export default function PDFsScreen() {
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPdfs();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPurchased();
+    }, [])
+  );
 
   useEffect(() => {
     applyFilters();
@@ -99,6 +106,17 @@ export default function PDFsScreen() {
       // ignore
     }
     setLoading(false);
+  }
+
+  async function fetchPurchased() {
+    try {
+      const data = await api.getPurchasedPdfs();
+      if (data && Array.isArray(data)) {
+        setPurchasedIds(new Set(data.map((p: any) => String(p.id))));
+      }
+    } catch (e) {
+      // not logged in or error — silently ignore
+    }
   }
 
   function applyFilters() {
@@ -187,6 +205,8 @@ export default function PDFsScreen() {
                 <Text style={styles.tileMeta} numberOfLines={1}>{getMetaLine(item)}</Text>
                 {item.is_free ? (
                   <Text style={styles.freeTag}>FREE</Text>
+                ) : purchasedIds.has(String(item.id)) ? (
+                  <Text style={styles.ownedTag}>OWNED</Text>
                 ) : (
                   <Text style={styles.paidTag}>₹{item.price}</Text>
                 )}
@@ -232,6 +252,7 @@ const styles = StyleSheet.create({
   tileMeta: { fontSize: 10.5, color: COLORS.muted, opacity: 0.7 },
   freeTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primary, color: '#fff', letterSpacing: 0.06 },
   paidTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.fg, color: '#fff', letterSpacing: 0.06 },
+  ownedTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06 },
 
   loadingContainer: { paddingVertical: 60, alignItems: 'center' },
   emptyContainer: { paddingVertical: 60, alignItems: 'center', gap: 8 },

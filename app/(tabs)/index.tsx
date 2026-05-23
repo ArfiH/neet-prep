@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animated } from 'react-native';
-import { useEffect, useRef, useState } from 'react';
-import { useRouter } from 'expo-router';
+import { useEffect, useRef, useState, useCallback } from 'react';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { api } from '@/lib/api';
 import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
@@ -80,10 +80,17 @@ export default function HomeScreen() {
   const scrollX = useRef(new Animated.Value(0)).current;
   const contentWidth = useRef(0);
   const layoutWidth = useRef(0);
+  const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPdfs();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      fetchPurchased();
+    }, [])
+  );
 
   useEffect(() => {
     if (pdfs.length > 0) {
@@ -95,6 +102,15 @@ export default function HomeScreen() {
     try {
       const data = await api.getPdfs();
       if (data) setPdfs(data);
+    } catch (e) {}
+  }
+
+  async function fetchPurchased() {
+    try {
+      const data = await api.getPurchasedPdfs();
+      if (data && Array.isArray(data)) {
+        setPurchasedIds(new Set(data.map((p: any) => String(p.id))));
+      }
     } catch (e) {}
   }
 
@@ -192,8 +208,8 @@ export default function HomeScreen() {
               </View>
               <Text style={styles.featuredTitle} numberOfLines={1}>{item.title}</Text>
               <Text style={styles.featuredMeta} numberOfLines={1}>{item.downloads.toLocaleString()} views</Text>
-              <View style={[styles.featuredBadge, item.is_free ? styles.badgeFree : styles.badgePaid]}>
-                <Text style={styles.badgeText}>{item.is_free ? 'FREE' : `₹${item.price}`}</Text>
+              <View style={[styles.featuredBadge, item.is_free ? styles.badgeFree : purchasedIds.has(String(item.id)) ? styles.badgeOwned : styles.badgePaid]}>
+                <Text style={styles.badgeText}>{item.is_free ? 'FREE' : purchasedIds.has(String(item.id)) ? 'OWNED' : `₹${item.price}`}</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -239,5 +255,6 @@ const styles = StyleSheet.create({
   featuredBadge: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999 },
   badgeFree: { backgroundColor: COLORS.primary },
   badgePaid: { backgroundColor: COLORS.fg },
+  badgeOwned: { backgroundColor: COLORS.primaryDark },
   badgeText: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: '#fff', letterSpacing: 0.06, textTransform: 'uppercase' },
 });

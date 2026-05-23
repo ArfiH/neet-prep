@@ -60,7 +60,8 @@ const getPdfJsViewerHTML = (url: string, title: string, watermark: string) => `
       function renderPage(pageNum) {
         if (pageNum > pdf.numPages) return;
         pdf.getPage(pageNum).then(function(page) {
-          const scale = window.innerWidth / page.getViewport({ scale: 1 }).width;
+          const baseScale = window.innerWidth / page.getViewport({ scale: 1 }).width;
+          const scale = baseScale * window.devicePixelRatio;
           const viewport = page.getViewport({ scale: scale });
           const wrapper = document.createElement('div');
           wrapper.className = 'page-wrapper';
@@ -212,7 +213,6 @@ export default function PdfViewerScreen() {
             javaScriptEnabled
             domStorageEnabled
             startInLoadingState
-            scalesPageToFit
             bounces
             allowsInlineMediaPlayback
             mediaPlaybackRequiresUserAction={false}
