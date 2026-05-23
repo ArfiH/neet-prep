@@ -2,6 +2,22 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
 
+const issueTokens = (userId, email) => {
+  const accessToken = jwt.sign(
+    { userId, email },
+    process.env.JWT_SECRET,
+    { expiresIn: process.env.JWT_EXPIRES_IN }
+  );
+
+  const refreshToken = jwt.sign(
+    { userId },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: '30d' }
+  );
+
+  return { accessToken, refreshToken };
+};
+
 const register = async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -22,15 +38,17 @@ const register = async (req, res) => {
       [email, passwordHash, name || null]
     );
 
-    const token = jwt.sign(
-      { userId: result.insertId, email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+    const { accessToken, refreshToken } = issueTokens(result.insertId, email);
+
+    await pool.query(
+      'UPDATE users SET refresh_token = ? WHERE id = ?',
+      [refreshToken, result.insertId]
     );
 
     res.status(201).json({
       message: 'Registration successful',
-      token,
+      token: accessToken,
+      refreshToken,
       user: { id: result.insertId, email, name },
     });
   } catch (error) {
@@ -58,15 +76,17 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    const token = jwt.sign(
-      { userId: user.id, email: user.email },
-      process.env.JWT_SECRET,
-      { expiresIn: process.env.JWT_EXPIRES_IN }
+    const { accessToken, refreshToken } = issueTokens(user.id, user.email);
+
+    await pool.query(
+      'UPDATE users SET refresh_token = ? WHERE id = ?',
+      [refreshToken, user.id]
     );
 
     res.json({
       message: 'Login successful',
-      token,
+      token: accessToken,
+      refreshToken,
       user: {
         id: user.id,
         email: user.email,
@@ -108,14 +128,53 @@ const getProfile = async (req, res) => {
   }
 };
 
+const refresh = async (req, res) => {
+  try {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(401).json({ error: 'No refresh token' });
+
+    const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
+    const [users] = await pool.query(
+      'SELECT id, email FROM users WHERE id = ? AND refresh_token = ?',
+      [decoded.userId, refreshToken]
+    );
+    if (users.length === 0) {
+      return res.status(401).json({ error: 'Invalid refresh token' });
+    }
+
+    const accessToken = jwt.sign(
+      { userId: users[0].id, email: users[0].email },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.JWT_EXPIRES_IN }
+    );
+
+    res.json({ token: accessToken });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ error: 'Refresh token expired' });
+    }
+    res.status(401).json({ error: 'Invalid refresh token' });
+  }
+};
+
 const updateProfile = async (req, res) => {
   try {
     const { name, neet_rank, category } = req.body;
 
-    await pool.query(
-      'UPDATE users SET name = COALESCE(?, name), neet_rank = COALESCE(?, neet_rank), category = COALESCE(?, category) WHERE id = ?',
-      [name, neet_rank, category, req.userId]
-    );
+    const updates = [];
+    const values = [];
+    if (name !== undefined && name !== '') { updates.push('name = ?'); values.push(name); }
+    if (neet_rank !== undefined && neet_rank !== '') { updates.push('neet_rank = ?'); values.push(neet_rank); }
+    if (category !== undefined && category !== '') { updates.push('category = ?'); values.push(category); }
+
+    if (updates.length > 0) {
+      values.push(req.userId);
+      await pool.query(
+        `UPDATE users SET ${updates.join(', ')} WHERE id = ?`,
+        values
+      );
+    }
 
     res.json({ message: 'Profile updated' });
   } catch (error) {
@@ -124,4 +183,4 @@ const updateProfile = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile };
+module.exports = { register, login, getProfile, updateProfile, refresh };

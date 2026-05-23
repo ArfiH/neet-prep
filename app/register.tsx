@@ -79,7 +79,7 @@ export default function RegisterScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your name"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={name}
                   onChangeText={setName}
                   autoCapitalize="words"
@@ -94,7 +94,7 @@ export default function RegisterScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your email"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -111,7 +111,7 @@ export default function RegisterScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Create a password"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -136,7 +136,7 @@ export default function RegisterScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Confirm your password"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showPassword}

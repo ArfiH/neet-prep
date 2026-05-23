@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   pdf: { flex: 1, width, height: height - 100 },
 
   watermarkCentered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  watermarkText: { fontSize: 28, fontWeight: '600', color: 'rgba(0, 0, 0, 0.2)', transform: [{ rotate: '-45deg' }] },
+  watermarkText: { fontSize: 28, fontWeight: '600', color: 'rgba(0, 0, 0, 0.08)', transform: [{ rotate: '-45deg' }] },
 
   adOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
   adOverlayContent: { backgroundColor: '#fff', padding: 30, borderRadius: 16, alignItems: 'center', marginHorizontal: 20 },

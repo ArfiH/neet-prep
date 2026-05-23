@@ -100,7 +100,7 @@ export default function CollegesScreen() {
             <TextInput
               style={styles.rankInput}
               placeholder="e.g. 15000"
-              placeholderTextColor={COLORS.muted}
+              placeholderTextColor={COLORS.placeholder}
               value={rank}
               onChangeText={setRank}
               keyboardType="number-pad"
@@ -132,7 +132,7 @@ export default function CollegesScreen() {
             </TouchableOpacity>
             {showStateDropdown && (
               <View style={styles.stateDropdown}>
-                <TextInput style={styles.stateSearch} placeholder="Search state..." placeholderTextColor={COLORS.muted} value={stateSearch} onChangeText={setStateSearch} />
+                <TextInput style={styles.stateSearch} placeholder="Search state..." placeholderTextColor={COLORS.placeholder} value={stateSearch} onChangeText={setStateSearch} />
                 <ScrollView style={{ maxHeight: 200 }} nestedScrollEnabled>
                   {filteredStates.map((s) => (
                     <TouchableOpacity key={s} style={[styles.stateOption, state === s && styles.stateOptionActive]} onPress={() => { setState(s); setShowStateDropdown(false); setStateSearch(''); }}>

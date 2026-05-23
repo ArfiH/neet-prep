@@ -35,10 +35,7 @@ yarn-error.*
 *.tsbuildinfo
 
 TODO.txt
-PLAN.md
 /android
-release.keystore
 nul
-server.log
-session-ses_compact.md
 AGENTS.md
+neetzyme1_neet_prep.sql

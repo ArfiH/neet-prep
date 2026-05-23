@@ -5,6 +5,7 @@ export const COLORS = {
 
   fg: '#1a1d23',
   muted: '#5f6570',
+  placeholder: '#9CA3AF',
 
   background: '#ffffff',
   surface: '#ffffff',

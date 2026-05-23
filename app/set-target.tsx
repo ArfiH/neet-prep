@@ -122,7 +122,7 @@ export default function SetTargetScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Enter your target rank"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={rank}
                   onChangeText={setRank}
                   keyboardType="number-pad"

@@ -129,7 +129,7 @@ export default function ResetPasswordScreen() {
                 <TextInput
                   style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Paste reset code from email"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={tokenInput}
                   onChangeText={setTokenInput}
                   autoCapitalize="none"
@@ -149,7 +149,7 @@ export default function ResetPasswordScreen() {
                 <TextInput
                   style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Enter new password"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={password}
                   onChangeText={setPassword}
                   secureTextEntry={!showPassword}
@@ -175,7 +175,7 @@ export default function ResetPasswordScreen() {
                 <TextInput
                   style={[styles.input, isWideDevice && styles.inputWide]}
                   placeholder="Confirm new password"
-                  placeholderTextColor={COLORS.muted}
+                  placeholderTextColor={COLORS.placeholder}
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
                   secureTextEntry={!showPassword}
