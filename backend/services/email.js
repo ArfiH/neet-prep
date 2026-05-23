@@ -10,9 +10,10 @@ const transporter = nodemailer.createTransport({
 
 const APP_SCHEME = 'myapp';
 const APP_BASE_URL = process.env.APP_BASE_URL || 'http://localhost:8081';
+const API_BASE_URL = process.env.API_BASE_URL || APP_BASE_URL + '/api';
 
 const sendPasswordResetEmail = async (email, resetToken) => {
-  const deepLinkUrl = `${APP_SCHEME}://reset-password?token=${resetToken}`;
+  const deepLinkUrl = `${API_BASE_URL}/redirect/reset-password?token=${resetToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,
@@ -78,7 +79,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
 };
 
 const sendVerificationEmail = async (email, verificationToken) => {
-  const deepLinkUrl = `${APP_SCHEME}://verify-email?token=${verificationToken}`;
+  const deepLinkUrl = `${API_BASE_URL}/redirect/verify-email?token=${verificationToken}`;
 
   const mailOptions = {
     from: process.env.EMAIL_USER,

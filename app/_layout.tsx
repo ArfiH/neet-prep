@@ -35,6 +35,14 @@ function AuthRouter() {
             params: { token }
           });
         }
+
+        if (parsed.path === 'verify-email' && parsed.queryParams?.token) {
+          const token = parsed.queryParams.token as string;
+          router.replace({
+            pathname: '/verify-email',
+            params: { token }
+          });
+        }
       } catch (e) {
         console.error('Error parsing deep link:', e);
       }
@@ -49,6 +57,14 @@ function AuthRouter() {
           const token = parsed.queryParams.token as string;
           router.replace({
             pathname: '/reset-password',
+            params: { token }
+          });
+        }
+
+        if (parsed.path === 'verify-email' && parsed.queryParams?.token) {
+          const token = parsed.queryParams.token as string;
+          router.replace({
+            pathname: '/verify-email',
             params: { token }
           });
         }
@@ -72,6 +88,7 @@ function AuthRouter() {
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="login" />
         <Stack.Screen name="register" />
+        <Stack.Screen name="verify-email" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="reset-password" />
         <Stack.Screen name="+not-found" />
@@ -83,6 +100,7 @@ function AuthRouter() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="register" />
+      <Stack.Screen name="verify-email" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="reset-password" />
       <Stack.Screen name="set-target" />

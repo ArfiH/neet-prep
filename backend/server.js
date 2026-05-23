@@ -7,6 +7,7 @@ const authRoutes = require('./routes/auth');
 const pdfRoutes = require('./routes/pdfs');
 const collegeRoutes = require('./routes/colleges');
 const passwordResetRoutes = require('./routes/passwordReset');
+const redirectRoutes = require('./routes/redirect');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -20,6 +21,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/pdfs', pdfRoutes);
 app.use('/api/colleges', collegeRoutes);
 app.use('/api/auth', passwordResetRoutes);
+app.use('/api', redirectRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
