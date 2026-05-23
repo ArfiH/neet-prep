@@ -77,4 +77,57 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   return transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendPasswordResetEmail };
+const sendVerificationEmail = async (email, verificationToken) => {
+  const deepLinkUrl = `${APP_SCHEME}://verify-email?token=${verificationToken}`;
+
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Verify your NEET Zyme account',
+    html: `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px }
+          .header { background: #16A34A; color: white; padding: 20px; text-align: center }
+          .content { padding: 30px 20px; background: #f9f9f9; text-align: center }
+          .button { background: #16A34A; color: white; padding: 15px 30px; 
+                   text-decoration: none; border-radius: 8px; display: inline-block; 
+                   margin: 20px 0; font-weight: bold; font-size: 18px }
+          .footer { padding: 20px; text-align: center; font-size: 12px; color: #666 }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <h1>NEET Zyme</h1>
+          </div>
+          <div class="content">
+            <h2>Welcome to NEET Zyme!</h2>
+            <p>Click below to verify your email address and activate your account.</p>
+            <center>
+            <a href="${deepLinkUrl}" class="button">Verify Email</a>
+            </center>
+            <p style="margin-top: 20px; color: #666; font-size: 14px;">
+              Or copy this link into your browser:<br>
+              <span style="color: #16A34A;">${deepLinkUrl}</span>
+            </p>
+            <p style="margin-top: 30px; color: #999; font-size: 13px;">
+              If you didn't create this account, you can safely ignore this email.
+            </p>
+          </div>
+          <div class="footer">
+            <p>NEET Zyme - Your NEET Preparation Companion</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `,
+  };
+
+  return transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendPasswordResetEmail, sendVerificationEmail };

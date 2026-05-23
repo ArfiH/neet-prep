@@ -48,7 +48,7 @@ export default function RegisterScreen() {
 
     try {
       await register(email, password, name);
-      router.replace('/(tabs)');
+      router.replace(`/verify-email?email=${encodeURIComponent(email)}`);
     } catch (e: any) {
       setError(e.message || 'Registration failed');
     } finally {

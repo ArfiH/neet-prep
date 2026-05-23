@@ -44,7 +44,10 @@ class ApiClient {
     const data = await response.json();
 
     if (!response.ok) {
-      throw new Error(data.error || 'Request failed');
+      const err = new Error(data.error || 'Request failed') as any;
+      if (data.needs_verification) err.needs_verification = true;
+      if (data.email) err.email = data.email;
+      throw err;
     }
 
     return data;
@@ -52,13 +55,10 @@ class ApiClient {
 
   // Auth methods
   async register(email: string, password: string, name?: string) {
-    const data = await this.request<{ token: string; user: any }>('/auth/register', {
+    const data = await this.request<{ message: string; email: string }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ email, password, name }),
     });
-    this.token = data.token;
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
-    await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     return data;
   }
 
@@ -81,6 +81,20 @@ class ApiClient {
 
   async forgotPassword(email: string) {
     return this.request<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async verifyEmail(token: string) {
+    return this.request<{ token: string; user: any }>('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ token }),
+    });
+  }
+
+  async resendVerification(email: string) {
+    return this.request<{ message: string }>('/auth/resend-verification', {
       method: 'POST',
       body: JSON.stringify({ email }),
     });

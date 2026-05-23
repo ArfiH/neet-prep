@@ -12,19 +12,22 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, Link, Router } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { login, resendVerification } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
 
   async function handleLogin() {
     if (!email || !password) {
@@ -34,14 +37,35 @@ export default function LoginScreen() {
 
     setLoading(true);
     setError('');
+    setNeedsVerification(false);
+    setResendMessage('');
 
     try {
       await login(email, password);
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message || 'Login failed');
+      if (e.needs_verification) {
+        setNeedsVerification(true);
+        setError('Please verify your email before logging in');
+      } else {
+        setError(e.message || 'Login failed');
+      }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleResend() {
+    if (!email || resending) return;
+    setResending(true);
+    setResendMessage('');
+    try {
+      const msg = await resendVerification(email);
+      setResendMessage(msg);
+    } catch (e: any) {
+      setResendMessage(e.message || 'Failed to resend');
+    } finally {
+      setResending(false);
     }
   }
 
@@ -112,6 +136,26 @@ export default function LoginScreen() {
 
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
+            {needsVerification && (
+              <View style={styles.verifyBlock}>
+                {resendMessage ? (
+                  <Text style={resendMessage.includes('sent') ? styles.successText : styles.errorText}>
+                    {resendMessage}
+                  </Text>
+                ) : null}
+                <TouchableOpacity
+                  style={styles.resendBtn}
+                  onPress={handleResend}
+                  disabled={resending}
+                >
+                  <RefreshCw size={16} color={COLORS.primary} strokeWidth={2} />
+                  <Text style={styles.resendText}>
+                    {resending ? 'Sending...' : 'Resend Verification Email'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
               onPress={handleLogin}
@@ -167,6 +211,10 @@ const styles = StyleSheet.create({
   forgotButton: { alignSelf: 'flex-end', marginTop: -4 },
   forgotText: { fontSize: 14, color: COLORS.primary, fontWeight: '500' },
   errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
+  successText: { color: COLORS.primary, fontSize: 14, textAlign: 'center', marginBottom: 8 },
+  verifyBlock: { gap: 8 },
+  resendBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
+  resendText: { fontSize: 14, color: COLORS.primary, fontWeight: '600' },
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,

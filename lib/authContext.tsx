@@ -25,6 +25,8 @@ type AuthContextType = {
   forgotPassword: (email: string) => Promise<string>;
   resetPassword: (token: string, newPassword: string) => Promise<void>;
   refreshUser: () => Promise<void>;
+  verifyEmail: (token: string) => Promise<void>;
+  resendVerification: (email: string) => Promise<string>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -73,11 +75,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function register(email: string, password: string, name?: string) {
-    const data = await api.register(email, password, name);
-    await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
-    await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
-    setUser(data.user);
-    await api.init();
+    await api.register(email, password, name);
   }
 
   async function logout() {
@@ -87,6 +85,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function forgotPassword(email: string): Promise<string> {
     const data = await api.forgotPassword(email);
+    return data.message;
+  }
+
+  async function verifyEmail(token: string) {
+    const data = await api.verifyEmail(token);
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
+    await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
+    setUser(data.user);
+    await api.init();
+  }
+
+  async function resendVerification(email: string): Promise<string> {
+    const data = await api.resendVerification(email);
     return data.message;
   }
 
@@ -108,7 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, register, logout, forgotPassword, resetPassword, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );
