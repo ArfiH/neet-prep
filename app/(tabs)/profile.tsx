@@ -146,7 +146,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>STUDY</Text>
           <View style={styles.menuCard}>
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => router.push('/(tabs)/pdfs' as any)} activeOpacity={0.75}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => router.push('/purchased' as any)} activeOpacity={0.75}>
               <View style={styles.menuIcon}>
                 <BookOpen size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>

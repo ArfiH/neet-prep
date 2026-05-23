@@ -103,6 +103,7 @@ function AuthRouter() {
       <Stack.Screen name="verify-email" />
       <Stack.Screen name="forgot-password" />
       <Stack.Screen name="reset-password" />
+      <Stack.Screen name="purchased" />
       <Stack.Screen name="set-target" />
       <Stack.Screen name="pdf/[id]" />
       <Stack.Screen name="pdf/viewer/[id]" />
