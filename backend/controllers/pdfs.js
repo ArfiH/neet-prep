@@ -216,4 +216,46 @@ const paymentCallback = async (req, res) => {
   }
 };
 
-module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback };
+const { getAuth } = require('../services/b2');
+
+const getPdfViewUrl = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [pdfs] = await pool.query('SELECT * FROM pdfs WHERE id = ?', [id]);
+    if (pdfs.length === 0) {
+      return res.status(404).json({ error: 'PDF not found' });
+    }
+
+    const pdf = parsePdf(pdfs[0]);
+
+    if (!pdf.file_url) {
+      return res.status(400).json({ error: 'PDF file not available' });
+    }
+
+    if (!pdf.is_free) {
+      const [purchases] = await pool.query(
+        'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ? AND status = "completed"',
+        [req.userId, id]
+      );
+      if (purchases.length === 0) {
+        return res.status(403).json({ error: 'Please purchase this PDF to view it' });
+      }
+    }
+
+    let viewUrl = pdf.file_url;
+    let headers = {};
+
+    if (viewUrl.includes('backblazeb2.com')) {
+      const auth = await getAuth();
+      headers = { Authorization: auth.authorizationToken };
+    }
+
+    res.json({ url: viewUrl, headers, is_free: pdf.is_free, title: pdf.title });
+  } catch (error) {
+    console.error('Get view URL error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl };

@@ -68,7 +68,9 @@
           "androidAppId": "ca-app-pub-1317710744152870~2156531294",
           "iosAppId": "ca-app-pub-1317710744152870~2156531294"
         }
-      ]
+      ],
+      "@config-plugins/react-native-blob-util",
+      "@config-plugins/react-native-pdf"
     ],
     "experiments": {
       "typedRoutes": true

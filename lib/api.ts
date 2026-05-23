@@ -34,6 +34,13 @@ class ApiClient {
       headers: { ...headers, ...options.headers },
     });
 
+    const contentType = response.headers.get('content-type') || '';
+
+    if (!contentType.includes('application/json')) {
+      const text = await response.text();
+      throw new Error(`Server returned ${response.status} — expected JSON, got ${contentType}`);
+    }
+
     const data = await response.json();
 
     if (!response.ok) {
@@ -123,6 +130,10 @@ class ApiClient {
 
   async getPurchasedPdfs() {
     return this.request<any[]>('/pdfs/user/purchased', { method: 'GET' });
+  }
+
+  async getPdfViewUrl(id: string) {
+    return this.request<{ url: string; headers: Record<string, string>; is_free: boolean; title: string }>(`/pdfs/${id}/view`, { method: 'GET' });
   }
 
   async createRazorpayOrder(pdfId: string) {

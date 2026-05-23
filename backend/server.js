@@ -26,6 +26,11 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// 404 — catch-all for unhandled routes (return JSON, never HTML)
+app.use((req, res) => {
+  res.status(404).json({ error: `Route not found: ${req.method} ${req.originalUrl}` });
+});
+
 // Error handler
 app.use((err, req, res, next) => {
   console.error(err.stack);
