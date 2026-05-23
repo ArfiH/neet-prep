@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, MapPin, Phone, Globe, Users, IndianRupee, Calendar, Award, Hop as Home, ExternalLink, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Phone, Globe, Users, IndianRupee, Award, ExternalLink, Building } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -146,7 +146,7 @@ export default function CollegeDetailScreen() {
               <Text style={styles.statLabel}>Tuition Fee</Text>
             </View>
             <View style={styles.statBox}>
-              <Home size={20} color='#7C3AED' strokeWidth={2} />
+              <Building size={20} color='#7C3AED' strokeWidth={2} />
               <Text style={styles.statValue}>{formatFee(college.hostel_fee_annual)}</Text>
               <Text style={styles.statLabel}>Hostel Fee</Text>
             </View>
@@ -174,7 +174,6 @@ export default function CollegeDetailScreen() {
                   </View>
                 ))}
               </View>
-              <Text style={styles.cutoffNote}>* Lower rank = Better (rank 1 is best)</Text>
             </View>
           )}
 

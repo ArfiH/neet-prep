@@ -169,21 +169,12 @@ export default function PdfViewerScreen() {
                 setError('This PDF file could not be loaded. It may be corrupted or unavailable.');
               }}
               style={styles.pdf}
+              renderActivityIndicator={() => (
+                <ActivityIndicator size="large" color={COLORS.primary} />
+              )}
             />
-            <View style={styles.watermarkLayer} pointerEvents="none">
-              <View style={styles.watermarkRow}>
-                <Text style={styles.watermarkText}>{watermarkText}</Text>
-              </View>
-              <View style={styles.watermarkRow}>
-                <Text style={styles.watermarkText}>{watermarkText}</Text>
-              </View>
-              <View style={styles.watermarkRow}>
-                <Text style={styles.watermarkText}>{watermarkText}</Text>
-              </View>
-              <View style={styles.watermarkRow}>
-                <Text style={styles.watermarkText}>{watermarkText}</Text>
-              </View>
-              <View style={styles.watermarkRow}>
+            <View style={StyleSheet.absoluteFill} pointerEvents="none">
+              <View style={styles.watermarkCentered}>
                 <Text style={styles.watermarkText}>{watermarkText}</Text>
               </View>
             </View>
@@ -210,9 +201,8 @@ const styles = StyleSheet.create({
   pdfContainer: { flex: 1, position: 'relative' },
   pdf: { flex: 1, width, height: height - 100 },
 
-  watermarkLayer: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, justifyContent: 'space-around', alignItems: 'center' },
-  watermarkRow: { width: '100%', alignItems: 'center' },
-  watermarkText: { fontSize: 14, fontWeight: '800', color: 'rgba(255,255,255,0.08)', transform: [{ rotate: '-25deg' }], letterSpacing: 2 },
+  watermarkCentered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
+  watermarkText: { fontSize: 28, fontWeight: '600', color: 'rgba(0, 0, 0, 0.2)', transform: [{ rotate: '-45deg' }] },
 
   adOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
   adOverlayContent: { backgroundColor: '#fff', padding: 30, borderRadius: 16, alignItems: 'center', marginHorizontal: 20 },

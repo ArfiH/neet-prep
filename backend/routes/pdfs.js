@@ -6,7 +6,7 @@ const { auth, optionalAuth } = require('../middleware/auth');
 router.get('/', getAllPdfs);
 router.get('/:id', getPdfById);
 router.get('/:id/check', optionalAuth, checkPurchase);
-router.get('/user/purchased', auth, getPurchasedPdfs);
+router.get('/user/purchased', optionalAuth, getPurchasedPdfs);
 router.post('/create-order', auth, createOrder);
 router.post('/verify-payment', auth, verifyPayment);
 router.all('/payment-callback', paymentCallback);

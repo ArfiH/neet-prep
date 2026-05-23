@@ -48,6 +48,7 @@ const getPdfById = async (req, res) => {
 
 const getPurchasedPdfs = async (req, res) => {
   try {
+    if (!req.userId) return res.json([]);
     const [pdfs] = await pool.query(`
       SELECT p.* FROM pdfs p
       INNER JOIN purchases pr ON p.id = pr.pdf_id
