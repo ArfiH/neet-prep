@@ -117,8 +117,12 @@ export default function PDFDetailScreen() {
 
   useEffect(() => {
     const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && deepLinkHandledRef.current === false && pollingRef.current) {
-        checkPurchase();
+      if (state === 'active' && !deepLinkHandledRef.current) {
+        if (pollingRef.current) {
+          checkPurchase();
+        } else {
+          setPaying(false);
+        }
       }
     });
     return () => sub.remove();
@@ -178,7 +182,16 @@ export default function PDFDetailScreen() {
       const callbackUrl = `${API_BASE_URL}/pdfs/payment-callback`;
       const checkoutUrl = `https://api.razorpay.com/v1/checkout/embedded?key_id=${key_id}&order_id=${order_id}&callback_url=${encodeURIComponent(callbackUrl)}`;
       await WebBrowser.openBrowserAsync(checkoutUrl);
-      pollingRef.current = setInterval(checkPurchase, 2000);
+
+      // Browser was dismissed without a deep link callback
+      if (!deepLinkHandledRef.current) {
+        setPaying(false);
+        if (pollingRef.current) clearInterval(pollingRef.current);
+      }
+
+      if (deepLinkHandledRef.current) {
+        pollingRef.current = setInterval(checkPurchase, 2000);
+      }
     } catch (error: any) {
       if (error?.message) {
         Alert.alert('Payment failed', error.message);

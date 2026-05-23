@@ -126,7 +126,7 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, email, phone, name, neet_rank, category, created_at FROM users WHERE id = ?',
+      'SELECT id, email, phone, name, neet_rank, category, email_verified, created_at FROM users WHERE id = ?',
       [req.userId]
     );
 

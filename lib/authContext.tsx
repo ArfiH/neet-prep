@@ -12,6 +12,7 @@ type User = {
   name: string | null;
   neet_rank: number | null;
   category: string | null;
+  email_verified: boolean;
 };
 
 type AuthContextType = {
@@ -47,7 +48,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         await api.init();
         try {
           const profileData = await api.getProfile();
-          if (profileData) {
+          if (profileData && profileData.email_verified) {
             setUser(profileData);
             await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(profileData));
             return;
