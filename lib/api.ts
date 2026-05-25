@@ -185,6 +185,15 @@ class ApiClient {
     });
     return this.request<any[]>(`/colleges/predict?${params}`, { method: 'GET' });
   }
+
+  // Notification methods
+  async getNotifications() {
+    return this.request<any[]>('/notifications', { method: 'GET' });
+  }
+
+  async markAllNotificationsRead() {
+    return this.request<{ message: string }>('/notifications/read-all', { method: 'POST' });
+  }
 }
 
 export const api = new ApiClient();

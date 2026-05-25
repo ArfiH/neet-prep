@@ -33,16 +33,27 @@ export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useFocusEffect(
     useCallback(() => {
       if (user) {
         fetchProfile();
+        fetchUnreadCount();
       } else {
         setLoading(false);
       }
     }, [user])
   );
+
+  async function fetchUnreadCount() {
+    try {
+      const data = await api.getNotifications();
+      setUnreadCount(data.filter((n: any) => !n.is_read).length);
+    } catch (e) {
+      // ignore
+    }
+  }
 
   async function fetchProfile() {
     try {
@@ -167,7 +178,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>ACCOUNT</Text>
           <View style={styles.menuCard}>
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => router.push('/notifications' as any)}>
               <View style={styles.menuIcon}>
                 <Bell size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>
@@ -175,6 +186,11 @@ export default function ProfileScreen() {
                 <Text style={styles.menuLabel}>Notifications</Text>
                 <Text style={styles.menuSublabel}>Manage alerts</Text>
               </View>
+              {unreadCount > 0 && (
+                <View style={styles.badge}>
+                  <Text style={styles.badgeText}>{unreadCount}</Text>
+                </View>
+              )}
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => router.push('/privacy' as any)}>
@@ -272,6 +288,8 @@ const styles = StyleSheet.create({
   menuSublabel: { fontSize: 11, color: COLORS.muted, marginTop: 1 },
 
   signOutBtn: { backgroundColor: COLORS.stage, borderRadius: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
+  badge: { minWidth: 20, height: 20, borderRadius: 10, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 5, marginRight: 4 },
+  badgeText: { fontSize: 10, fontWeight: '700', color: '#fff', fontFamily: monoFont },
   signOutText: { fontSize: 15, fontWeight: '600', color: COLORS.muted },
   signInBtn: { backgroundColor: COLORS.primary, borderRadius: 16, paddingVertical: 14, flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 8 },
   signInText: { fontSize: 15, fontWeight: '700', color: '#fff' },

@@ -11,6 +11,7 @@ import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { resetPaymentHandled, markPaymentHandled, paymentHandled } from '@/lib/paymentSession';
+import Toast from 'react-native-toast-message';
 
 type PDF = {
   id: string;
@@ -108,19 +109,18 @@ export default function PDFDetailScreen() {
         if (params.success === 'true') {
           setPurchased(true);
           setPaying(false);
-          Alert.alert('Purchase successful', 'You can now read this PDF.', [
-            { text: 'Read PDF', onPress: () => router.replace(`/pdf/viewer/${pdf.id}`) },
-          ]);
+          Toast.show({ type: 'success', text1: 'Purchase successful', text2: 'You can now read this PDF.' });
+          router.replace(`/pdf/viewer/${pdf.id}`);
         } else {
           setPaying(false);
-          Alert.alert('Payment failed', params.error || 'The payment was not completed.');
+          Toast.show({ type: 'error', text1: 'Payment failed', text2: params.error || 'The payment was not completed.' });
         }
       } else {
         setPaying(false);
       }
     } catch (e: any) {
       setPaying(false);
-      Alert.alert('Payment failed', e?.message || 'Something went wrong.');
+      Toast.show({ type: 'error', text1: 'Payment failed', text2: e?.message || 'Something went wrong.' });
     }
   }
 

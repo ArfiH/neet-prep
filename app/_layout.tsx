@@ -8,6 +8,28 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import * as Linking from 'expo-linking';
 import { initAdMob } from '@/lib/adService';
+import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
+
+const toastConfig = {
+  success: (props: any) => (
+    <BaseToast
+      {...props}
+      style={{ borderLeftColor: COLORS.primary, borderRadius: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 14, fontWeight: '600', color: COLORS.fg }}
+      text2Style={{ fontSize: 12, color: COLORS.muted }}
+    />
+  ),
+  error: (props: any) => (
+    <ErrorToast
+      {...props}
+      style={{ borderLeftColor: COLORS.error, borderRadius: 12 }}
+      contentContainerStyle={{ paddingHorizontal: 15 }}
+      text1Style={{ fontSize: 14, fontWeight: '600', color: COLORS.fg }}
+      text2Style={{ fontSize: 12, color: COLORS.muted }}
+    />
+  ),
+};
 
 function AuthRouter() {
   const { loading, initialized, isLoggedIn } = useAuth();
@@ -109,6 +131,7 @@ function AuthRouter() {
       <Stack.Screen name="pdf/viewer/[id]" />
       <Stack.Screen name="college/[id]" />
       <Stack.Screen name="razorpay-callback" />
+      <Stack.Screen name="notifications" />
       <Stack.Screen name="privacy" />
       <Stack.Screen name="help" />
       <Stack.Screen name="about" />
@@ -130,6 +153,7 @@ export default function RootLayout() {
         <AuthRouter />
       </AuthProvider>
       <StatusBar style="dark" backgroundColor="#ffffff" />
+      <Toast config={toastConfig} />
     </SafeAreaProvider>
   );
 }

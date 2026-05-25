@@ -169,9 +169,17 @@ const verifyPayment = async (req, res) => {
       [razorpay_order_id, userId]
     );
 
+    const pdfId = purchases[0]?.pdf_id;
+
+    if (pdfId) {
+      const [pdfs] = await pool.query('SELECT title FROM pdfs WHERE id = ?', [pdfId]);
+      const pdfTitle = pdfs[0]?.title || 'a PDF';
+      createNotification(userId, 'Purchase Successful ', `You now have access to "${pdfTitle}". Happy studying!`);
+    }
+
     res.json({
       success: true,
-      pdf_id: purchases[0]?.pdf_id,
+      pdf_id: pdfId,
       message: 'Payment verified successfully',
     });
   } catch (error) {
@@ -212,6 +220,18 @@ const paymentCallback = async (req, res) => {
       [razorpay_order_id]
     );
 
+    // Get user_id and pdf title to create notification
+    const [purchases] = await pool.query(
+      'SELECT user_id, pdf_id FROM purchases WHERE razorpay_order_id = ?',
+      [razorpay_order_id]
+    );
+    if (purchases.length > 0) {
+      const { user_id, pdf_id } = purchases[0];
+      const [pdfs] = await pool.query('SELECT title FROM pdfs WHERE id = ?', [pdf_id]);
+      const pdfTitle = pdfs[0]?.title || 'a PDF';
+      createNotification(user_id, 'Purchase Successful', `You now have access to "${pdfTitle}". Happy studying!`);
+    }
+
     res.redirect(302, `myapp://razorpay-callback?success=true&pdfId=${pdfId}`);
   } catch (err) {
     console.error('Payment callback error:', err);
@@ -220,6 +240,7 @@ const paymentCallback = async (req, res) => {
 };
 
 const { getAuth } = require('../services/b2');
+const { createNotification } = require('./notifications');
 
 const getPdfViewUrl = async (req, res) => {
   try {
