@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
-import { useEffect, useState } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import * as Linking from 'expo-linking';
+import { useEffect, useState, useRef, useCallback } from 'react';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart, Eye } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '@/constants/colors';
@@ -10,6 +10,7 @@ import { api, API_BASE_URL } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { resetPaymentHandled, markPaymentHandled, paymentHandled } from '@/lib/paymentSession';
 
 type PDF = {
   id: string;
@@ -41,10 +42,20 @@ export default function PDFDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [purchased, setPurchased] = useState(false);
   const [paying, setPaying] = useState(false);
+  const hasStartedPayment = useRef(false);
 
   useEffect(() => {
     fetchPdf();
   }, [id]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (hasStartedPayment.current) {
+        setPaying(false);
+        hasStartedPayment.current = false;
+      }
+    }, [])
+  );
 
   async function fetchPdf() {
     try {
@@ -78,14 +89,47 @@ export default function PDFDetailScreen() {
     }
     try {
       setPaying(true);
+      resetPaymentHandled();
       const { order_id, key_id } = await api.createRazorpayOrder(pdf.id);
       const callbackUrl = `${API_BASE_URL}/pdfs/payment-callback/${pdf.id}`;
       const checkoutUrl = `https://api.razorpay.com/v1/checkout/embedded?key_id=${key_id}&order_id=${order_id}&callback_url=${encodeURIComponent(callbackUrl)}`;
-      await Linking.openURL(checkoutUrl);
-    } catch (error: any) {
-      Alert.alert('Payment failed', error?.message || 'Something went wrong. Please try again.');
+
+      hasStartedPayment.current = true;
+      const result = await WebBrowser.openAuthSessionAsync(checkoutUrl, 'myapp://');
+      WebBrowser.dismissBrowser();
+
+      if (paymentHandled) return;
+      markPaymentHandled();
+
+      if (result.type === 'success' && result.url) {
+        const params = parseParams(result.url);
+        if (params.success === 'true') {
+          setPurchased(true);
+          setPaying(false);
+          Alert.alert('Purchase successful', 'You can now read this PDF.', [
+            { text: 'Read PDF', onPress: () => router.replace(`/pdf/viewer/${pdf.id}`) },
+          ]);
+        } else {
+          setPaying(false);
+          Alert.alert('Payment failed', params.error || 'The payment was not completed.');
+        }
+      } else {
+        setPaying(false);
+      }
+    } catch (e: any) {
       setPaying(false);
+      Alert.alert('Payment failed', e?.message || 'Something went wrong.');
     }
+  }
+
+  function parseParams(url: string): Record<string, string> {
+    const query = url.split('?')[1] ?? '';
+    const params: Record<string, string> = {};
+    query.split('&').forEach((p) => {
+      const [k, v] = p.split('=');
+      if (k) params[k] = decodeURIComponent(v || '');
+    });
+    return params;
   }
 
   function handleReadOrBuy() {
