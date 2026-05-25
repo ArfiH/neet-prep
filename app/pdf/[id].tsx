@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart, Eye } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
@@ -21,6 +21,7 @@ type PDF = {
   is_free: boolean;
   pages_count: number;
   file_url: string;
+  details: string[];
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -219,14 +220,12 @@ export default function PDFDetailScreen() {
               <Clock size={12} color={COLORS.muted} strokeWidth={1.2} />
               <Text style={styles.metaPillText}>~{Math.ceil(pdf.pages_count / 2)} min read</Text>
             </View>
-            <View style={styles.metaPill}>
-              <ImageIcon size={12} color={COLORS.muted} strokeWidth={1.2} />
-              <Text style={styles.metaPillText}>Diagrams</Text>
-            </View>
-            <View style={styles.metaPill}>
-              <CheckCircle size={12} color={COLORS.muted} strokeWidth={1.2} />
-              <Text style={styles.metaPillText}>NEET 2024 aligned</Text>
-            </View>
+            {pdf.details?.map((detail, i) => (
+              <View key={i} style={styles.metaPill}>
+                <Tag size={12} color={COLORS.muted} strokeWidth={1.2} />
+                <Text style={styles.metaPillText}>{detail}</Text>
+              </View>
+            ))}
           </View>
         </View>
 

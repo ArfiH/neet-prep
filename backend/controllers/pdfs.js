@@ -10,6 +10,7 @@ const razorpay = new Razorpay({
 const parsePdf = (pdf) => ({
   ...pdf,
   tags: pdf.tags ? JSON.parse(pdf.tags) : [],
+  details: pdf.details ? JSON.parse(pdf.details) : [],
   is_free: Boolean(pdf.is_free),
 });
 
