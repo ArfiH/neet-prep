@@ -15,6 +15,7 @@ type PDF = {
   price: number;
   is_free: boolean;
   pages_count: number;
+  category: string | null;
 };
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
@@ -38,6 +39,7 @@ export default function PDFsScreen() {
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -52,7 +54,7 @@ export default function PDFsScreen() {
 
   useEffect(() => {
     applyFilters();
-  }, [pdfs, activeSubject, activeFilter]);
+  }, [pdfs, activeSubject, activeFilter, activeCategory]);
 
   async function fetchPdfs() {
     setLoading(true);
@@ -83,6 +85,9 @@ export default function PDFsScreen() {
     if (activeSubject) {
       result = result.filter((p) => p.subject === activeSubject);
     }
+    if (activeCategory) {
+      result = result.filter((p) => p.category === activeCategory);
+    }
     if (activeFilter === 'free') result = result.filter((p) => p.is_free);
     if (activeFilter === 'paid') result = result.filter((p) => !p.is_free);
     setFiltered(result);
@@ -91,6 +96,7 @@ export default function PDFsScreen() {
   const freeCount = filtered.filter((p) => p.is_free).length;
   const paidCount = filtered.filter((p) => !p.is_free).length;
   const uniqueSubjects = getUniqueSubjects(pdfs);
+  const uniqueCategories = [...new Set(pdfs.map((p) => p.category).filter(Boolean))] as string[];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -120,6 +126,24 @@ export default function PDFsScreen() {
             </TouchableOpacity>
           ))}
         </View>
+
+        {/* Category Bar */}
+        {uniqueCategories.length > 0 && (
+          <>
+            <Text style={styles.barLabel}>Category</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.categoryBar}>
+              {uniqueCategories.map((cat) => (
+                <TouchableOpacity
+                  key={cat}
+                  style={[styles.catChip, activeCategory === cat && styles.catChipActive]}
+                  onPress={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                >
+                  <Text style={[styles.catChipText, activeCategory === cat && styles.catChipTextActive]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </>
+        )}
 
         {/* Availability Bar */}
         <Text style={styles.barLabel}>Availability</Text>
@@ -198,6 +222,11 @@ const styles = StyleSheet.create({
   subjTextActive: { color: '#fff' },
 
   availBar: { flexDirection: 'row', paddingHorizontal: 14, paddingBottom: 6, gap: 6 },
+  categoryBar: { paddingHorizontal: 14, paddingBottom: 8, gap: 6, flexDirection: 'row' },
+  catChip: { paddingVertical: 7, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface },
+  catChipActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
+  catChipText: { fontSize: 11, fontWeight: '600', color: COLORS.muted },
+  catChipTextActive: { color: '#fff' },
   avail: { flex: 1, paddingVertical: 7, borderRadius: 8, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface, alignItems: 'center' },
   availActive: { backgroundColor: COLORS.primary, borderColor: COLORS.primary },
   availText: { fontSize: 10.5, fontWeight: '600', color: COLORS.muted },
