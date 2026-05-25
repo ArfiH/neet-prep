@@ -109,6 +109,9 @@ function AuthRouter() {
       <Stack.Screen name="pdf/viewer/[id]" />
       <Stack.Screen name="college/[id]" />
       <Stack.Screen name="razorpay-callback" />
+      <Stack.Screen name="privacy" />
+      <Stack.Screen name="help" />
+      <Stack.Screen name="about" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

@@ -177,7 +177,7 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} activeOpacity={0.75}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => router.push('/privacy' as any)}>
               <View style={styles.menuIcon}>
                 <Shield size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>
@@ -194,7 +194,7 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>SUPPORT</Text>
           <View style={styles.menuCard}>
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75}>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => router.push('/help' as any)}>
               <View style={styles.menuIcon}>
                 <HelpCircle size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>
@@ -204,7 +204,7 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.menuItem} activeOpacity={0.75}>
+            <TouchableOpacity style={styles.menuItem} activeOpacity={0.75} onPress={() => router.push('/about' as any)}>
               <View style={styles.menuIcon}>
                 <User size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>
