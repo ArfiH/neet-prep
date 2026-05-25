@@ -6,6 +6,7 @@ import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCa
 import { LinearGradient } from 'expo-linear-gradient';
 import * as WebBrowser from 'expo-web-browser';
 import { COLORS, SHADOWS } from '@/constants/colors';
+import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
 import { api, API_BASE_URL } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { useAuth } from '@/lib/authContext';
@@ -24,34 +25,6 @@ type PDF = {
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 const serifFont = Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' });
-
-function getTileBg(subject: string): string {
-  const lower = subject.toLowerCase();
-  if (lower.includes('anat')) return COLORS.tileAnatomy;
-  if (lower.includes('phys')) return COLORS.tilePhysics;
-  if (lower.includes('chem')) return COLORS.tileChemistry;
-  if (lower.includes('bot')) return COLORS.tileBotany;
-  if (lower.includes('zoo')) return COLORS.tileZoology;
-  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.tilePYQ;
-  if (subject === 'Biology') return COLORS.tileBotany;
-  if (subject === 'Physics') return COLORS.tilePhysics;
-  if (subject === 'Chemistry') return COLORS.tileChemistry;
-  return COLORS.tileAnatomy;
-}
-
-function getGlyphColor(subject: string): string {
-  const lower = subject.toLowerCase();
-  if (lower.includes('anat')) return COLORS.glyphAnatomy;
-  if (lower.includes('phys')) return COLORS.glyphPhysics;
-  if (lower.includes('chem')) return COLORS.glyphChemistry;
-  if (lower.includes('bot')) return COLORS.glyphBotany;
-  if (lower.includes('zoo')) return COLORS.glyphZoology;
-  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.glyphPYQ;
-  if (subject === 'Biology') return COLORS.glyphBotany;
-  if (subject === 'Physics') return COLORS.glyphPhysics;
-  if (subject === 'Chemistry') return COLORS.glyphChemistry;
-  return COLORS.glyphAnatomy;
-}
 
 function darkenColor(hex: string, amount: number): string {
   const num = parseInt(hex.replace('#', ''), 16);

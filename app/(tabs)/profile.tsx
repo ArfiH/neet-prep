@@ -102,18 +102,12 @@ export default function ProfileScreen() {
           <Text style={styles.profileName}>{userName}</Text>
           <Text style={styles.profileEmail}>{userEmail}</Text>
 
-          <View style={styles.statsRow}>
+          {/* <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Text style={styles.statValue}>{pdfsOwned}</Text>
               <Text style={styles.statLabel}>PDFs Owned</Text>
             </View>
             
-            {/* Your NEET Rank */}
-            {/* <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{userRank ? `#${userRank}` : '-'}</Text>
-              <Text style={styles.statLabel}>NEET Rank</Text>
-            </View> */}
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>8</Text>
@@ -125,7 +119,7 @@ export default function ProfileScreen() {
               <Text style={styles.statValue}>18</Text>
               <Text style={styles.statLabel}>Days Streak</Text>
             </View>
-          </View>
+          </View> */}
         </View>
 
         {/* NEET Target Card */}

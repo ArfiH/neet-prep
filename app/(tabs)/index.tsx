@@ -2,6 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animate
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
+import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
 import { api } from '@/lib/api';
 import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -28,49 +29,6 @@ function Indicator({ scrollX, contentWidth, layoutWidth }: { scrollX: Animated.V
     extrapolate: 'clamp',
   });
   return <Animated.View style={[styles.scrollIndicator, { width: indicatorWidth, transform: [{ translateX }] }]} />;
-}
-
-function getTileBg(subject: string): string {
-  const lower = subject.toLowerCase();
-  if (lower.includes('anat')) return COLORS.tileAnatomy;
-  if (lower.includes('phys')) return COLORS.tilePhysics;
-  if (lower.includes('chem')) return COLORS.tileChemistry;
-  if (lower.includes('bot')) return COLORS.tileBotany;
-  if (lower.includes('zoo')) return COLORS.tileZoology;
-  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.tilePYQ;
-  if (subject === 'Biology') return COLORS.tileBotany;
-  if (subject === 'Physics') return COLORS.tilePhysics;
-  if (subject === 'Chemistry') return COLORS.tileChemistry;
-  return COLORS.tileAnatomy;
-}
-
-function getGlyphColor(subject: string): string {
-  const lower = subject.toLowerCase();
-  if (lower.includes('anat')) return COLORS.glyphAnatomy;
-  if (lower.includes('phys')) return COLORS.glyphPhysics;
-  if (lower.includes('chem')) return COLORS.glyphChemistry;
-  if (lower.includes('bot')) return COLORS.glyphBotany;
-  if (lower.includes('zoo')) return COLORS.glyphZoology;
-  if (lower.includes('pyq') || lower.includes('prev')) return COLORS.glyphPYQ;
-  if (subject === 'Biology') return COLORS.glyphBotany;
-  if (subject === 'Physics') return COLORS.glyphPhysics;
-  if (subject === 'Chemistry') return COLORS.glyphChemistry;
-  return COLORS.glyphAnatomy;
-}
-
-function getGlyphLetter(subject: string): string {
-  const lower = subject.toLowerCase();
-  if (lower.includes('anat')) return 'A';
-  if (lower.includes('phys')) return 'P';
-  if (lower.includes('chem')) return 'C';
-  if (lower.includes('bot')) return 'B';
-  if (lower.includes('zoo')) return 'Z';
-  if (lower.includes('pyq') || lower.includes('prev')) return 'PY';
-  if (subject === 'Biology') return 'B';
-  if (subject === 'Physics') return 'P';
-  if (subject === 'Chemistry') return 'C';
-  if (subject === 'Practice') return 'Que';
-  return subject.charAt(0).toUpperCase();
 }
 
 export default function HomeScreen() {
@@ -138,7 +96,7 @@ export default function HomeScreen() {
         </View>
 
         {/* Stats */}
-        <View style={styles.stats}>
+        {/* <View style={styles.stats}>
           <View style={styles.stat}>
             <Text style={styles.statNum}>{pdfs.length}</Text>
             <Text style={styles.statLabel}>PDFs read</Text>
@@ -151,7 +109,7 @@ export default function HomeScreen() {
             <Text style={styles.statNum}>18</Text>
             <Text style={styles.statLabel}>Days streak</Text>
           </View>
-        </View>
+        </View> */}
 
         {/* Recently Viewed */}
         {recentPdfs.length > 0 && (
