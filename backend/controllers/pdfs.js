@@ -181,6 +181,7 @@ const verifyPayment = async (req, res) => {
 
 const paymentCallback = async (req, res) => {
   try {
+    const pdfId = req.params.pdfId;
     const razorpay_payment_id = req.body?.razorpay_payment_id || req.query?.razorpay_payment_id;
     const razorpay_order_id = req.body?.razorpay_order_id || req.query?.razorpay_order_id;
     const razorpay_signature = req.body?.razorpay_signature || req.query?.razorpay_signature;
@@ -188,11 +189,11 @@ const paymentCallback = async (req, res) => {
 
     if (razorpay_error) {
       const desc = encodeURIComponent(razorpay_error.description || 'Payment failed');
-      return res.redirect(`myapp://razorpay-callback?success=false&error=${desc}`);
+      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=${desc}`);
     }
 
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
-      return res.redirect('myapp://razorpay-callback?success=false&error=missing_params');
+      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=missing_params`);
     }
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
@@ -202,7 +203,7 @@ const paymentCallback = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
-      return res.redirect('myapp://razorpay-callback?success=false&error=signature_mismatch');
+      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=signature_mismatch`);
     }
 
     await pool.query(
@@ -210,10 +211,10 @@ const paymentCallback = async (req, res) => {
       [razorpay_order_id]
     );
 
-    res.redirect(302, 'myapp://razorpay-callback?success=true');
+    res.redirect(302, `myapp://razorpay-callback?success=true&pdfId=${pdfId}`);
   } catch (err) {
     console.error('Payment callback error:', err);
-    res.redirect('myapp://razorpay-callback?success=false&error=exception');
+    res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=exception`);
   }
 };
 

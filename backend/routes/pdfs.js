@@ -9,7 +9,7 @@ router.get('/:id/check', optionalAuth, checkPurchase);
 router.get('/user/purchased', optionalAuth, getPurchasedPdfs);
 router.post('/create-order', auth, createOrder);
 router.post('/verify-payment', auth, verifyPayment);
-router.all('/payment-callback', paymentCallback);
+router.all('/payment-callback/:pdfId', paymentCallback);
 router.get('/:id/view', optionalAuth, getPdfViewUrl);
 
 module.exports = router;

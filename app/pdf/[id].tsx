@@ -1,10 +1,9 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert, AppState } from 'react-native';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as Linking from 'expo-linking';
 import { ArrowLeft, BookOpen, Clock, Image as ImageIcon, CheckCircle, ShoppingCart, Eye } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import * as WebBrowser from 'expo-web-browser';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
 import { api, API_BASE_URL } from '@/lib/api';
@@ -43,63 +42,9 @@ export default function PDFDetailScreen() {
   const [purchased, setPurchased] = useState(false);
   const [paying, setPaying] = useState(false);
 
-  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const deepLinkHandledRef = useRef(false);
-
   useEffect(() => {
     fetchPdf();
   }, [id]);
-
-  useEffect(() => {
-    return () => {
-      if (pollingRef.current) clearInterval(pollingRef.current);
-    };
-  }, []);
-
-  useEffect(() => {
-    const handler = ({ url }: { url: string }) => {
-      if (deepLinkHandledRef.current) return;
-      if (!url.includes('razorpay-callback')) return;
-      deepLinkHandledRef.current = true;
-      if (pollingRef.current) clearInterval(pollingRef.current);
-      const query = url.split('?')[1];
-      const params: Record<string, string> = {};
-      if (query) {
-        query.split('&').forEach((p) => {
-          const [k, v] = p.split('=');
-          if (k) params[k] = decodeURIComponent(v || '');
-        });
-      }
-      if (params.success === 'true') {
-        setPurchased(true);
-        setPaying(false);
-        Alert.alert('Purchase successful', 'You can now read this PDF.', [
-          { text: 'Read PDF', onPress: () => router.replace(`/pdf/viewer/${id}`) },
-        ]);
-      } else {
-        setPaying(false);
-        const errorMsg = params.error || 'The payment was not completed.';
-        Alert.alert('Payment failed', errorMsg, [
-          { text: 'OK', onPress: () => router.back() },
-        ]);
-      }
-    };
-    const sub = Linking.addEventListener('url', handler);
-    return () => sub.remove();
-  }, []);
-
-  useEffect(() => {
-    const sub = AppState.addEventListener('change', (state) => {
-      if (state === 'active' && !deepLinkHandledRef.current) {
-        if (pollingRef.current) {
-          checkPurchase();
-        } else {
-          setPaying(false);
-        }
-      }
-    });
-    return () => sub.remove();
-  }, []);
 
   async function fetchPdf() {
     try {
@@ -122,23 +67,6 @@ export default function PDFDetailScreen() {
     setLoading(false);
   }
 
-  async function checkPurchase() {
-    try {
-      const { hasPurchased } = await api.checkPdfPurchase(id);
-      if (hasPurchased) {
-        deepLinkHandledRef.current = true;
-        if (pollingRef.current) clearInterval(pollingRef.current);
-        setPurchased(true);
-        setPaying(false);
-        Alert.alert('Purchase successful', 'You can now read this PDF.', [
-          { text: 'Read PDF', onPress: () => router.replace(`/pdf/viewer/${id}`) },
-        ]);
-      }
-    } catch {
-      // ignore polling errors
-    }
-  }
-
   async function handleBuyPdf() {
     if (!pdf?.file_url) {
       Alert.alert('Unavailable', 'This PDF file is not uploaded yet.');
@@ -150,27 +78,12 @@ export default function PDFDetailScreen() {
     }
     try {
       setPaying(true);
-      deepLinkHandledRef.current = false;
       const { order_id, key_id } = await api.createRazorpayOrder(pdf.id);
-      const callbackUrl = `${API_BASE_URL}/pdfs/payment-callback`;
+      const callbackUrl = `${API_BASE_URL}/pdfs/payment-callback/${pdf.id}`;
       const checkoutUrl = `https://api.razorpay.com/v1/checkout/embedded?key_id=${key_id}&order_id=${order_id}&callback_url=${encodeURIComponent(callbackUrl)}`;
-      await WebBrowser.openBrowserAsync(checkoutUrl);
-
-      // Browser was dismissed without a deep link callback
-      if (!deepLinkHandledRef.current) {
-        setPaying(false);
-        if (pollingRef.current) clearInterval(pollingRef.current);
-      }
-
-      if (deepLinkHandledRef.current) {
-        pollingRef.current = setInterval(checkPurchase, 2000);
-      }
+      await Linking.openURL(checkoutUrl);
     } catch (error: any) {
-      if (error?.message) {
-        Alert.alert('Payment failed', error.message);
-      } else {
-        Alert.alert('Payment failed', 'Something went wrong. Please try again.');
-      }
+      Alert.alert('Payment failed', error?.message || 'Something went wrong. Please try again.');
       setPaying(false);
     }
   }
