@@ -5,12 +5,12 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  Alert,
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
+import CustomAlert from '@/components/CustomAlert';
 import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Bug } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -35,6 +35,7 @@ export default function ProfileScreen() {
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [showLogoutAlert, setShowLogoutAlert] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -67,26 +68,17 @@ export default function ProfileScreen() {
     }
   }
 
-  async function handleLogout() {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await logout();
-              router.replace('/login');
-            } catch (e) {
-              console.log('Logout error:', e);
-            }
-          },
-        },
-      ]
-    );
+  function handleLogout() {
+    setShowLogoutAlert(true);
+  }
+
+  async function confirmLogout() {
+    try {
+      await logout();
+      router.replace('/login');
+    } catch (e) {
+      console.log('Logout error:', e);
+    }
   }
 
   const userName = profile?.name || user?.name || 'Guest User';
@@ -265,6 +257,18 @@ export default function ProfileScreen() {
         <Text style={styles.version}>NEET Zyme v1.0.0</Text>
         <View style={{ height: 24 }} />
       </ScrollView>
+
+      <CustomAlert
+        visible={showLogoutAlert}
+        title="Sign Out"
+        message="Are you sure you want to sign out?"
+        type="destructive"
+        buttons={[
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Sign Out', style: 'destructive', onPress: confirmLogout },
+        ]}
+        onDismiss={() => setShowLogoutAlert(false)}
+      />
     </SafeAreaView>
   );
 }

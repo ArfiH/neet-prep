@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -10,6 +10,7 @@ import { api, API_BASE_URL } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import CustomAlert from '@/components/CustomAlert';
 import { resetPaymentHandled, markPaymentHandled, paymentHandled } from '@/lib/paymentSession';
 import Toast from 'react-native-toast-message';
 
@@ -46,6 +47,7 @@ export default function PDFDetailScreen() {
   const [purchased, setPurchased] = useState(false);
   const [paying, setPaying] = useState(false);
   const hasStartedPayment = useRef(false);
+  const [alertConfig, setAlertConfig] = useState<any>(null);
 
   useEffect(() => {
     fetchPdf();
@@ -83,7 +85,12 @@ export default function PDFDetailScreen() {
 
   async function handleBuyPdf() {
     if (!pdf?.file_url) {
-      Alert.alert('Unavailable', 'This PDF file is not uploaded yet.');
+      setAlertConfig({
+        type: 'warning',
+        title: 'Unavailable',
+        message: 'This PDF file is not uploaded yet.',
+        buttons: [{ text: 'OK' }],
+      });
       return;
     }
     if (purchased) {
@@ -137,7 +144,12 @@ export default function PDFDetailScreen() {
   function handleReadOrBuy() {
     if (pdf?.is_free || purchased) {
       if (!pdf?.file_url) {
-        Alert.alert('Unavailable', 'This PDF file is not uploaded yet.');
+        setAlertConfig({
+          type: 'warning',
+          title: 'Unavailable',
+          message: 'This PDF file is not uploaded yet.',
+          buttons: [{ text: 'OK' }],
+        });
         return;
       }
       router.replace(`/pdf/viewer/${pdf.id}`);
@@ -255,6 +267,15 @@ export default function PDFDetailScreen() {
 
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      <CustomAlert
+        visible={!!alertConfig}
+        type={alertConfig?.type || 'default'}
+        title={alertConfig?.title}
+        message={alertConfig?.message || ''}
+        buttons={alertConfig?.buttons || []}
+        onDismiss={() => setAlertConfig(null)}
+      />
     </SafeAreaView>
   );
 }
