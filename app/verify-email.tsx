@@ -12,6 +12,7 @@ import { Mail, ArrowLeft, RefreshCw, CheckCircle2 } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function VerifyEmailScreen() {
   const router = useRouter();
@@ -85,7 +86,7 @@ export default function VerifyEmailScreen() {
           {status === 'error' && (
             <View style={styles.centerContent}>
               <Text style={styles.centerTitle}>Verification Failed</Text>
-              <Text style={styles.errorText}>{error}</Text>
+              <AlertBanner type="error" message={error} />
               <TouchableOpacity style={styles.button} onPress={() => router.replace('/login')}>
                 <Text style={styles.buttonText}>Go to Login</Text>
               </TouchableOpacity>
@@ -142,9 +143,10 @@ export default function VerifyEmailScreen() {
         </View>
 
         {resendMessage ? (
-          <Text style={resendMessage.includes('failed') || resendMessage.includes('error') ? styles.errorText : styles.successText}>
-            {resendMessage}
-          </Text>
+          <AlertBanner
+            type={resendMessage.includes('failed') || resendMessage.includes('error') ? 'error' : 'success'}
+            message={resendMessage}
+          />
         ) : null}
 
         <TouchableOpacity
@@ -240,9 +242,6 @@ const styles = StyleSheet.create({
 
   loginBtn: { alignItems: 'center', paddingVertical: 16, marginTop: 8 },
   loginBtnText: { fontSize: 15, color: COLORS.muted, fontWeight: '500' },
-
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center', marginBottom: 16 },
-  successText: { color: COLORS.primary, fontSize: 14, textAlign: 'center', marginBottom: 16 },
 
   button: {
     backgroundColor: COLORS.primary,

@@ -17,6 +17,7 @@ import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -149,14 +150,25 @@ export default function LoginScreen() {
               <Text style={styles.forgotText}>Forgot Password?</Text>
             </TouchableOpacity>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? (
+              <AlertBanner
+                type="error"
+                message={error}
+                action={
+                  error === 'This account uses Google Sign-In. Please sign in with Google.'
+                    ? { label: 'Sign in with Google', onPress: handleGoogleSignIn }
+                    : undefined
+                }
+              />
+            ) : null}
 
             {needsVerification && (
               <View style={styles.verifyBlock}>
                 {resendMessage ? (
-                  <Text style={resendMessage.includes('sent') ? styles.successText : styles.errorText}>
-                    {resendMessage}
-                  </Text>
+                  <AlertBanner
+                    type={resendMessage.includes('sent') ? 'success' : 'error'}
+                    message={resendMessage}
+                  />
                 ) : null}
                 <TouchableOpacity
                   style={styles.resendBtn}
@@ -233,8 +245,6 @@ const styles = StyleSheet.create({
   eyeButton: { padding: 4 },
   forgotButton: { alignSelf: 'flex-end', marginTop: -4 },
   forgotText: { fontSize: 14, color: COLORS.primary, fontWeight: '500' },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
-  successText: { color: COLORS.primary, fontSize: 14, textAlign: 'center', marginBottom: 8 },
   verifyBlock: { gap: 8 },
   resendBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 10 },
   resendText: { fontSize: 14, color: COLORS.primary, fontWeight: '600' },

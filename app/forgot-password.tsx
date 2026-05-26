@@ -15,6 +15,7 @@ import { Mail, ArrowLeft } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function ForgotPasswordScreen() {
   const router = useRouter();
@@ -88,18 +89,14 @@ export default function ForgotPasswordScreen() {
             </View>
 
             {message ? (
-              <View style={styles.successBox}>
-                <Text style={styles.successText}>{message}</Text>
-                <TouchableOpacity 
-                  style={styles.haveCodeButton}
-                  onPress={() => router.push('/reset-password')}
-                >
-                  <Text style={styles.haveCodeText}>Already have a reset code? Enter it here</Text>
-                </TouchableOpacity>
-              </View>
+              <AlertBanner
+                type="success"
+                message={message}
+                action={{ label: 'Already have a reset code? Enter it here', onPress: () => router.push('/reset-password') }}
+              />
             ) : null}
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? <AlertBanner type="error" message={error} /> : null}
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -163,13 +160,15 @@ const styles = StyleSheet.create({
     fontSize: 16, 
     color: COLORS.fg 
   },
-  successBox: {
-    backgroundColor: COLORS.tagFreeBg,
-    padding: 14,
-    borderRadius: 12,
+  haveCodeButton: {
+    marginTop: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    backgroundColor: COLORS.primary,
+    borderRadius: 10,
+    alignItems: 'center',
   },
-  successText: { color: COLORS.tagFree, fontSize: 14, textAlign: 'center' },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
+  haveCodeText: { fontSize: 14, fontWeight: '600', color: '#fff' },
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,
@@ -186,13 +185,4 @@ const styles = StyleSheet.create({
   },
   backToLoginText: { fontSize: 15, color: COLORS.muted },
   linkText: { fontSize: 15, color: COLORS.primary, fontWeight: '600' },
-  haveCodeButton: {
-    marginTop: 12,
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    backgroundColor: COLORS.primary,
-    borderRadius: 10,
-    alignItems: 'center',
-  },
-  haveCodeText: { fontSize: 14, fontWeight: '600', color: '#fff' },
 });

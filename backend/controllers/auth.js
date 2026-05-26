@@ -87,6 +87,13 @@ const login = async (req, res) => {
     }
 
     const user = users[0];
+
+    if (!user.password_hash) {
+      return res.status(401).json({
+        error: 'This account uses Google Sign-In. Please sign in with Google.',
+      });
+    }
+
     const isValid = await bcrypt.compare(password, user.password_hash);
     if (!isValid) {
       return res.status(401).json({ error: 'Invalid credentials' });

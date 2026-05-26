@@ -35,6 +35,7 @@ export const COLORS = {
   tagPrivate: '#7C3AED',
   tagPrivateBg: '#EDE9FE',
 
+  success: '#16A34A',
   error: '#EF4444',
 };
 

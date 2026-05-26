@@ -16,6 +16,7 @@ import * as Linking from 'expo-linking';
 import { Lock, Eye, EyeOff, ArrowLeft, KeyRound } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AlertBanner from '@/components/AlertBanner';
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -183,11 +184,9 @@ export default function ResetPasswordScreen() {
               </View>
             </View>
 
-            {/* Error Message */}
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? <AlertBanner type="error" message={error} /> : null}
 
-            {/* Success Message */}
-            {message ? <Text style={styles.successText}>{message}</Text> : null}
+            {message ? <AlertBanner type="success" message={message} /> : null}
 
             {/* Reset Button */}
             <TouchableOpacity
@@ -254,8 +253,6 @@ const styles = StyleSheet.create({
   },
   eyeButton: { padding: 4 },
   hintText: { fontSize: 12, color: COLORS.muted, marginTop: 4 },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
-  successText: { color: COLORS.primary, fontSize: 14, textAlign: 'center' },
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,

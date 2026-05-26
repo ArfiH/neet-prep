@@ -16,6 +16,7 @@ import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import AlertBanner from '@/components/AlertBanner';
 
 export default function RegisterScreen() {
   const router = useRouter();
@@ -167,7 +168,7 @@ export default function RegisterScreen() {
               </View>
             </View>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+            {error ? <AlertBanner type="error" message={error} /> : null}
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
@@ -221,7 +222,6 @@ const styles = StyleSheet.create({
     color: COLORS.fg 
   },
   eyeButton: { padding: 4 },
-  errorText: { color: COLORS.error, fontSize: 14, textAlign: 'center' },
   button: {
     backgroundColor: COLORS.primary,
     paddingVertical: 16,
