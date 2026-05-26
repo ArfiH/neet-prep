@@ -40,4 +40,19 @@ const createNotification = async (userId, title, body) => {
   }
 };
 
-module.exports = { getNotifications, markAllRead, createNotification };
+// POST /api/notifications/:id/read — mark single notification as read
+const markAsRead = async (req, res) => {
+  try {
+    const { id } = req.params;
+    await pool.query(
+      'UPDATE notifications SET is_read = 1 WHERE id = ? AND user_id = ?',
+      [id, req.userId]
+    );
+    res.json({ message: 'Marked as read' });
+  } catch (error) {
+    console.error('Mark read error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { getNotifications, markAllRead, markAsRead, createNotification };

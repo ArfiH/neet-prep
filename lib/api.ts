@@ -194,6 +194,10 @@ class ApiClient {
   async markAllNotificationsRead() {
     return this.request<{ message: string }>('/notifications/read-all', { method: 'POST' });
   }
+
+  async markNotificationRead(id: number) {
+    return this.request<{ message: string }>(`/notifications/${id}/read`, { method: 'POST' });
+  }
 }
 
 export const api = new ApiClient();

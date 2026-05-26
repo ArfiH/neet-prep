@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Bell, CheckCheck } from 'lucide-react-native';
+import { ArrowLeft, Bell, Check, CheckCheck } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { COLORS } from '@/constants/colors';
 import { api } from '@/lib/api';
@@ -55,6 +55,15 @@ export default function NotificationsScreen() {
     }
   }
 
+  async function handleMarkRead(id: number) {
+    try {
+      await api.markNotificationRead(id);
+      setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n)));
+    } catch (e) {
+      // ignore
+    }
+  }
+
   const unreadCount = notifications.filter((n) => !n.is_read).length;
 
   return (
@@ -92,6 +101,11 @@ export default function NotificationsScreen() {
                 <Text style={styles.itemBody}>{n.body}</Text>
                 <Text style={styles.itemTime}>{timeAgo(n.created_at)}</Text>
               </View>
+              {!n.is_read && (
+                <TouchableOpacity style={styles.markBtn} onPress={() => handleMarkRead(n.id)} hitSlop={8}>
+                  <Check size={14} color={COLORS.primary} strokeWidth={2.5} />
+                </TouchableOpacity>
+              )}
             </View>
           ))}
           <View style={{ height: 24 }} />
@@ -122,4 +136,5 @@ const styles = StyleSheet.create({
   itemTitle: { fontSize: 14, fontWeight: '700', color: COLORS.fg, marginBottom: 3 },
   itemBody: { fontSize: 13, color: COLORS.muted, lineHeight: 19 },
   itemTime: { fontSize: 10.5, fontFamily: monoFont, color: COLORS.muted, marginTop: 6 },
+  markBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', flexShrink: 0 },
 });
