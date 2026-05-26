@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -8,6 +8,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import * as Linking from 'expo-linking';
 import { initAdMob } from '@/lib/adService';
+import { isOnboardingComplete } from '@/lib/onboardingStorage';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 const toastConfig = {
@@ -34,12 +35,20 @@ const toastConfig = {
 function AuthRouter() {
   const { loading, initialized, isLoggedIn } = useAuth();
   const router = useRouter();
+  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
   useEffect(() => {
-    if (initialized && !loading && !isLoggedIn) {
+    isOnboardingComplete().then(setOnboarded);
+  }, []);
+
+  useEffect(() => {
+    if (onboarded === null || !initialized || loading) return;
+    if (!onboarded) {
+      router.replace('/onboarding');
+    } else if (!isLoggedIn) {
       router.replace('/login');
     }
-  }, [initialized, loading, isLoggedIn]);
+  }, [onboarded, initialized, loading, isLoggedIn]);
 
   useEffect(() => {
     const handleDeepLink = async (event: { url: string }) => {
@@ -97,11 +106,19 @@ function AuthRouter() {
     return () => subscription.remove();
   }, [router]);
 
-  if (loading || !initialized) {
+  if (loading || onboarded === null || !initialized) {
     return (
       <View style={styles.loading}>
         <ActivityIndicator size="large" color={COLORS.primary} />
       </View>
+    );
+  }
+
+  if (!onboarded) {
+    return (
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="onboarding" />
+      </Stack>
     );
   }
 
