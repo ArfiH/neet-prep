@@ -1,9 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { resolveMx } = require('dns/promises');
 const { OAuth2Client } = require('google-auth-library');
 const { pool } = require('../config/db');
 const { sendVerificationEmail } = require('../services/email');
+const disposableDomains = require('disposable-email-domains');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -29,6 +31,28 @@ const register = async (req, res) => {
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
+    }
+
+    // Layer 1: Format validation
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return res.status(400).json({ error: 'Please enter a valid email address' });
+    }
+
+    const domain = email.split('@')[1].toLowerCase();
+
+    // Layer 2: Disposable email check
+    if (disposableDomains.includes(domain)) {
+      return res.status(400).json({ error: 'Please use a permanent email address' });
+    }
+
+    // Layer 3: MX record check
+    try {
+      const mx = await resolveMx(domain);
+      if (!mx || mx.length === 0) {
+        return res.status(400).json({ error: 'This email domain does not exist' });
+      }
+    } catch {
+      return res.status(400).json({ error: 'This email domain does not exist' });
     }
 
     const [existing] = await pool.query('SELECT id, email_verified FROM users WHERE email = ?', [email]);
