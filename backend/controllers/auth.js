@@ -1,8 +1,11 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
+const { OAuth2Client } = require('google-auth-library');
 const { pool } = require('../config/db');
 const { sendVerificationEmail } = require('../services/email');
+
+const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const issueTokens = (userId, email) => {
   const accessToken = jwt.sign(
@@ -286,4 +289,73 @@ const resendVerification = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getProfile, updateProfile, refresh, verifyEmail, resendVerification };
+const googleAuth = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) return res.status(400).json({ error: 'ID token is required' });
+
+    const ticket = await googleClient.verifyIdToken({
+      idToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name } = payload;
+
+    if (!email) {
+      return res.status(400).json({ error: 'Google account has no email' });
+    }
+
+    const [existing] = await pool.query(
+      'SELECT * FROM users WHERE google_id = ? OR email = ?',
+      [googleId, email]
+    );
+
+    let user;
+    if (existing.length > 0) {
+      user = existing[0];
+      const updates = [];
+      const values = [];
+      if (!user.google_id) {
+        updates.push('google_id = ?');
+        values.push(googleId);
+      }
+      if (!user.email_verified) {
+        updates.push('email_verified = TRUE');
+      }
+      if (updates.length > 0) {
+        values.push(user.id);
+        await pool.query(`UPDATE users SET ${updates.join(', ')} WHERE id = ?`, values);
+      }
+    } else {
+      const [result] = await pool.query(
+        'INSERT INTO users (email, name, google_id, email_verified) VALUES (?, ?, ?, TRUE)',
+        [email, name || null, googleId]
+      );
+      user = { id: result.insertId, email, name: name || null, email_verified: true };
+    }
+
+    const { accessToken, refreshToken } = issueTokens(user.id, user.email);
+
+    await pool.query('UPDATE users SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
+
+    res.json({
+      message: 'Google sign-in successful',
+      token: accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        phone: user.phone || null,
+        neet_rank: user.neet_rank || null,
+        category: user.category || null,
+        email_verified: true,
+      },
+    });
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(401).json({ error: 'Invalid Google token' });
+  }
+};
+
+module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, resendVerification };

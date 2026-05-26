@@ -15,10 +15,11 @@ import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -26,6 +27,20 @@ export default function RegisterScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      await loginWithGoogle();
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      setError(e.message || 'Google sign-in failed');
+    } finally {
+      setGoogleLoading(false);
+    }
+  }
 
   async function handleRegister() {
     if (!name || !email || !password || !confirmPassword) {
@@ -69,6 +84,14 @@ export default function RegisterScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
             <Text style={styles.subtitle}>Join NEET Zyme today</Text>
+          </View>
+
+          <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} label="Sign up with Google" />
+
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
           </View>
 
           <View style={styles.form}>
@@ -208,6 +231,9 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 8 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  dividerText: { marginHorizontal: 12, fontSize: 13, color: COLORS.muted, fontWeight: '500' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

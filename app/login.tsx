@@ -16,10 +16,11 @@ import { Mail, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
+import GoogleSignInButton from '@/components/GoogleSignInButton';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const { login, resendVerification } = useAuth();
+  const { login, loginWithGoogle, resendVerification } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -28,6 +29,7 @@ export default function LoginScreen() {
   const [needsVerification, setNeedsVerification] = useState(false);
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [googleLoading, setGoogleLoading] = useState(false);
 
   async function handleLogin() {
     if (!email || !password) {
@@ -52,6 +54,19 @@ export default function LoginScreen() {
       }
     } finally {
       setLoading(false);
+    }
+  }
+
+  async function handleGoogleSignIn() {
+    setGoogleLoading(true);
+    setError('');
+    try {
+      await loginWithGoogle();
+      router.replace('/(tabs)');
+    } catch (e: any) {
+      setError(e.message || 'Google sign-in failed');
+    } finally {
+      setGoogleLoading(false);
     }
   }
 
@@ -169,6 +184,14 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
+          <View style={styles.dividerRow}>
+            <View style={styles.dividerLine} />
+            <Text style={styles.dividerText}>or</Text>
+            <View style={styles.dividerLine} />
+          </View>
+
+          <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
+
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
             <TouchableOpacity onPress={() => router.push('/register' as any)}>
@@ -224,6 +247,9 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.7 },
   buttonText: { fontSize: 16, fontWeight: '700', color: '#fff' },
+  dividerRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 8 },
+  dividerLine: { flex: 1, height: 1, backgroundColor: COLORS.border },
+  dividerText: { marginHorizontal: 12, fontSize: 13, color: COLORS.muted, fontWeight: '500' },
   footer: {
     flexDirection: 'row',
     justifyContent: 'center',

@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '@/lib/api';
+import { configureGoogleSignIn, signInWithGoogle } from '@/lib/googleAuth';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const USER_DATA_KEY = 'user_data';
@@ -21,6 +22,7 @@ type AuthContextType = {
   initialized: boolean;
   isLoggedIn: boolean;
   login: (email: string, password: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
@@ -39,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     loadStoredAuth();
+    configureGoogleSignIn();
   }, []);
 
   async function loadStoredAuth() {
@@ -66,6 +69,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const isLoggedIn = !!user && !!user.id;
+
+  async function loginWithGoogle() {
+    try {
+      const { idToken } = await signInWithGoogle();
+      const data = await api.googleLogin(idToken);
+      await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
+      setUser(data.user);
+      await api.init();
+    } catch (error: any) {
+      if (error?.code === 'SIGN_IN_CANCELLED') return;
+      throw error;
+    }
+  }
 
   async function login(email: string, password: string) {
     const data = await api.login(email, password);
@@ -120,7 +137,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
+    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, loginWithGoogle, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );
