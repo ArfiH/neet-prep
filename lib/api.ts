@@ -122,7 +122,7 @@ class ApiClient {
     return this.request<any>('/auth/profile', { method: 'GET' });
   }
 
-  async updateProfile(data: { name?: string; neet_rank?: number; category?: string }) {
+  async updateProfile(data: { name?: string; category?: string }) {
     return this.request<any>('/auth/profile', {
       method: 'PUT',
       body: JSON.stringify(data),

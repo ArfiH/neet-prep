@@ -11,7 +11,7 @@ type User = {
   email: string;
   phone: string | null;
   name: string | null;
-  neet_rank: number | null;
+
   category: string | null;
   email_verified: boolean;
 };

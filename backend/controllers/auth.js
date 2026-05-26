@@ -123,7 +123,6 @@ const login = async (req, res) => {
         email: user.email,
         phone: user.phone,
         name: user.name,
-        neet_rank: user.neet_rank,
         category: user.category,
       },
     });
@@ -136,7 +135,7 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, email, phone, name, neet_rank, category, email_verified, created_at FROM users WHERE id = ?',
+      'SELECT id, email, phone, name, category, email_verified, created_at FROM users WHERE id = ?',
       [req.userId]
     );
 
@@ -191,12 +190,11 @@ const refresh = async (req, res) => {
 
 const updateProfile = async (req, res) => {
   try {
-    const { name, neet_rank, category } = req.body;
+    const { name, category } = req.body;
 
     const updates = [];
     const values = [];
     if (name !== undefined && name !== '') { updates.push('name = ?'); values.push(name); }
-    if (neet_rank !== undefined && neet_rank !== '') { updates.push('neet_rank = ?'); values.push(neet_rank); }
     if (category !== undefined && category !== '') { updates.push('category = ?'); values.push(category); }
 
     if (updates.length > 0) {
@@ -354,7 +352,6 @@ const googleAuth = async (req, res) => {
         email: user.email,
         name: user.name,
         phone: user.phone || null,
-        neet_rank: user.neet_rank || null,
         category: user.category || null,
         email_verified: true,
       },

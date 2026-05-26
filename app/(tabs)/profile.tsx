@@ -22,7 +22,7 @@ type ProfileData = {
   id: number;
   email: string;
   name: string | null;
-  neet_rank: number | null;
+
   category: string | null;
   purchases_count: number;
 };
@@ -83,7 +83,6 @@ export default function ProfileScreen() {
 
   const userName = profile?.name || user?.name || 'Guest User';
   const userEmail = profile?.email || user?.email || 'No email';
-  const userRank = profile?.neet_rank || user?.neet_rank || null;
   const userCategory = profile?.category || user?.category || 'General';
   const pdfsOwned = profile?.purchases_count || 0;
 
