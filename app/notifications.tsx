@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Bell, Check, CheckCheck } from 'lucide-react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { COLORS } from '@/constants/colors';
+import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -95,7 +95,7 @@ export default function NotificationsScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.list}>
           {notifications.map((n) => (
             <View key={n.id} style={[styles.item, !n.is_read && styles.itemUnread]}>
-              <View style={[styles.dot, !n.is_read && styles.dotUnread]} />
+              {/* <View style={[styles.dot, !n.is_read && styles.dotUnread]} /> */}
               <View style={styles.itemContent}>
                 <Text style={styles.itemTitle}>{n.title}</Text>
                 <Text style={styles.itemBody}>{n.body}</Text>
@@ -103,7 +103,7 @@ export default function NotificationsScreen() {
               </View>
               {!n.is_read && (
                 <TouchableOpacity style={styles.markBtn} onPress={() => handleMarkRead(n.id)} hitSlop={8}>
-                  <Check size={14} color={COLORS.primary} strokeWidth={2.5} />
+                  <Check size={14} color="#fff" strokeWidth={2.5} />
                 </TouchableOpacity>
               )}
             </View>
@@ -136,5 +136,5 @@ const styles = StyleSheet.create({
   itemTitle: { fontSize: 14, fontWeight: '700', color: COLORS.fg, marginBottom: 3 },
   itemBody: { fontSize: 13, color: COLORS.muted, lineHeight: 19 },
   itemTime: { fontSize: 10.5, fontFamily: monoFont, color: COLORS.muted, marginTop: 6 },
-  markBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', flexShrink: 0 },
+  markBtn: { width: 26, height: 26, borderRadius: 13, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', alignSelf: 'center', flexShrink: 0, ...SHADOWS.sm },
 });
