@@ -5,10 +5,11 @@ import {
   StyleSheet,
   TouchableOpacity,
   ActivityIndicator,
+  TextInput,
   ScrollView,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Mail, ArrowLeft, RefreshCw, CheckCircle2 } from 'lucide-react-native';
+import { Mail, ArrowLeft, RefreshCw, CheckCircle2, ChevronDown, ChevronUp, KeyRound } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
@@ -23,6 +24,9 @@ export default function VerifyEmailScreen() {
   const [error, setError] = useState('');
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
+  const [showManualInput, setShowManualInput] = useState(false);
+  const [manualToken, setManualToken] = useState('');
+  const [manualVerifying, setManualVerifying] = useState(false);
 
   const email = params.email || '';
 
@@ -142,6 +146,61 @@ export default function VerifyEmailScreen() {
           </View>
         </View>
 
+        <TouchableOpacity
+          style={styles.manualToggle}
+          onPress={() => setShowManualInput(!showManualInput)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.manualToggleText}>Didn't get redirected?</Text>
+          {showManualInput ? <ChevronUp size={16} color={COLORS.muted} /> : <ChevronDown size={16} color={COLORS.muted} />}
+        </TouchableOpacity>
+
+        {showManualInput && (
+          <View style={styles.manualInputSection}>
+            <Text style={styles.manualInputLabel}>Paste the verification code from your email</Text>
+            <View style={styles.manualInputRow}>
+              <KeyRound size={16} color={COLORS.muted} strokeWidth={2} />
+              <TextInput
+                style={styles.manualInput}
+                placeholder="Paste verification code here"
+                placeholderTextColor={COLORS.placeholder}
+                value={manualToken}
+                onChangeText={setManualToken}
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <TouchableOpacity
+              style={[styles.manualVerifyBtn, (!manualToken || manualVerifying) && styles.manualVerifyBtnDisabled]}
+              onPress={async () => {
+                if (!manualToken) return;
+                setManualVerifying(true);
+                setError('');
+                try {
+                  await verifyEmail(manualToken);
+                  setStatus('verified');
+                  setTimeout(() => router.replace('/(tabs)'), 2000);
+                } catch (e: any) {
+                  setError(e.message || 'Verification failed');
+                } finally {
+                  setManualVerifying(false);
+                }
+              }}
+              disabled={!manualToken || manualVerifying}
+            >
+              {manualVerifying ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.manualVerifyText}>Verify</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {error && !status ? (
+          <AlertBanner type="error" message={error} />
+        ) : null}
+
         {resendMessage ? (
           <AlertBanner
             type={resendMessage.includes('failed') || resendMessage.includes('error') ? 'error' : 'success'}
@@ -242,6 +301,51 @@ const styles = StyleSheet.create({
 
   loginBtn: { alignItems: 'center', paddingVertical: 16, marginTop: 8 },
   loginBtnText: { fontSize: 15, color: COLORS.muted, fontWeight: '500' },
+
+  manualToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    marginBottom: 16,
+  },
+  manualToggleText: { fontSize: 14, color: COLORS.muted, fontWeight: '500' },
+
+  manualInputSection: {
+    backgroundColor: COLORS.surface,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    marginBottom: 16,
+    gap: 12,
+  },
+  manualInputLabel: { fontSize: 13, color: COLORS.muted, textAlign: 'center' },
+  manualInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: COLORS.stage,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    paddingLeft: 12,
+  },
+  manualInput: {
+    flex: 1,
+    paddingVertical: 14,
+    paddingHorizontal: 10,
+    fontSize: 15,
+    color: COLORS.fg,
+  },
+  manualVerifyBtn: {
+    backgroundColor: COLORS.primary,
+    paddingVertical: 14,
+    borderRadius: 14,
+    alignItems: 'center',
+  },
+  manualVerifyBtnDisabled: { opacity: 0.6 },
+  manualVerifyText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   button: {
     backgroundColor: COLORS.primary,

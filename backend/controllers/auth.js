@@ -236,46 +236,92 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const verifyEmailToken = async (token) => {
+  if (!token) {
+    throw new Error('Verification token is required');
+  }
+
+  const [users] = await pool.query(
+    'SELECT id, email FROM users WHERE verification_token = ? AND email_verified = FALSE',
+    [token]
+  );
+
+  if (users.length === 0) {
+    throw new Error('Invalid or expired verification token');
+  }
+
+  const user = users[0];
+
+  await pool.query(
+    'UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?',
+    [user.id]
+  );
+
+  const { accessToken, refreshToken } = issueTokens(user.id, user.email);
+
+  await pool.query(
+    'UPDATE users SET refresh_token = ? WHERE id = ?',
+    [refreshToken, user.id]
+  );
+
+  return { user, accessToken, refreshToken };
+};
+
 const verifyEmail = async (req, res) => {
   try {
     const { token } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ error: 'Verification token is required' });
-    }
-
-    const [users] = await pool.query(
-      'SELECT id, email FROM users WHERE verification_token = ? AND email_verified = FALSE',
-      [token]
-    );
-
-    if (users.length === 0) {
-      return res.status(400).json({ error: 'Invalid or expired verification token' });
-    }
-
-    const user = users[0];
-
-    await pool.query(
-      'UPDATE users SET email_verified = TRUE, verification_token = NULL WHERE id = ?',
-      [user.id]
-    );
-
-    const { accessToken, refreshToken } = issueTokens(user.id, user.email);
-
-    await pool.query(
-      'UPDATE users SET refresh_token = ? WHERE id = ?',
-      [refreshToken, user.id]
-    );
-
+    const result = await verifyEmailToken(token);
     res.json({
       message: 'Email verified successfully',
-      token: accessToken,
-      refreshToken,
-      user: { id: user.id, email: user.email },
+      token: result.accessToken,
+      refreshToken: result.refreshToken,
+      user: { id: result.user.id, email: result.user.email },
     });
   } catch (error) {
     console.error('Verify email error:', error);
+    if (error.message === 'Verification token is required') {
+      return res.status(400).json({ error: error.message });
+    }
+    if (error.message === 'Invalid or expired verification token') {
+      return res.status(400).json({ error: error.message });
+    }
     res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const verifyEmailWeb = async (req, res) => {
+  try {
+    const { token } = req.query;
+    const result = await verifyEmailToken(token);
+
+    res.setHeader('Content-Type', 'text/html');
+    res.send(`
+      <html><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;padding:20px">
+        <div style="background:#fff;padding:40px;border-radius:20px;max-width:400px;width:100%;text-align:center">
+          <div style="width:56px;height:56px;border-radius:28px;background:#d8f5e5;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+            <span style="font-size:28px">✓</span>
+          </div>
+          <h2 style="color:#1a1d23;margin-bottom:8px">Email Verified!</h2>
+          <p style="color:#5f6570;margin-bottom:24px">Your account is now active. You can log in to NEET Zyme.</p>
+          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zyme</a>
+        </div>
+      </body></html>
+    `);
+  } catch (error) {
+    console.error('Verify email web error:', error);
+    res.setHeader('Content-Type', 'text/html');
+    res.status(400).send(`
+      <html><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;padding:20px">
+        <div style="background:#fff;padding:40px;border-radius:20px;max-width:400px;width:100%;text-align:center">
+          <div style="width:56px;height:56px;border-radius:28px;background:#fee2e2;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+            <span style="font-size:28px;color:#dc2626">✕</span>
+          </div>
+          <h2 style="color:#1a1d23;margin-bottom:8px">Verification Failed</h2>
+          <p style="color:#5f6570;margin-bottom:8px">${error.message}</p>
+          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zyme</a>
+        </div>
+      </body></html>
+    `);
   }
 };
 
@@ -386,4 +432,4 @@ const googleAuth = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, resendVerification };
+module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification };
