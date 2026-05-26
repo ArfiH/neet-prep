@@ -11,11 +11,12 @@ import {
 import { useRouter } from 'expo-router';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp } from 'lucide-react-native';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Bug } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
+import { resetOnboarding } from '@/lib/onboardingStorage';
 
 type ProfileData = {
   id: number;
@@ -248,6 +249,19 @@ export default function ProfileScreen() {
           )}
         </View>
 
+        {__DEV__ && (
+          <TouchableOpacity
+            style={styles.devBtn}
+            onPress={async () => {
+              await resetOnboarding();
+              router.replace('/onboarding');
+            }}
+            activeOpacity={0.7}
+          >
+            <Bug size={14} color={COLORS.muted} strokeWidth={2} />
+            <Text style={styles.devBtnText}>Reset Onboarding</Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.version}>NEET Zyme v1.0.0</Text>
         <View style={{ height: 24 }} />
       </ScrollView>
@@ -295,4 +309,6 @@ const styles = StyleSheet.create({
   signInText: { fontSize: 15, fontWeight: '700', color: '#fff' },
 
   version: { textAlign: 'center', fontSize: 10.5, fontFamily: monoFont, color: COLORS.muted, marginTop: 8 },
+  devBtn: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6, marginTop: 16, paddingVertical: 8 },
+  devBtnText: { fontSize: 12, color: COLORS.muted, fontWeight: '500' },
 });

@@ -18,3 +18,11 @@ export async function markOnboardingComplete(): Promise<void> {
     // silently fail
   }
 }
+
+export async function resetOnboarding(): Promise<void> {
+  try {
+    await AsyncStorage.removeItem(ONBOARDING_KEY);
+  } catch {
+    // silently fail
+  }
+}
