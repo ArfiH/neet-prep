@@ -5,6 +5,11 @@ export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://loca
 const AUTH_TOKEN_KEY = 'auth_token';
 const USER_DATA_KEY = 'user_data';
 
+export function formatPrice(price: number | string): string {
+  const num = Number(price);
+  return Number.isInteger(num) ? String(num) : num.toFixed(2);
+}
+
 class ApiClient {
   private token: string | null = null;
   private onSessionInvalidated: (() => void) | null = null;

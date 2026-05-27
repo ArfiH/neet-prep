@@ -6,7 +6,7 @@ import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag } from 'lucide-react
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
-import { api, API_BASE_URL } from '@/lib/api';
+import { api, API_BASE_URL, formatPrice } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -190,7 +190,7 @@ export default function PDFDetailScreen() {
   const glyphColor = getGlyphColor(pdf.subject);
   const gradientEnd = darkenColor(glyphColor, 40);
   const subjectLabel = pdf.subject.toUpperCase();
-  const availLabel = pdf.is_free ? 'FREE' : `₹${pdf.price}`;
+  const availLabel = pdf.is_free ? 'FREE' : `₹${formatPrice(pdf.price)}`;
 
   const titleParts = pdf.title.split(' — ');
   const titleMain = titleParts[0];
@@ -269,7 +269,7 @@ export default function PDFDetailScreen() {
           ) : (
             <>
               <ShoppingCart size={16} color="#fff" strokeWidth={2} />
-              <Text style={styles.startBtnText}>Buy Now — ₹{pdf.price}</Text>
+              <Text style={styles.startBtnText}>Buy Now — ₹{formatPrice(pdf.price)}</Text>
             </>
           )}
         </TouchableOpacity>

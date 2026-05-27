@@ -4,7 +4,7 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { BookOpen } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
-import { api } from '@/lib/api';
+import { api, formatPrice } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 type PDF = {
@@ -191,7 +191,7 @@ export default function PDFsScreen() {
                 ) : purchasedIds.has(String(item.id)) ? (
                   <Text style={styles.ownedTag}>OWNED</Text>
                 ) : (
-                  <Text style={styles.paidTag}>₹{item.price}</Text>
+                  <Text style={styles.paidTag}>₹{formatPrice(item.price)}</Text>
                 )}
               </TouchableOpacity>
             ))}

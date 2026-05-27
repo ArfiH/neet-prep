@@ -3,7 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
-import { api } from '@/lib/api';
+import { api, formatPrice } from '@/lib/api';
 import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -167,7 +167,7 @@ export default function HomeScreen() {
               <Text style={styles.featuredTitle} numberOfLines={1}>{item.title}</Text>
               <Text style={styles.featuredMeta} numberOfLines={1}>{item.downloads.toLocaleString()} views</Text>
               <View style={[styles.featuredBadge, item.is_free ? styles.badgeFree : purchasedIds.has(String(item.id)) ? styles.badgeOwned : styles.badgePaid]}>
-                <Text style={styles.badgeText}>{item.is_free ? 'FREE' : purchasedIds.has(String(item.id)) ? 'OWNED' : `₹${item.price}`}</Text>
+                <Text style={styles.badgeText}>{item.is_free ? 'FREE' : purchasedIds.has(String(item.id)) ? 'OWNED' : `₹${formatPrice(item.price)}`}</Text>
               </View>
             </TouchableOpacity>
           ))}
