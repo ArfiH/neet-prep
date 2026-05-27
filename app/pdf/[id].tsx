@@ -62,6 +62,15 @@ export default function PDFDetailScreen() {
     }, [])
   );
 
+  useFocusEffect(
+    useCallback(() => {
+      if (!id) return;
+      api.checkPdfPurchase(id).then(({ hasPurchased }) => {
+        setPurchased(hasPurchased);
+      }).catch(() => {});
+    }, [id])
+  );
+
   async function fetchPdf() {
     try {
       const data = await api.getPdfById(id);
