@@ -45,6 +45,11 @@ class ApiClient {
 
     if (!response.ok) {
       const err = new Error(data.error || 'Request failed') as any;
+      if (data.error === 'SESSION_INVALIDATED') {
+        err.sessionInvalidated = true;
+        this.token = null;
+        await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+      }
       if (data.needs_verification) err.needs_verification = true;
       if (data.email) err.email = data.email;
       throw err;

@@ -9,15 +9,15 @@ const disposableDomains = require('disposable-email-domains');
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
-const issueTokens = (userId, email) => {
+const issueTokens = (userId, email, tokenVersion = 0) => {
   const accessToken = jwt.sign(
-    { userId, email },
+    { userId, email, tokenVersion },
     process.env.JWT_SECRET,
     { expiresIn: process.env.JWT_EXPIRES_IN }
   );
 
   const refreshToken = jwt.sign(
-    { userId },
+    { userId, tokenVersion },
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: '30d' }
   );
@@ -131,11 +131,14 @@ const login = async (req, res) => {
       });
     }
 
-    const { accessToken, refreshToken } = issueTokens(user.id, user.email);
+    const [vRows] = await pool.query('SELECT token_version FROM users WHERE id = ?', [user.id]);
+    const tokenVersion = (vRows[0]?.token_version || 0) + 1;
+
+    const { accessToken, refreshToken } = issueTokens(user.id, user.email, tokenVersion);
 
     await pool.query(
-      'UPDATE users SET refresh_token = ? WHERE id = ?',
-      [refreshToken, user.id]
+      'UPDATE users SET token_version = ?, refresh_token = ? WHERE id = ?',
+      [tokenVersion, refreshToken, user.id]
     );
 
     res.json({
@@ -197,8 +200,11 @@ const refresh = async (req, res) => {
       return res.status(401).json({ error: 'Invalid refresh token' });
     }
 
+    const [vRows] = await pool.query('SELECT token_version FROM users WHERE id = ?', [users[0].id]);
+    const tokenVersion = vRows[0]?.token_version || 0;
+
     const accessToken = jwt.sign(
-      { userId: users[0].id, email: users[0].email },
+      { userId: users[0].id, email: users[0].email, tokenVersion },
       process.env.JWT_SECRET,
       { expiresIn: process.env.JWT_EXPIRES_IN }
     );
@@ -257,11 +263,14 @@ const verifyEmailToken = async (token) => {
     [user.id]
   );
 
-  const { accessToken, refreshToken } = issueTokens(user.id, user.email);
+  const [vRows] = await pool.query('SELECT token_version FROM users WHERE id = ?', [user.id]);
+  const tokenVersion = (vRows[0]?.token_version || 0) + 1;
+
+  const { accessToken, refreshToken } = issueTokens(user.id, user.email, tokenVersion);
 
   await pool.query(
-    'UPDATE users SET refresh_token = ? WHERE id = ?',
-    [refreshToken, user.id]
+    'UPDATE users SET token_version = ?, refresh_token = ? WHERE id = ?',
+    [tokenVersion, refreshToken, user.id]
   );
 
   return { user, accessToken, refreshToken };
@@ -409,9 +418,12 @@ const googleAuth = async (req, res) => {
       user = { id: result.insertId, email, name: name || null, email_verified: true };
     }
 
-    const { accessToken, refreshToken } = issueTokens(user.id, user.email);
+    const [vRows] = await pool.query('SELECT token_version FROM users WHERE id = ?', [user.id]);
+    const tokenVersion = (vRows[0]?.token_version || 0) + 1;
 
-    await pool.query('UPDATE users SET refresh_token = ? WHERE id = ?', [refreshToken, user.id]);
+    const { accessToken, refreshToken } = issueTokens(user.id, user.email, tokenVersion);
+
+    await pool.query('UPDATE users SET token_version = ?, refresh_token = ? WHERE id = ?', [tokenVersion, refreshToken, user.id]);
 
     res.json({
       message: 'Google sign-in successful',
