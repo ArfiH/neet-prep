@@ -133,4 +133,55 @@ const sendVerificationEmail = async (email, verificationToken) => {
   return transporter.sendMail(mailOptions);
 };
 
-module.exports = { sendPasswordResetEmail, sendVerificationEmail };
+const sendInvoiceEmail = async (email, pdfTitle, amount, paymentId, orderId) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: 'Your NEET Zyme Purchase — Invoice',
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px }
+    .header { background: #16A34A; color: white; padding: 20px; text-align: center }
+    .content { padding: 30px 20px; background: #f9f9f9 }
+    .item { background: #fff; border-radius: 8px; padding: 20px; margin: 20px 0 }
+    .label { color: #666; font-size: 13px }
+    .value { font-size: 16px; font-weight: bold; margin-bottom: 12px }
+    .total { font-size: 20px; color: #16A34A; font-weight: bold; text-align: right }
+    .footer { padding: 20px; text-align: center; font-size: 12px; color: #666 }
+    hr { border: none; border-top: 1px solid #e0e0e0; margin: 15px 0 }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>NEET Zyme</h1></div>
+    <div class="content">
+      <h2>Purchase Confirmation</h2>
+      <p>Thank you for your purchase! You now have access to your PDF.</p>
+      <div class="item">
+        <div class="label">Item</div>
+        <div class="value">${pdfTitle}</div>
+        <hr>
+        <div class="label">Payment ID</div>
+        <div class="value">${paymentId}</div>
+        <div class="label">Order ID</div>
+        <div class="value">${orderId}</div>
+        <hr>
+        <div class="total">Amount Paid: ₹${amount}</div>
+      </div>
+      <p>You can view this PDF anytime from your library in the NEET Zyme app.</p>
+      <p style="color: #666; font-size: 14px;">Happy studying!</p>
+    </div>
+    <div class="footer">
+      <p>NEET Zyme - Your NEET Preparation Companion</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  };
+  return transporter.sendMail(mailOptions).catch(() => {});
+};
+
+module.exports = { sendPasswordResetEmail, sendVerificationEmail, sendInvoiceEmail };

@@ -227,9 +227,22 @@ const paymentCallback = async (req, res) => {
     );
     if (purchases.length > 0) {
       const { user_id, pdf_id } = purchases[0];
-      const [pdfs] = await pool.query('SELECT title FROM pdfs WHERE id = ?', [pdf_id]);
-      const pdfTitle = pdfs[0]?.title || 'a PDF';
+      const [pdfRows] = await pool.query('SELECT title, price FROM pdfs WHERE id = ?', [pdf_id]);
+      const pdfTitle = pdfRows[0]?.title || 'a PDF';
+      const pdfPrice = pdfRows[0]?.price || 0;
       createNotification(user_id, 'Purchase Successful', `You now have access to "${pdfTitle}". Happy studying!`);
+
+      const [users] = await pool.query('SELECT email FROM users WHERE id = ?', [user_id]);
+      if (users.length > 0) {
+        const { sendInvoiceEmail } = require('../services/email');
+        sendInvoiceEmail(
+          users[0].email,
+          pdfTitle,
+          Number(pdfPrice).toFixed(2),
+          razorpay_payment_id,
+          razorpay_order_id
+        );
+      }
     }
 
     res.redirect(302, `myapp://razorpay-callback?success=true&pdfId=${pdfId}`);
