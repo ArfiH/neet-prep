@@ -21,8 +21,8 @@ type AuthContextType = {
   loading: boolean;
   initialized: boolean;
   isLoggedIn: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  loginWithGoogle: () => Promise<void>;
+  login: (email: string, password: string, forceLogin?: boolean) => Promise<void>;
+  loginWithGoogle: (forceLogin?: boolean) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
@@ -42,6 +42,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     loadStoredAuth();
     configureGoogleSignIn();
+    api.setSessionInvalidatedHandler(() => {
+      setUser(null);
+    });
   }, []);
 
   async function loadStoredAuth() {
@@ -70,10 +73,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const isLoggedIn = !!user && !!user.id;
 
-  async function loginWithGoogle() {
+  async function loginWithGoogle(forceLogin = false) {
     try {
       const { idToken } = await signInWithGoogle();
-      const data = await api.googleLogin(idToken);
+      const data = await api.googleLogin(idToken, forceLogin);
       await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
       await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
       setUser(data.user);
@@ -84,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  async function login(email: string, password: string) {
-    const data = await api.login(email, password);
+  async function login(email: string, password: string, forceLogin = false) {
+    const data = await api.login(email, password, forceLogin);
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
@@ -97,7 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function logout() {
-    await api.logout();
+    try {
+      await api.logout();
+    } catch {}
     setUser(null);
   }
 

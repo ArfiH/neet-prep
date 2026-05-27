@@ -99,7 +99,7 @@ const register = async (req, res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, forceLogin } = req.body;
 
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
@@ -123,6 +123,14 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    const hasActiveSession = user.has_active_session ? true : false;
+    if (hasActiveSession && !forceLogin) {
+      return res.status(409).json({
+        error: 'ACTIVE_SESSION_EXISTS',
+        message: 'Another device is already signed in to this account. Continue? That device will be logged out.',
+      });
+    }
+
     if (!user.email_verified) {
       return res.status(403).json({
         error: 'Please verify your email before logging in',
@@ -137,7 +145,7 @@ const login = async (req, res) => {
     const { accessToken, refreshToken } = issueTokens(user.id, user.email, tokenVersion);
 
     await pool.query(
-      'UPDATE users SET token_version = ?, refresh_token = ? WHERE id = ?',
+      'UPDATE users SET token_version = ?, has_active_session = TRUE, refresh_token = ? WHERE id = ?',
       [tokenVersion, refreshToken, user.id]
     );
 
@@ -375,7 +383,7 @@ const resendVerification = async (req, res) => {
 
 const googleAuth = async (req, res) => {
   try {
-    const { idToken } = req.body;
+    const { idToken, forceLogin } = req.body;
     if (!idToken) return res.status(400).json({ error: 'ID token is required' });
 
     const ticket = await googleClient.verifyIdToken({
@@ -418,12 +426,20 @@ const googleAuth = async (req, res) => {
       user = { id: result.insertId, email, name: name || null, email_verified: true };
     }
 
+    const hasActiveSession = user.has_active_session ? true : false;
+    if (hasActiveSession && !forceLogin) {
+      return res.status(409).json({
+        error: 'ACTIVE_SESSION_EXISTS',
+        message: 'Another device is already signed in to this account. Continue? That device will be logged out.',
+      });
+    }
+
     const [vRows] = await pool.query('SELECT token_version FROM users WHERE id = ?', [user.id]);
     const tokenVersion = (vRows[0]?.token_version || 0) + 1;
 
     const { accessToken, refreshToken } = issueTokens(user.id, user.email, tokenVersion);
 
-    await pool.query('UPDATE users SET token_version = ?, refresh_token = ? WHERE id = ?', [tokenVersion, refreshToken, user.id]);
+    await pool.query('UPDATE users SET token_version = ?, has_active_session = TRUE, refresh_token = ? WHERE id = ?', [tokenVersion, refreshToken, user.id]);
 
     res.json({
       message: 'Google sign-in successful',
@@ -444,4 +460,17 @@ const googleAuth = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification };
+const logout = async (req, res) => {
+  try {
+    await pool.query(
+      'UPDATE users SET has_active_session = FALSE, token_version = token_version + 1 WHERE id = ?',
+      [req.userId]
+    );
+    res.json({ message: 'Logged out successfully' });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout };

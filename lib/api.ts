@@ -7,6 +7,11 @@ const USER_DATA_KEY = 'user_data';
 
 class ApiClient {
   private token: string | null = null;
+  private onSessionInvalidated: (() => void) | null = null;
+
+  setSessionInvalidatedHandler(handler: () => void) {
+    this.onSessionInvalidated = handler;
+  }
 
   async init() {
     this.token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
@@ -47,8 +52,11 @@ class ApiClient {
       const err = new Error(data.error || 'Request failed') as any;
       if (data.error === 'SESSION_INVALIDATED') {
         err.sessionInvalidated = true;
+        err.message = 'Your session has expired. You were logged in on another device.';
         this.token = null;
         await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
+        await AsyncStorage.setItem('session_invalidated', 'true');
+        this.onSessionInvalidated?.();
       }
       if (data.needs_verification) err.needs_verification = true;
       if (data.email) err.email = data.email;
@@ -67,10 +75,10 @@ class ApiClient {
     return data;
   }
 
-  async login(email: string, password: string) {
+  async login(email: string, password: string, forceLogin = false) {
     const data = await this.request<{ token: string; user: any }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, forceLogin }),
     });
     this.token = data.token;
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
@@ -78,10 +86,10 @@ class ApiClient {
     return data;
   }
 
-  async googleLogin(idToken: string) {
+  async googleLogin(idToken: string, forceLogin = false) {
     const data = await this.request<{ token: string; user: any }>('/auth/google', {
       method: 'POST',
-      body: JSON.stringify({ idToken }),
+      body: JSON.stringify({ idToken, forceLogin }),
     });
     this.token = data.token;
     await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
@@ -90,6 +98,9 @@ class ApiClient {
   }
 
   async logout() {
+    try {
+      await this.request<{ message: string }>('/auth/logout', { method: 'POST' });
+    } catch {}
     this.token = null;
     await AsyncStorage.removeItem(AUTH_TOKEN_KEY);
     await AsyncStorage.removeItem(USER_DATA_KEY);

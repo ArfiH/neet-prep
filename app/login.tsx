@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,15 +9,16 @@ import {
   KeyboardAvoidingView,
   Platform,
   ScrollView,
-  Alert,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter, Link, Router } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, RefreshCw } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, RefreshCw, LogOut } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
 import AlertBanner from '@/components/AlertBanner';
+import CustomAlert from '@/components/CustomAlert';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -31,8 +32,20 @@ export default function LoginScreen() {
   const [resending, setResending] = useState(false);
   const [resendMessage, setResendMessage] = useState('');
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [sessionInvalidated, setSessionInvalidated] = useState(false);
+  const [showConflictAlert, setShowConflictAlert] = useState(false);
+  const [conflictEmail, setConflictEmail] = useState('');
 
-  async function handleLogin() {
+  useEffect(() => {
+    AsyncStorage.getItem('session_invalidated').then(val => {
+      if (val === 'true') {
+        setSessionInvalidated(true);
+        AsyncStorage.removeItem('session_invalidated');
+      }
+    });
+  }, []);
+
+  async function handleLogin(force = false) {
     if (!email || !password) {
       setError('Please fill in all fields');
       return;
@@ -44,10 +57,17 @@ export default function LoginScreen() {
     setResendMessage('');
 
     try {
-      await login(email, password);
+      if (force) {
+        await login(email, password, true);
+      } else {
+        await login(email, password);
+      }
       router.replace('/(tabs)');
     } catch (e: any) {
-      if (e.needs_verification) {
+      if (e.message === 'ACTIVE_SESSION_EXISTS') {
+        setConflictEmail(email);
+        setShowConflictAlert(true);
+      } else if (e.needs_verification) {
         setNeedsVerification(true);
         setError('Please verify your email before logging in');
       } else {
@@ -58,14 +78,22 @@ export default function LoginScreen() {
     }
   }
 
-  async function handleGoogleSignIn() {
+  async function handleGoogleSignIn(force = false) {
     setGoogleLoading(true);
     setError('');
     try {
-      await loginWithGoogle();
+      if (force) {
+        await loginWithGoogle(true);
+      } else {
+        await loginWithGoogle();
+      }
       router.replace('/(tabs)');
     } catch (e: any) {
-      setError(e.message || 'Google sign-in failed');
+      if (e.message === 'ACTIVE_SESSION_EXISTS') {
+        setShowConflictAlert(true);
+      } else {
+        setError(e.message || 'Google sign-in failed');
+      }
     } finally {
       setGoogleLoading(false);
     }
@@ -99,6 +127,15 @@ export default function LoginScreen() {
             <Text style={styles.title}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
           </View>
+
+          {sessionInvalidated && (
+            <View style={{ marginBottom: 16 }}>
+              <AlertBanner
+                type="info"
+                message="A new login was detected on another device. You have been logged out. Please sign in again to continue."
+              />
+            </View>
+          )}
 
           <View style={styles.form}>
             <View style={styles.inputGroup}>
@@ -156,7 +193,7 @@ export default function LoginScreen() {
                 message={error}
                 action={
                   error === 'This account uses Google Sign-In. Please sign in with Google.'
-                    ? { label: 'Sign in with Google', onPress: handleGoogleSignIn }
+                    ? { label: 'Sign in with Google', onPress: () => handleGoogleSignIn() }
                     : undefined
                 }
               />
@@ -185,7 +222,7 @@ export default function LoginScreen() {
 
             <TouchableOpacity
               style={[styles.button, loading && styles.buttonDisabled]}
-              onPress={handleLogin}
+              onPress={() => handleLogin()}
               disabled={loading}
             >
               {loading ? (
@@ -202,7 +239,7 @@ export default function LoginScreen() {
             <View style={styles.dividerLine} />
           </View>
 
-          <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} />
+          <GoogleSignInButton onPress={() => handleGoogleSignIn()} loading={googleLoading} />
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>
@@ -212,6 +249,25 @@ export default function LoginScreen() {
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <CustomAlert
+        visible={showConflictAlert}
+        title="Already Signed In"
+        message="Another device is already signed in to this account. Continue? That device will be logged out."
+        type="destructive"
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setShowConflictAlert(false) },
+          { text: 'Continue', style: 'destructive', onPress: () => {
+            setShowConflictAlert(false);
+            if (conflictEmail) {
+              handleLogin(true);
+            } else {
+              handleGoogleSignIn(true);
+            }
+          }},
+        ]}
+        onDismiss={() => setShowConflictAlert(false)}
+      />
     </SafeAreaView>
   );
 }
