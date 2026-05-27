@@ -9,6 +9,8 @@ const collegeRoutes = require('./routes/colleges');
 const passwordResetRoutes = require('./routes/passwordReset');
 const redirectRoutes = require('./routes/redirect');
 const notificationRoutes = require('./routes/notifications');
+const adminRoutes = require('./routes/admin');
+const path = require('path');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -24,6 +26,14 @@ app.use('/api/colleges', collegeRoutes);
 app.use('/api/auth', passwordResetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api', redirectRoutes);
+app.use('/api/admin', adminRoutes);
+
+// Serve admin React SPA
+const adminDist = path.join(__dirname, 'admin-dist');
+app.use('/admin', express.static(adminDist));
+app.get('/admin/*', (req, res) => {
+  res.sendFile(path.join(adminDist, 'index.html'));
+});
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -159,6 +159,7 @@ const login = async (req, res) => {
         phone: user.phone,
         name: user.name,
         category: user.category,
+        role: user.role || 'user',
       },
     });
   } catch (error) {
@@ -170,7 +171,7 @@ const login = async (req, res) => {
 const getProfile = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, email, phone, name, category, email_verified, created_at FROM users WHERE id = ?',
+      'SELECT id, email, phone, name, category, role, email_verified, created_at FROM users WHERE id = ?',
       [req.userId]
     );
 
@@ -451,6 +452,7 @@ const googleAuth = async (req, res) => {
         name: user.name,
         phone: user.phone || null,
         category: user.category || null,
+        role: user.role || 'user',
         email_verified: true,
       },
     });

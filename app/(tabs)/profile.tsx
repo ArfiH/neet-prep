@@ -8,6 +8,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import CustomAlert from '@/components/CustomAlert';
@@ -31,7 +32,7 @@ const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const [profile, setProfile] = useState<ProfileData | null>(null);
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -224,6 +225,29 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           </View>
         </View>
+
+        {/* Admin Panel */}
+        {isAdmin && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>ADMIN</Text>
+            <View style={styles.menuCard}>
+              <TouchableOpacity style={styles.menuItem} activeOpacity={0.75}
+                onPress={async () => {
+                  const url = await api.getAdminUrl();
+                  if (url) WebBrowser.openAuthSessionAsync(url);
+                }}>
+                <View style={styles.menuIcon}>
+                  <Shield size={18} color={COLORS.primaryDark} strokeWidth={2} />
+                </View>
+                <View style={styles.menuText}>
+                  <Text style={styles.menuLabel}>Admin Panel</Text>
+                  <Text style={styles.menuSublabel}>Manage PDFs, colleges & users</Text>
+                </View>
+                <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
 
         {/* Sign In / Sign Out */}
         <View style={styles.section}>

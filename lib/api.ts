@@ -230,6 +230,13 @@ class ApiClient {
   async markNotificationRead(id: number) {
     return this.request<{ message: string }>(`/notifications/${id}/read`, { method: 'POST' });
   }
+
+  async getAdminUrl(path: string = ''): Promise<string | null> {
+    const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) return null;
+    const base = API_BASE_URL.replace('/api', '');
+    return `${base}/admin${path}?token=${token}`;
+  }
 }
 
 export const api = new ApiClient();

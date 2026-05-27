@@ -11,8 +11,8 @@ type User = {
   email: string;
   phone: string | null;
   name: string | null;
-
   category: string | null;
+  role?: string;
   email_verified: boolean;
 };
 
@@ -21,6 +21,7 @@ type AuthContextType = {
   loading: boolean;
   initialized: boolean;
   isLoggedIn: boolean;
+  isAdmin: boolean;
   login: (email: string, password: string, forceLogin?: boolean) => Promise<void>;
   loginWithGoogle: (forceLogin?: boolean) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
@@ -72,6 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   const isLoggedIn = !!user && !!user.id;
+  const isAdmin = user?.role === 'admin';
 
   async function loginWithGoogle(forceLogin = false) {
     try {
@@ -142,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, login, loginWithGoogle, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
+    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, isAdmin, login, loginWithGoogle, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );
