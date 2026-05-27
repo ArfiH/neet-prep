@@ -1,0 +1,168 @@
+:root {
+  --color-paper: oklch(99% 0.005 90);
+  --color-paper-2: oklch(96% 0.008 90);
+  --color-paper-3: oklch(93% 0.01 90);
+  --color-text: oklch(20% 0.02 250);
+  --color-text-2: oklch(45% 0.025 250);
+  --color-text-3: oklch(62% 0.03 250);
+  --color-border: oklch(88% 0.015 90);
+  --color-accent: oklch(58% 0.18 155);
+  --color-accent-hover: oklch(52% 0.2 155);
+  --color-accent-muted: oklch(90% 0.06 155);
+  --color-danger: oklch(52% 0.2 25);
+  --color-danger-muted: oklch(90% 0.08 25);
+  --color-success: oklch(58% 0.18 155);
+  --color-success-muted: oklch(90% 0.06 155);
+  --color-warning: oklch(72% 0.15 80);
+  --color-warning-muted: oklch(94% 0.06 80);
+  --color-focus: oklch(55% 0.2 240);
+  --font-ui: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 14px;
+  --radius-xl: 20px;
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 6%);
+  --shadow-md: 0 4px 12px oklch(0% 0 0 / 8%);
+  --shadow-lg: 0 8px 30px oklch(0% 0 0 / 10%);
+  --shadow-xl: 0 16px 48px oklch(0% 0 0 / 12%);
+  --transition-fast: 150ms ease;
+  --transition-normal: 250ms ease;
+  --max-width: 1200px;
+}
+
+*,
+*::before,
+*::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: var(--font-ui);
+  background: var(--color-paper);
+  color: var(--color-text);
+  line-height: 1.6;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#root {
+  min-height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+input, textarea, select, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+a { color: var(--color-accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+img { max-width: 100%; height: auto; }
+
+pre, code {
+  font-family: var(--font-mono);
+}
+
+/* Utility classes */
+.container {
+  width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 var(--space-6);
+}
+
+@media (max-width: 640px) {
+  .container { padding: 0 var(--space-4); }
+}
+
+/* Button base */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  font-size: 15px;
+  cursor: pointer;
+  transition: background var(--transition-fast), opacity var(--transition-fast);
+  text-decoration: none;
+}
+
+.btn-primary {
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+}
+.btn-primary:hover {
+  background: var(--color-accent-hover);
+  text-decoration: none;
+}
+
+.btn-outline {
+  background: transparent;
+  color: var(--color-text);
+  border: 1.5px solid var(--color-border);
+}
+.btn-outline:hover {
+  background: var(--color-paper-2);
+  text-decoration: none;
+}
+
+.btn-lg { padding: var(--space-4) var(--space-8); font-size: 16px; border-radius: var(--radius-lg); }
+
+/* Pill badges */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+}
+.pill-free { background: var(--color-success-muted); color: var(--color-success); }
+.pill-paid { background: oklch(94% 0.06 80); color: oklch(52% 0.15 80); }
+.pill-owne { background: var(--color-accent-muted); color: var(--color-accent); }
+
+/* Card base */
+.card {
+  background: var(--color-paper-2);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  transition: box-shadow var(--transition-fast), transform var(--transition-fast);
+}
+.card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+/* Loading spinner */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-border);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

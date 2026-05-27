@@ -1,0 +1,256 @@
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import * as api from '../lib/api';
+
+const CATEGORIES = ['General', 'OBC', 'SC', 'ST'];
+const STATES = [
+  'All India', 'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa',
+  'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu & Kashmir', 'Jharkhand',
+  'Karnataka', 'Kerala', 'Madhya Pradesh', 'Maharashtra', 'Manipur', 'Meghalaya',
+  'Mizoram', 'Nagaland', 'Odisha', 'Punjab', 'Rajasthan', 'Sikkim', 'Tamil Nadu',
+  'Telangana', 'Tripura', 'Uttar Pradesh', 'Uttarakhand', 'West Bengal', 'Puducherry',
+];
+
+type Prediction = {
+  id: string;
+  name: string;
+  state: string;
+  city: string;
+  type: string;
+  cutoff_rank: number;
+  probability: number;
+  rank_diff: number;
+};
+
+function probColor(p: number): string {
+  if (p >= 0.9) return 'var(--color-success)';
+  if (p >= 0.6) return 'var(--color-warning)';
+  return 'var(--color-danger)';
+}
+
+function probLabel(p: number): string {
+  if (p >= 0.9) return 'High';
+  if (p >= 0.6) return 'Medium';
+  return 'Low';
+}
+
+export default function Colleges() {
+  const [rank, setRank] = useState('');
+  const [category, setCategory] = useState('General');
+  const [state, setState] = useState('All India');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [results, setResults] = useState<Prediction[]>([]);
+  const [predicted, setPredicted] = useState(false);
+  const [showStateDropdown, setShowStateDropdown] = useState(false);
+  const [stateSearch, setStateSearch] = useState('');
+
+  const filteredStates = STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
+
+  const handlePredict = async () => {
+    const rankNum = parseInt(rank);
+    if (!rank || isNaN(rankNum) || rankNum <= 0) return;
+
+    setLoading(true);
+    setError('');
+    setPredicted(false);
+
+    try {
+      const data = await api.predictColleges(rankNum, category, state);
+      setResults(data || []);
+    } catch (err: any) {
+      api.logError('Colleges.predict', err);
+      setError(err.message || 'Failed to get predictions.');
+    } finally {
+      setLoading(false);
+      setPredicted(true);
+    }
+  };
+
+  return (
+    <div style={{ padding: 'var(--space-8) 0' }}>
+      <div className="container" style={{ maxWidth: 800 }}>
+        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>College Predictor</h1>
+        <p style={{ fontSize: 15, color: 'var(--color-text-2)', marginBottom: 'var(--space-6)' }}>
+          Find colleges based on your NEET rank and category.
+        </p>
+
+        {/* Form Card */}
+        <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
+            {/* Rank */}
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>NEET Rank</label>
+              <input
+                type="number"
+                min="1"
+                placeholder="e.g. 15000"
+                value={rank}
+                onChange={e => setRank(e.target.value)}
+                style={{
+                  width: '100%', padding: 'var(--space-3) var(--space-4)',
+                  border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                  fontSize: 16, fontWeight: 700, outline: 'none',
+                  color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                }}
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>Category</label>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                {CATEGORIES.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setCategory(cat)}
+                    style={{
+                      flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
+                      border: '1.5px solid var(--color-border)',
+                      background: category === cat ? 'var(--color-accent)' : 'var(--color-paper-2)',
+                      color: category === cat ? '#fff' : 'var(--color-text-2)',
+                      fontWeight: 600, fontSize: 13, cursor: 'pointer', minWidth: 60,
+                    }}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* State */}
+          <div style={{ marginBottom: 'var(--space-5)' }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>State Preference</label>
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowStateDropdown(!showStateDropdown)}
+                style={{
+                  width: '100%', padding: 'var(--space-3) var(--space-4)',
+                  border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                  fontSize: 15, textAlign: 'left', cursor: 'pointer',
+                  background: 'var(--color-paper-2)', color: 'var(--color-text)',
+                  display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                }}
+              >
+                {state}
+                <span style={{ transform: showStateDropdown ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s' }}>&#9660;</span>
+              </button>
+              {showStateDropdown && (
+                <div style={{
+                  position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                  background: 'var(--color-paper)', border: '1px solid var(--color-border)',
+                  borderRadius: 'var(--radius-md)', marginTop: 4, boxShadow: 'var(--shadow-lg)',
+                  maxHeight: 260, overflow: 'hidden', display: 'flex', flexDirection: 'column',
+                }}>
+                  <input
+                    type="text"
+                    placeholder="Search state..."
+                    value={stateSearch}
+                    onChange={e => setStateSearch(e.target.value)}
+                    style={{
+                      padding: '10px 14px', border: 'none', borderBottom: '1px solid var(--color-border)',
+                      fontSize: 13, outline: 'none', background: 'transparent', color: 'var(--color-text)',
+                    }}
+                  />
+                  <div style={{ overflow: 'auto', flex: 1 }}>
+                    {filteredStates.map(s => (
+                      <button
+                        key={s}
+                        onClick={() => { setState(s); setShowStateDropdown(false); setStateSearch(''); }}
+                        style={{
+                          display: 'block', width: '100%', padding: '10px 14px',
+                          background: state === s ? 'var(--color-accent-muted)' : 'transparent',
+                          border: 'none', textAlign: 'left', cursor: 'pointer',
+                          fontSize: 14, color: 'var(--color-text)',
+                        }}
+                      >
+                        {s}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Predict Button */}
+          <button
+            onClick={handlePredict}
+            disabled={!rank || loading}
+            className="btn btn-primary btn-lg"
+            style={{ width: '100%', opacity: !rank || loading ? 0.6 : 1 }}
+          >
+            {loading ? (
+              <><div className="spinner" style={{ width: 20, height: 20, borderWidth: 2, borderTopColor: '#fff' }} /> Predicting...</>
+            ) : (
+              'Predict My Colleges'
+            )}
+          </button>
+        </div>
+
+        {/* Error */}
+        {error && (
+          <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--color-danger-muted)', color: 'var(--color-danger)', borderRadius: 'var(--radius-md)', fontSize: 14, marginBottom: 'var(--space-4)' }}>
+            {error}
+          </div>
+        )}
+
+        {/* Results */}
+        {predicted && (
+          <div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-4)' }}>
+              {results.length} College{results.length !== 1 ? 's' : ''} Found
+            </h2>
+
+            {results.length === 0 ? (
+              <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
+                <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 4 }}>No colleges found</p>
+                <p style={{ fontSize: 14, color: 'var(--color-text-3)' }}>Try selecting "All India" or a different category.</p>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+                {results.map((college) => (
+                  <Link
+                    key={college.id}
+                    to={`/colleges/${college.id}`}
+                    style={{ textDecoration: 'none', color: 'inherit' }}
+                  >
+                    <div className="card" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-4)' }}>
+                      <div style={{ flex: 1 }}>
+                        <h3 style={{ fontSize: 15, fontWeight: 700, color: 'var(--color-text)', marginBottom: 2 }}>
+                          {college.name}
+                        </h3>
+                        <p style={{ fontSize: 13, color: 'var(--color-text-2)', marginBottom: 'var(--space-2)' }}>
+                          {college.city ? `${college.city}, ` : ''}{college.state}
+                        </p>
+                        <div style={{ display: 'flex', gap: 'var(--space-3)', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <span style={{
+                            fontSize: 12, fontWeight: 600, color: probColor(college.probability),
+                            background: `${probColor(college.probability)}18`,
+                            padding: '3px 10px', borderRadius: 999,
+                          }}>
+                            {probLabel(college.probability)} Chance
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
+                            Cutoff: {college.cutoff_rank.toLocaleString()}
+                          </span>
+                          <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
+                            {college.rank_diff >= 0
+                              ? `+${college.rank_diff.toLocaleString()} margin`
+                              : `${Math.abs(college.rank_diff).toLocaleString()} above cutoff`}
+                          </span>
+                        </div>
+                      </div>
+                      <span style={{ color: 'var(--color-text-3)', fontSize: 18 }}>&rarr;</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
