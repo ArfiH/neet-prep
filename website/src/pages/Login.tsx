@@ -12,16 +12,20 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showConflict, setShowConflict] = useState(false);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  async function handleLogin(force = false) {
     setLoading(true);
     setError('');
 
     try {
-      await login(email, password);
+      await login(email, password, force);
       navigate(from, { replace: true });
     } catch (err: any) {
+      if (err?.active_session_exists) {
+        setShowConflict(true);
+        return;
+      }
       if (err?.needs_verification) {
         navigate('/verify-email', { state: { email: err.email } });
         return;
@@ -30,6 +34,11 @@ export default function Login() {
     } finally {
       setLoading(false);
     }
+  }
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault();
+    handleLogin(false);
   };
 
   return (
@@ -101,6 +110,59 @@ export default function Login() {
           <Link to="/register" style={{ fontWeight: 600 }}>Sign up</Link>
         </p>
       </div>
+
+      {/* Active Session Conflict Dialog */}
+      {showConflict && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.45)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+            padding: 'var(--space-4)',
+          }}
+          onClick={() => setShowConflict(false)}
+        >
+          <div
+            style={{
+              background: 'var(--color-paper)', borderRadius: 'var(--radius-lg)',
+              padding: 'var(--space-6)', maxWidth: 400, width: '100%',
+              boxShadow: 'var(--shadow-xl)',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{
+              width: 48, height: 48, borderRadius: 24,
+              background: 'var(--color-warning-muted)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              marginBottom: 'var(--space-4)',
+            }}>
+              <span style={{ fontSize: 24 }}>⚠</span>
+            </div>
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>
+              Active Session Detected
+            </h3>
+            <p style={{ fontSize: 14, color: 'var(--color-text-2)', lineHeight: 1.6, marginBottom: 'var(--space-5)' }}>
+              You are already logged in on another device. Continuing will sign out from the other device.
+            </p>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', justifyContent: 'flex-end' }}>
+              <button
+                onClick={() => setShowConflict(false)}
+                className="btn btn-outline"
+                style={{ padding: '10px 24px', fontSize: 14 }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => { setShowConflict(false); handleLogin(true); }}
+                className="btn btn-primary"
+                style={{ padding: '10px 24px', fontSize: 14 }}
+              >
+                Continue
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

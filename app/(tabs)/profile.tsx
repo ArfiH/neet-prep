@@ -85,7 +85,7 @@ export default function ProfileScreen() {
   const userName = profile?.name || user?.name || 'Guest User';
   const userEmail = profile?.email || user?.email || 'No email';
   const userCategory = profile?.category || user?.category || 'General';
-  const pdfsOwned = profile?.purchases_count || 0;
+  // const pdfsOwned = profile?.purchases_count || 0;
 
   if (loading) {
     return (
@@ -107,11 +107,6 @@ export default function ProfileScreen() {
           <Text style={styles.profileEmail}>{userEmail}</Text>
 
           {/* <View style={styles.statsRow}>
-            <View style={styles.statItem}>
-              <Text style={styles.statValue}>{pdfsOwned}</Text>
-              <Text style={styles.statLabel}>PDFs Owned</Text>
-            </View>
-            
             <View style={styles.statDivider} />
             <View style={styles.statItem}>
               <Text style={styles.statValue}>8</Text>
@@ -148,10 +143,10 @@ export default function ProfileScreen() {
               <View style={styles.menuIcon}>
                 <BookOpen size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>
-              <View style={styles.menuText}>
+              {/* <View style={styles.menuText}>
                 <Text style={styles.menuLabel}>My Purchased PDFs</Text>
                 <Text style={styles.menuSublabel}>{pdfsOwned} PDFs in library</Text>
-              </View>
+              </View> */}
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/colleges' as any)} activeOpacity={0.75}>

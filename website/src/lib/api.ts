@@ -66,6 +66,9 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
       if (data.needs_verification) {
         throw { needs_verification: true, email: data.email, message: data.error || 'Email not verified' };
       }
+      if (data.error === 'ACTIVE_SESSION_EXISTS') {
+        throw { active_session_exists: true, message: data.message || data.error };
+      }
       throw new Error(data.error || `Request failed (${res.status})`);
     }
 
