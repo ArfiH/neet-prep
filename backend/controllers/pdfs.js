@@ -1,4 +1,5 @@
 const crypto = require('crypto');
+const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const Razorpay = require('razorpay');
 const { pool } = require('../config/db');
 
@@ -295,4 +296,83 @@ const getPdfViewUrl = async (req, res) => {
   }
 };
 
-module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl };
+const serveWatermarkedPdf = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.userId;
+    const userEmail = req.user?.email || 'user@neetzyme.com';
+
+    const [pdfs] = await pool.query('SELECT * FROM pdfs WHERE id = ?', [id]);
+    if (pdfs.length === 0) {
+      return res.status(404).json({ error: 'PDF not found' });
+    }
+
+    const pdf = parsePdf(pdfs[0]);
+
+    if (!pdf.file_url) {
+      return res.status(400).json({ error: 'PDF file not available' });
+    }
+
+    if (!pdf.is_free) {
+      const [purchases] = await pool.query(
+        'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ? AND status = "completed"',
+        [userId, id]
+      );
+      if (purchases.length === 0) {
+        return res.status(403).json({ error: 'Please purchase this PDF to view it' });
+      }
+    }
+
+    // Fetch PDF bytes from B2
+    let pdfBytes;
+    if (pdf.file_url.includes('backblazeb2.com')) {
+      const auth = await getAuth();
+      const response = await fetch(pdf.file_url, {
+        headers: { Authorization: auth.authorizationToken },
+      });
+      if (!response.ok) {
+        return res.status(502).json({ error: 'Failed to fetch PDF from storage' });
+      }
+      pdfBytes = Buffer.from(await response.arrayBuffer());
+    } else {
+      const response = await fetch(pdf.file_url);
+      if (!response.ok) {
+        return res.status(502).json({ error: 'Failed to fetch PDF' });
+      }
+      pdfBytes = Buffer.from(await response.arrayBuffer());
+    }
+
+    // Watermark the PDF
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+    const pages = pdfDoc.getPages();
+    const today = new Date().toLocaleDateString('en-IN');
+    const watermarkText = `${userEmail} • NEET Zyme • ${today}`;
+    const fontSize = 11;
+
+    for (const page of pages) {
+      const { width, height } = page.getSize();
+      page.drawText(watermarkText, {
+        x: width * 0.12,
+        y: height * 0.48,
+        size: fontSize,
+        font,
+        color: rgb(0.65, 0.65, 0.65),
+        opacity: 0.35,
+        rotate: { type: 'degrees', angle: 35 },
+      });
+    }
+
+    const watermarkedBytes = await pdfDoc.save();
+    const fileName = pdf.title.replace(/"/g, '').replace(/[<>:;"'/\\?*]/g, '_');
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `inline; filename="${fileName}.pdf"`);
+    res.status(200).send(Buffer.from(watermarkedBytes));
+  } catch (error) {
+    console.error('Watermarked PDF error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl, serveWatermarkedPdf };

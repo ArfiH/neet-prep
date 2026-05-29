@@ -1,15 +1,16 @@
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
-import { useAuth } from '../lib/auth';
 import * as api from '../lib/api';
 
-pdfjs.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjs.version}/pdf.worker.min.mjs`;
+const API_BASE = import.meta.env.VITE_API_BASE || '/api';
+
+pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export default function PDFViewer() {
   const { id } = useParams<{ id: string }>();
-  const { user } = useAuth();
-  const [viewData, setViewData] = useState<{ url: string; headers: Record<string, string>; is_free: boolean; title: string } | null>(null);
+  const [pdfBytes, setPdfBytes] = useState<ArrayBuffer | null>(null);
+  const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [numPages, setNumPages] = useState(0);
@@ -19,20 +20,34 @@ export default function PDFViewer() {
 
   useEffect(() => {
     if (!id) return;
-    api.getPdfViewUrl(id)
-      .then(data => setViewData(data))
-      .catch(err => { api.logError('PDFViewer.fetchUrl', err); setError('Failed to load PDF.'); })
-      .finally(() => setLoading(false));
+    const token = localStorage.getItem('neet_zyme_token');
+    fetch(`${API_BASE}/pdfs/${id}/watermarked`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+    })
+      .then(res => {
+        if (res.status === 403) throw new Error('Please purchase this PDF to view it');
+        if (res.status === 404) throw new Error('PDF not found');
+        if (!res.ok) throw new Error(`Failed to load PDF (${res.status})`);
+        const contentDisp = res.headers.get('content-disposition') || '';
+        const match = contentDisp.match(/filename="?(.+?)"?$/);
+        if (match) setTitle(match[1].replace(/\.pdf$/i, ''));
+        return res.arrayBuffer();
+      })
+      .then(buffer => { setPdfBytes(buffer); setLoading(false); })
+      .catch(err => {
+        api.logError('PDFViewer', err);
+        setError(err.message || 'Failed to load the PDF.');
+        setLoading(false);
+      });
   }, [id]);
 
-  const pdfFile = viewData
-    ? { url: viewData.url, httpHeaders: Object.keys(viewData.headers).length > 0 ? viewData.headers : undefined }
-    : null;
+  const pdfSource = useMemo(
+    () => pdfBytes ? { data: pdfBytes } : null,
+    [pdfBytes]
+  );
 
-  const watermarkText = user?.email || 'NEET ZYME';
-
-  const onDocumentLoadSuccess = useCallback(({ numPages }: { numPages: number }) => {
-    setNumPages(numPages);
+  const onDocumentLoadSuccess = useCallback(({ numPages: n }: { numPages: number }) => {
+    setNumPages(n);
   }, []);
 
   const onDocumentLoadError = useCallback((err: Error) => {
@@ -55,11 +70,11 @@ export default function PDFViewer() {
     );
   }
 
-  if (error || !viewData) {
+  if (error) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ color: 'var(--color-danger)', fontSize: 16, marginBottom: 'var(--space-4)' }}>{error || 'PDF unavailable'}</p>
+          <p style={{ color: 'var(--color-danger)', fontSize: 16, marginBottom: 'var(--space-4)' }}>{error}</p>
           <Link to="/pdfs" className="btn btn-outline">Back to PDFs</Link>
         </div>
       </div>
@@ -68,7 +83,6 @@ export default function PDFViewer() {
 
   return (
     <div style={{ background: '#1a1a1a', minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-      {/* Top bar */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
         padding: 'var(--space-3) var(--space-5)', background: '#222',
@@ -76,7 +90,7 @@ export default function PDFViewer() {
       }}>
         <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14 }}>&larr; Back</Link>
         <span style={{ color: '#ccc', fontSize: 14, fontWeight: 600, flex: 1, textAlign: 'center' }}>
-          {viewData.title}
+          {title}
         </span>
         {numPages > 0 && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
@@ -84,7 +98,7 @@ export default function PDFViewer() {
               onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
               disabled={currentPage <= 1}
               style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
-            >&minus;</button>
+            >&lt;</button>
             <span style={{ color: '#999', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
               {currentPage} / {numPages}
             </span>
@@ -92,7 +106,7 @@ export default function PDFViewer() {
               onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
               disabled={currentPage >= numPages}
               style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
-            >+</button>
+            >&gt;</button>
           </div>
         )}
         <div style={{ display: 'flex', gap: 4 }}>
@@ -110,7 +124,6 @@ export default function PDFViewer() {
         </div>
       </div>
 
-      {/* PDF Container */}
       <div
         ref={containerRef}
         onContextMenu={handleContextMenu}
@@ -120,15 +133,13 @@ export default function PDFViewer() {
         }}
       >
         <style>{`
-          @media print {
-            .pdf-viewer-wrapper { display: none !important; }
-          }
+          @media print { .pdf-viewer-wrapper { display: none !important; } }
           .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; }
         `}</style>
 
         <div className="pdf-viewer-wrapper" style={{ position: 'relative', maxWidth: '100%' }}>
           <Document
-            file={pdfFile}
+            file={pdfSource}
             onLoadSuccess={onDocumentLoadSuccess}
             onLoadError={onDocumentLoadError}
             loading={
@@ -144,25 +155,6 @@ export default function PDFViewer() {
                 renderTextLayer={false}
                 renderAnnotationLayer={false}
               />
-              {/* Watermark overlay */}
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                pointerEvents: 'none', userSelect: 'none',
-                overflow: 'hidden',
-              }}>
-                <span style={{
-                  fontSize: 28, fontWeight: 600,
-                  color: 'rgba(255, 0, 0, 0.12)',
-                  transform: 'rotate(-45deg)',
-                  whiteSpace: 'nowrap',
-                  fontFamily: 'var(--font-mono)',
-                  letterSpacing: '0.1em',
-                }}>
-                  {watermarkText}
-                </span>
-              </div>
-              {/* Anti-capture transparent overlay */}
               <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
                 pointerEvents: 'none', userSelect: 'none',
