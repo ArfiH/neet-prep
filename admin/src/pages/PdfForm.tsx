@@ -12,7 +12,7 @@ export default function PdfForm() {
   const [form, setForm] = useState({
     title: '', description: '', subject: 'Biology', author: '',
     price: '0', is_free: true, cover_image_url: '', file_url: '',
-    pages_count: '0', tags: '', details: '',
+    pages_count: '0', tags: '', details: '', class: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -32,6 +32,7 @@ export default function PdfForm() {
           pages_count: String(pdf.pages_count || 0),
           tags: Array.isArray(pdf.tags) ? pdf.tags.join(', ') : '',
           details: Array.isArray(pdf.details) ? pdf.details.join('\n') : '',
+          class: pdf.class || '',
         });
       }).catch(e => setError(e.message));
     }
@@ -85,8 +86,12 @@ export default function PdfForm() {
               {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
           </FormField>
-          <FormField label="Author">
-            <input value={form.author} onChange={e => update('author', e.target.value)} style={inputStyle} placeholder="Author name" />
+          <FormField label="Class">
+            <select value={form.class} onChange={e => update('class', e.target.value)} style={inputStyle}>
+              <option value="">None</option>
+              <option value="11">11th</option>
+              <option value="12">12th</option>
+            </select>
           </FormField>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>

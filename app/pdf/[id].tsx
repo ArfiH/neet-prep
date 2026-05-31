@@ -25,6 +25,7 @@ type PDF = {
   file_url: string;
   details: string[];
   category: string | null;
+  class: string | null;
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -215,7 +216,7 @@ export default function PDFDetailScreen() {
           style={styles.pdfHero}
         >
           <View style={styles.badge}>
-            <Text style={styles.badgeText}>— {subjectLabel}{pdf.category ? ` · ${pdf.category}` : ''} · {availLabel}</Text>
+            <Text style={styles.badgeText}>— {subjectLabel}{pdf['class'] ? ` · ${pdf['class']}` : ''}{pdf.category ? ` · ${pdf.category}` : ''} · {availLabel}</Text>
           </View>
           <Text style={styles.heroTitle}>
             {titleMain}

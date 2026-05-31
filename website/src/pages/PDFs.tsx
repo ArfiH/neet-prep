@@ -12,6 +12,7 @@ type PDF = {
   is_free: boolean;
   pages_count: number;
   category: string | null;
+  class: string | null;
 };
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
@@ -24,6 +25,7 @@ export default function PDFs() {
   const [error, setError] = useState('');
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const [activeClass, setActiveClass] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
 
@@ -51,11 +53,16 @@ export default function PDFs() {
     () => [...new Set(pdfs.map(p => p.category).filter(Boolean))] as string[],
     [pdfs]
   );
+  const uniqueClasses = useMemo(
+    () => [...new Set(pdfs.map(p => p['class']).filter(Boolean))] as string[],
+    [pdfs]
+  );
 
   const filtered = useMemo(() => {
     let result = [...pdfs];
 
     if (activeSubject) result = result.filter(p => p.subject === activeSubject);
+    if (activeClass) result = result.filter(p => p['class'] === activeClass);
     if (activeFilter === 'free') result = result.filter(p => p.is_free);
     if (activeFilter === 'paid') result = result.filter(p => !p.is_free);
     if (searchQuery.trim()) {
@@ -66,7 +73,7 @@ export default function PDFs() {
       );
     }
     return result;
-  }, [pdfs, activeSubject, activeFilter, searchQuery]);
+  }, [pdfs, activeSubject, activeClass, activeFilter, searchQuery]);
 
   return (
     <div style={{ padding: 'var(--space-8) 0' }}>
@@ -119,6 +126,26 @@ export default function PDFs() {
               }}>
                 {cat}
               </span>
+            ))}
+          </div>
+        )}
+
+        {/* Class Filter */}
+        {uniqueClasses.length > 0 && (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
+            {uniqueClasses.map(cls => (
+              <button
+                key={cls}
+                onClick={() => setActiveClass(activeClass === cls ? null : cls)}
+                style={{
+                  padding: '8px 18px', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--color-border)',
+                  background: activeClass === cls ? 'var(--color-accent)' : 'var(--color-paper-2)',
+                  color: activeClass === cls ? '#fff' : 'var(--color-text-2)',
+                  fontWeight: 600, fontSize: 13, cursor: 'pointer',
+                }}
+              >
+                Class {cls}
+              </button>
             ))}
           </div>
         )}

@@ -11,6 +11,7 @@ type PDF = {
   is_free: boolean;
   pages_count: number;
   category: string | null;
+  class: string | null;
 };
 
 export default function Purchased() {

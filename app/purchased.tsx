@@ -15,6 +15,7 @@ type PDF = {
   price: number;
   is_free: boolean;
   pages_count: number;
+  class: string | null;
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });

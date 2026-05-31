@@ -14,6 +14,7 @@ type PDF = {
   file_url: string;
   details: string[];
   category: string | null;
+  class: string | null;
   downloads: number;
 };
 
@@ -170,6 +171,12 @@ export default function PDFDetail() {
           }}>
             <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)', alignItems: 'center' }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: subjectColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{pdf.subject}</span>
+              {pdf['class'] && (
+                <>
+                  <span style={{ color: 'var(--color-text-3)' }}>&middot;</span>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>{pdf['class']}</span>
+                </>
+              )}
               {pdf.category && (
                 <>
                   <span style={{ color: 'var(--color-text-3)' }}>&middot;</span>

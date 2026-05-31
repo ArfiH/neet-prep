@@ -9,6 +9,7 @@ type PDF = {
   is_free: boolean;
   pages_count: number;
   category: string | null;
+  class: string | null;
 };
 
 const SUBJECT_COLORS: Record<string, { bg: string; glyph: string; letter: string }> = {
@@ -53,7 +54,7 @@ export default function PDFCard({ pdf, owned = false }: { pdf: PDF; owned?: bool
         {/* Content */}
         <div style={{ padding: 'var(--space-4) var(--space-5)', flex: 1, display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
           <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--color-text-3)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            {pdf.subject}{pdf.category ? ` · ${pdf.category}` : ''}
+            {pdf.subject}{pdf['class'] ? ` · ${pdf['class']}` : ''}{pdf.category ? ` · ${pdf.category}` : ''}
           </div>
           <h3 style={{ fontSize: 15, fontWeight: 700, lineHeight: 1.4, color: 'var(--color-text)', margin: 0 }}>
             {pdf.title}

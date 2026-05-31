@@ -16,6 +16,7 @@ type PDF = {
   is_free: boolean;
   pages_count: number;
   category: string | null;
+  class: string | null;
 };
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
@@ -40,6 +41,7 @@ export default function PDFsScreen() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [activeClass, setActiveClass] = useState<string | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -54,7 +56,7 @@ export default function PDFsScreen() {
 
   useEffect(() => {
     applyFilters();
-  }, [pdfs, activeSubject, activeFilter, activeCategory]);
+  }, [pdfs, activeSubject, activeFilter, activeCategory, activeClass]);
 
   async function fetchPdfs() {
     setLoading(true);
@@ -88,6 +90,9 @@ export default function PDFsScreen() {
     if (activeCategory) {
       result = result.filter((p) => p.category === activeCategory);
     }
+    if (activeClass) {
+      result = result.filter((p) => p['class'] === activeClass);
+    }
     if (activeFilter === 'free') result = result.filter((p) => p.is_free);
     if (activeFilter === 'paid') result = result.filter((p) => !p.is_free);
     setFiltered(result);
@@ -97,6 +102,7 @@ export default function PDFsScreen() {
   const paidCount = filtered.filter((p) => !p.is_free).length;
   const uniqueSubjects = getUniqueSubjects(pdfs);
   const uniqueCategories = [...new Set(pdfs.map((p) => p.category).filter(Boolean))] as string[];
+  const uniqueClasses = [...new Set(pdfs.map((p) => p['class']).filter(Boolean))] as string[];
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -142,6 +148,24 @@ export default function PDFsScreen() {
                 </TouchableOpacity>
               ))}
             </ScrollView>
+          </>
+        )}
+
+        {/* Class Bar */}
+        {uniqueClasses.length > 0 && (
+          <>
+            <Text style={styles.barLabel}>Class</Text>
+            <View style={styles.subjectBar}>
+              {uniqueClasses.map((cls) => (
+                <TouchableOpacity
+                  key={cls}
+                  style={[styles.subj, activeClass === cls && styles.subjActive]}
+                  onPress={() => setActiveClass(activeClass === cls ? null : cls)}
+                >
+                  <Text style={[styles.subjText, activeClass === cls && styles.subjTextActive]} numberOfLines={1}>Class {cls}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </>
         )}
 
