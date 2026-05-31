@@ -1,5 +1,4 @@
 const crypto = require('crypto');
-const { PDFDocument, rgb, StandardFonts } = require('pdf-lib');
 const Razorpay = require('razorpay');
 const { pool } = require('../config/db');
 
@@ -296,11 +295,10 @@ const getPdfViewUrl = async (req, res) => {
   }
 };
 
-const serveWatermarkedPdf = async (req, res) => {
+const serveRawPdf = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.userId;
-    const userEmail = req.user?.email || 'user@neetzyme.com';
 
     const [pdfs] = await pool.query('SELECT * FROM pdfs WHERE id = ?', [id]);
     if (pdfs.length === 0) {
@@ -323,7 +321,7 @@ const serveWatermarkedPdf = async (req, res) => {
       }
     }
 
-    // Fetch PDF bytes from B2
+    // Fetch raw PDF bytes from B2 (no server-side watermarking — watermark is applied via CSS on frontend)
     let pdfBytes;
     if (pdf.file_url.includes('backblazeb2.com')) {
       const auth = await getAuth();
@@ -342,37 +340,15 @@ const serveWatermarkedPdf = async (req, res) => {
       pdfBytes = Buffer.from(await response.arrayBuffer());
     }
 
-    // Watermark the PDF
-    const pdfDoc = await PDFDocument.load(pdfBytes);
-    const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
-    const pages = pdfDoc.getPages();
-    const today = new Date().toLocaleDateString('en-IN');
-    const watermarkText = `${userEmail} • NEET Zyme • ${today}`;
-    const fontSize = 11;
-
-    for (const page of pages) {
-      const { width, height } = page.getSize();
-      page.drawText(watermarkText, {
-        x: width * 0.12,
-        y: height * 0.48,
-        size: fontSize,
-        font,
-        color: rgb(0.65, 0.65, 0.65),
-        opacity: 0.35,
-        rotate: { type: 'degrees', angle: 35 },
-      });
-    }
-
-    const watermarkedBytes = await pdfDoc.save();
     const fileName = pdf.title.replace(/"/g, '').replace(/[<>:;"'/\\?*]/g, '_');
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `inline; filename="${fileName}.pdf"`);
-    res.status(200).send(Buffer.from(watermarkedBytes));
+    res.status(200).send(pdfBytes);
   } catch (error) {
-    console.error('Watermarked PDF error:', error);
+    console.error('Serve PDF error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
 
-module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl, serveWatermarkedPdf };
+module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl, serveRawPdf };

@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
 import * as api from '../lib/api';
+import { useAuth } from '../lib/auth';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -9,6 +10,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 export default function PDFViewer() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [pdfBytes, setPdfBytes] = useState<ArrayBuffer | null>(null);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
@@ -17,6 +19,8 @@ export default function PDFViewer() {
   const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.0);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  const watermarkText = user?.email;
 
   useEffect(() => {
     if (!id) return;
@@ -129,7 +133,7 @@ export default function PDFViewer() {
         onContextMenu={handleContextMenu}
         style={{
           flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          padding: 'var(--space-4)', position: 'relative', userSelect: 'none', WebkitUserDrag: 'none',
+          padding: 'var(--space-4)', position: 'relative', userSelect: 'none',
         }}
       >
         <style>{`
@@ -157,9 +161,20 @@ export default function PDFViewer() {
               />
               <div style={{
                 position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                display: 'flex', justifyContent: 'center', alignItems: 'center',
                 pointerEvents: 'none', userSelect: 'none',
-                WebkitUserDrag: 'none',
-              }} />
+              }}>
+                <span style={{
+                  fontFamily: 'Arial, sans-serif',
+                  fontSize: 40,
+                  fontWeight: 'bold',
+                  color: 'rgba(255, 0, 0, 0.15)',
+                  transform: 'rotate(-45deg)',
+                  whiteSpace: 'nowrap',
+                }}>
+                  {watermarkText}
+                </span>
+              </div>
             </div>
           </Document>
         </div>
