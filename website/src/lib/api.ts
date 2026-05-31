@@ -229,7 +229,11 @@ export async function markAllNotificationsRead(): Promise<any> {
 // ---------------------------------------------------------------------------
 export function formatPrice(price: number | string): string {
   const num = Number(price);
-  if (Number.isInteger(num) && num >= 0) return num.toString();
+  if (isNaN(num)) {
+    console.warn('Invalid price:', price);
+    return '0';
+  }
+    if (Number.isInteger(num) && num >= 0) return num.toString();
   return num.toFixed(2);
 }
 

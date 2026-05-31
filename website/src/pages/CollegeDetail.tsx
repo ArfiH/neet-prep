@@ -60,7 +60,7 @@ export default function CollegeDetail() {
     );
   }
 
-  const fees = college.tuition_fee_annual + college.hostel_fee_annual + college.other_charges;
+  const fees = (college.tuition_fee_annual || 0) + (college.hostel_fee_annual || 0) + (college.other_charges || 0);
 
   return (
     <div style={{ padding: 'var(--space-8) 0' }}>
@@ -108,7 +108,7 @@ export default function CollegeDetail() {
               <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Total Seats</div>
             </div>
             <div className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>₹{api.formatPrice(fees)}</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>{fees > 0 ? `₹${api.formatPrice(fees)}` : '—'}</div>
               <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Annual Fees</div>
             </div>
             <div className="card" style={{ textAlign: 'center' }}>
@@ -140,7 +140,8 @@ export default function CollegeDetail() {
                 )}
                 <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 'var(--space-1)', paddingTop: 'var(--space-2)', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 600 }}>Total</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{api.formatPrice(fees)}</span>
+                  {/* <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{api.formatPrice(fees)}</span> */}
+                  <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{fees.toFixed(2)}</span>
                 </div>
               </div>
             </div>

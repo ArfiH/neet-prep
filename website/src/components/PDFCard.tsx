@@ -24,11 +24,9 @@ function getSubjectStyle(subject: string) {
   return SUBJECT_COLORS[subject] || { bg: '#f0faf0', glyph: '#2ea86e', letter: subject.charAt(0) };
 }
 
-const GRADE_COLORS = ['#2ea86e', '#4a7dff', '#d4a017', '#e05a5a', '#8b5cf6', '#e67e22'];
-
 export default function PDFCard({ pdf, owned = false }: { pdf: PDF; owned?: boolean }) {
   const style = getSubjectStyle(pdf.subject);
-  const borderColor = GRADE_COLORS[Math.floor(Math.random() * GRADE_COLORS.length)];
+  const borderColor = style.glyph;
 
   const priceTag = pdf.is_free
     ? <span className="pill pill-free">FREE</span>

@@ -168,7 +168,7 @@ export default function PDFViewer() {
                   fontFamily: 'Arial, sans-serif',
                   fontSize: 40,
                   fontWeight: 'bold',
-                  color: 'rgba(255, 0, 0, 0.15)',
+                  color: 'rgba(0, 0, 0, 0.15)',
                   transform: 'rotate(-45deg)',
                   whiteSpace: 'nowrap',
                 }}>
