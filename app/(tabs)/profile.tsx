@@ -143,10 +143,10 @@ export default function ProfileScreen() {
               <View style={styles.menuIcon}>
                 <BookOpen size={18} color={COLORS.primaryDark} strokeWidth={2} />
               </View>
-              {/* <View style={styles.menuText}>
+              <View style={styles.menuText}>
                 <Text style={styles.menuLabel}>My Purchased PDFs</Text>
-                <Text style={styles.menuSublabel}>{pdfsOwned} PDFs in library</Text>
-              </View> */}
+                {/* <Text style={styles.menuSublabel}>{pdfsOwned} PDFs in library</Text> */}
+              </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
             <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => router.push('/downloaded' as any)} activeOpacity={0.75}>

@@ -26,8 +26,14 @@ export default function PDFs() {
   const [activeSubject, setActiveSubject] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<'all' | 'free' | 'paid'>('all');
   const [activeClass, setActiveClass] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [expandedSections, setExpandedSections] = useState<Set<string>>(
+    () => new Set(['subject', 'category', 'class', 'availability'])
+  );
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+
+  const hasActiveFilters = activeSubject !== null || activeCategory !== null || activeClass !== null || activeFilter !== 'all' || searchQuery.trim() !== '';
 
   useEffect(() => {
     Promise.all([
@@ -62,6 +68,7 @@ export default function PDFs() {
     let result = [...pdfs];
 
     if (activeSubject) result = result.filter(p => p.subject === activeSubject);
+    if (activeCategory) result = result.filter(p => p.category === activeCategory);
     if (activeClass) result = result.filter(p => p['class'] === activeClass);
     if (activeFilter === 'free') result = result.filter(p => p.is_free);
     if (activeFilter === 'paid') result = result.filter(p => !p.is_free);
@@ -73,15 +80,83 @@ export default function PDFs() {
       );
     }
     return result;
-  }, [pdfs, activeSubject, activeClass, activeFilter, searchQuery]);
+  }, [pdfs, activeSubject, activeCategory, activeClass, activeFilter, searchQuery]);
+
+  const sectionBtnStyle = (isActive: boolean): React.CSSProperties => ({
+    padding: '8px 18px',
+    borderRadius: 'var(--radius-md)',
+    border: '1.5px solid var(--color-border)',
+    background: isActive ? 'var(--color-accent)' : 'var(--color-paper-2)',
+    color: isActive ? '#fff' : 'var(--color-text-2)',
+    fontWeight: 600,
+    fontSize: 13,
+    cursor: 'pointer',
+    transition: 'background var(--transition-fast), color var(--transition-fast)',
+  });
+
+  const chipBtnStyle = (isActive: boolean): React.CSSProperties => ({
+    padding: '6px 16px',
+    borderRadius: 999,
+    border: '1.5px solid var(--color-border)',
+    background: isActive ? 'var(--color-accent)' : 'var(--color-paper-2)',
+    color: isActive ? '#fff' : 'var(--color-text-2)',
+    fontWeight: 600,
+    fontSize: 12,
+    cursor: 'pointer',
+    transition: 'background var(--transition-fast), color var(--transition-fast)',
+  });
+
+  const sectionHeaderStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 6,
+    padding: '6px 0',
+    border: 'none',
+    background: 'none',
+    cursor: 'pointer',
+    fontSize: 12,
+    fontWeight: 700,
+    fontFamily: 'var(--font-mono)',
+    color: 'var(--color-text-3)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.04em',
+  };
+
+  const sectionArrowStyle: React.CSSProperties = {
+    fontSize: 10,
+    lineHeight: 1,
+    transition: 'transform var(--transition-fast)',
+  };
+
+  function toggleSection(section: string) {
+    setExpandedSections(prev => {
+      const next = new Set(prev);
+      if (next.has(section)) next.delete(section);
+      else next.add(section);
+      return next;
+    });
+  }
+
+  function clearFilters() {
+    setActiveSubject(null);
+    setActiveCategory(null);
+    setActiveClass(null);
+    setActiveFilter('all');
+    setSearchQuery('');
+  }
 
   return (
     <div style={{ padding: 'var(--space-8) 0' }}>
       <div className="container">
+        {/* Header */}
         <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Browse PDFs</h1>
-        <p style={{ fontSize: 15, color: 'var(--color-text-2)', marginBottom: 'var(--space-6)' }}>
-          {pdfs.length} PDF{pdfs.length !== 1 ? 's' : ''} available
-        </p>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
+          <p style={{ fontSize: 15, color: 'var(--color-text-2)' }}>
+            {filtered.length} of {pdfs.length} PDF{pdfs.length !== 1 ? 's' : ''}
+          </p>
+          <span className="pill pill-free">{filtered.filter(p => p.is_free).length} FREE</span>
+          <span className="pill pill-paid">{filtered.filter(p => !p.is_free).length} PAID</span>
+        </div>
 
         {/* Search */}
         <input
@@ -97,76 +172,105 @@ export default function PDFs() {
           }}
         />
 
-        {/* Subject Filter */}
-        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
-          {uniqueSubjects.map(subj => (
-            <button
-              key={subj}
-              onClick={() => setActiveSubject(activeSubject === subj ? null : subj)}
-              style={{
-                padding: '8px 18px', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--color-border)',
-                background: activeSubject === subj ? 'var(--color-accent)' : 'var(--color-paper-2)',
-                color: activeSubject === subj ? '#fff' : 'var(--color-text-2)',
-                fontWeight: 600, fontSize: 13, cursor: 'pointer',
-              }}
-            >
-              {subj}
-            </button>
-          ))}
-        </div>
-
-        {/* Category Filter */}
-        {uniqueCategories.length > 0 && (
+        {/* Subject Section */}
+        <button onClick={() => toggleSection('subject')} style={sectionHeaderStyle}>
+          <span style={sectionArrowStyle}>{expandedSections.has('subject') ? '▾' : '▸'}</span>
+          Subject
+        </button>
+        {expandedSections.has('subject') && (
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
-            {uniqueCategories.map(cat => (
-              <span key={cat} style={{
-                padding: '4px 12px', borderRadius: 999,
-                background: 'var(--color-paper-3)', color: 'var(--color-text-2)',
-                fontSize: 12, fontWeight: 500,
-              }}>
-                {cat}
-              </span>
-            ))}
-          </div>
-        )}
-
-        {/* Class Filter */}
-        {uniqueClasses.length > 0 && (
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
-            {uniqueClasses.map(cls => (
+            {uniqueSubjects.map(subj => (
               <button
-                key={cls}
-                onClick={() => setActiveClass(activeClass === cls ? null : cls)}
-                style={{
-                  padding: '8px 18px', borderRadius: 'var(--radius-md)', border: '1.5px solid var(--color-border)',
-                  background: activeClass === cls ? 'var(--color-accent)' : 'var(--color-paper-2)',
-                  color: activeClass === cls ? '#fff' : 'var(--color-text-2)',
-                  fontWeight: 600, fontSize: 13, cursor: 'pointer',
-                }}
+                key={subj}
+                onClick={() => setActiveSubject(activeSubject === subj ? null : subj)}
+                style={sectionBtnStyle(activeSubject === subj)}
               >
-                Class {cls}
+                {subj}
               </button>
             ))}
           </div>
         )}
 
-        {/* Availability Filter */}
-        <div style={{ display: 'flex', gap: 8, marginBottom: 'var(--space-6)' }}>
-          {FILTERS.map(f => (
-            <button
-              key={f}
-              onClick={() => setActiveFilter(f)}
-              style={{
-                padding: '7px 18px', borderRadius: 'var(--radius-sm)', border: '1.5px solid var(--color-border)',
-                background: activeFilter === f ? 'var(--color-accent)' : 'var(--color-paper-2)',
-                color: activeFilter === f ? '#fff' : 'var(--color-text-2)',
-                fontWeight: 600, fontSize: 13, cursor: 'pointer', textTransform: 'capitalize',
-              }}
-            >
-              {f}
+        {/* Category Section */}
+        {uniqueCategories.length > 0 && (
+          <>
+            <button onClick={() => toggleSection('category')} style={sectionHeaderStyle}>
+              <span style={sectionArrowStyle}>{expandedSections.has('category') ? '▾' : '▸'}</span>
+              Category
             </button>
-          ))}
-        </div>
+            {expandedSections.has('category') && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
+                {uniqueCategories.map(cat => (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                    style={chipBtnStyle(activeCategory === cat)}
+                  >
+                    {cat}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Class Section */}
+        {uniqueClasses.length > 0 && (
+          <>
+            <button onClick={() => toggleSection('class')} style={sectionHeaderStyle}>
+              <span style={sectionArrowStyle}>{expandedSections.has('class') ? '▾' : '▸'}</span>
+              Class
+            </button>
+            {expandedSections.has('class') && (
+              <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 'var(--space-3)' }}>
+                {uniqueClasses.map(cls => (
+                  <button
+                    key={cls}
+                    onClick={() => setActiveClass(activeClass === cls ? null : cls)}
+                    style={sectionBtnStyle(activeClass === cls)}
+                  >
+                    Class {cls}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
+
+        {/* Availability Section */}
+        <button onClick={() => toggleSection('availability')} style={sectionHeaderStyle}>
+          <span style={sectionArrowStyle}>{expandedSections.has('availability') ? '▾' : '▸'}</span>
+          Availability
+        </button>
+        {expandedSections.has('availability') && (
+          <div style={{ display: 'flex', gap: 8, marginBottom: 'var(--space-4)' }}>
+            {FILTERS.map(f => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                style={chipBtnStyle(activeFilter === f)}
+              >
+                {f.charAt(0).toUpperCase() + f.slice(1)}
+              </button>
+            ))}
+          </div>
+        )}
+
+        {/* Clear Filters */}
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: 12, fontWeight: 600, color: 'var(--color-accent)',
+              padding: 0, marginBottom: 'var(--space-4)',
+              fontFamily: 'var(--font-mono)',
+              letterSpacing: '0.03em',
+            }}
+          >
+            Clear all filters
+          </button>
+        )}
 
         {/* Error */}
         {error && (
