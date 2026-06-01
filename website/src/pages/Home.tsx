@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../lib/api';
+import { useAuth } from '../lib/auth';
+import { getRecentlyViewedIds } from '../lib/recentlyViewed';
 import PDFCard from '../components/PDFCard';
 
 type PDF = {
@@ -15,17 +17,29 @@ type PDF = {
 };
 
 export default function Home() {
-  const [featured, setFeatured] = useState<PDF[]>([]);
+  const { isLoggedIn } = useAuth();
+  const [allPdfs, setAllPdfs] = useState<PDF[]>([]);
+  const [recentPdfs, setRecentPdfs] = useState<PDF[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
   useEffect(() => {
     api.getPdfs()
-      .then(pdfs => setFeatured(pdfs.slice(0, 8)))
+      .then(pdfs => {
+        setAllPdfs(pdfs);
+        const ids = getRecentlyViewedIds();
+        if (ids.length > 0) {
+          const recents = ids
+            .map(id => pdfs.find(p => String(p.id) === String(id)))
+            .filter(Boolean) as PDF[];
+          setRecentPdfs(recents);
+        }
+      })
       .catch(err => { api.logError('Home.getPdfs', err); setError('Could not load PDFs.'); })
       .finally(() => setLoading(false));
   }, []);
 
+  const featured = allPdfs.slice(0, 8);
   const freeCount = featured.filter(p => p.is_free).length;
   const paidCount = featured.length - freeCount;
 
@@ -58,6 +72,25 @@ export default function Home() {
           </div>
         </div>
       </section>
+
+      {/* Recently Viewed */}
+      {recentPdfs.length > 0 && (
+        <section style={{ padding: 'var(--space-8) 0 0 0' }}>
+          <div className="container">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-5)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)' }}>Recently viewed</h2>
+              <Link to="/pdfs" style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-accent)' }}>
+                View all &rarr;
+              </Link>
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 'var(--space-5)' }}>
+              {recentPdfs.map(pdf => (
+                <PDFCard key={pdf.id} pdf={pdf} />
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured PDFs */}
       <section style={{ padding: 'var(--space-12) 0' }}>
@@ -108,7 +141,7 @@ export default function Home() {
             {[
               { icon: '📘', title: 'Subject-wise PDFs', desc: 'Biology, Physics, Chemistry — all NEET topics covered with detailed explanations.' },
               { icon: '🎯', title: 'College Predictor', desc: 'Enter your rank and category to find the colleges you can get into.' },
-              { icon: '🆓', title: 'Free PDFs', desc: 'Access select PDFs for free by watching a short ad.' },
+              { icon: '🆓', title: 'Free PDFs', desc: 'Read free PDFs.' },
               { icon: '🔒', title: 'Secure Purchases', desc: 'Buy PDFs securely via Razorpay. Instant access after payment.' },
             ].map((feat, i) => (
               <div key={i} className="card" style={{ textAlign: 'center', padding: 'var(--space-6)' }}>
@@ -122,17 +155,19 @@ export default function Home() {
       </section>
 
       {/* CTA */}
-      <section style={{ padding: 'var(--space-16) 0', textAlign: 'center' }}>
-        <div className="container">
-          <h2 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-3)' }}>
-            Ready to start preparing?
-          </h2>
-          <p style={{ fontSize: 16, color: 'var(--color-text-2)', marginBottom: 'var(--space-6)', maxWidth: 480, margin: '0 auto var(--space-6)' }}>
-            Join thousands of NEET aspirants using NEET Zyme to ace their exam.
-          </p>
-          <Link to="/register" className="btn btn-primary btn-lg">Get Started Free</Link>
-        </div>
-      </section>
+      {!isLoggedIn && (
+        <section style={{ padding: 'var(--space-16) 0', textAlign: 'center' }}>
+          <div className="container">
+            <h2 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-3)' }}>
+              Ready to start preparing?
+            </h2>
+            <p style={{ fontSize: 16, color: 'var(--color-text-2)', marginBottom: 'var(--space-6)', maxWidth: 480, margin: '0 auto var(--space-6)' }}>
+              Join thousands of NEET aspirants using NEET Zyme to ace their exam.
+            </p>
+            <Link to="/register" className="btn btn-primary btn-lg">Get Started Free</Link>
+          </div>
+        </section>
+      )}
     </div>
   );
 }

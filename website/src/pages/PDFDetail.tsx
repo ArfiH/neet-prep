@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { addRecentlyViewed } from '../lib/recentlyViewed';
 
 type PDF = {
   id: string;
@@ -32,7 +33,7 @@ export default function PDFDetail() {
   useEffect(() => {
     if (!id) return;
     api.getPdfById(id)
-      .then(data => setPdf(data))
+      .then(data => { setPdf(data); addRecentlyViewed(id); })
       .catch(err => { api.logError('PDFDetail.fetch', err); setError('PDF not found.'); })
       .finally(() => setLoading(false));
   }, [id]);
