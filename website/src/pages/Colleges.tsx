@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../lib/api';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 const CATEGORIES = ['General', 'OBC', 'SC', 'ST'];
 const STATES = [
@@ -35,6 +36,7 @@ function probLabel(p: number): string {
 }
 
 export default function Colleges() {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('General');
   const [state, setState] = useState('All India');
@@ -77,7 +79,7 @@ export default function Colleges() {
 
         {/* Form Card */}
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
             {/* Rank */}
             <div>
               <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>NEET Rank</label>
@@ -105,7 +107,7 @@ export default function Colleges() {
                     key={cat}
                     onClick={() => setCategory(cat)}
                     style={{
-                      flex: 1, padding: '10px 0', borderRadius: 'var(--radius-sm)',
+                      flex: isMobile ? '0 1 auto' : 1, padding: '10px 16px', borderRadius: 'var(--radius-sm)',
                       border: '1.5px solid var(--color-border)',
                       background: category === cat ? 'var(--color-accent)' : 'var(--color-paper-2)',
                       color: category === cat ? '#fff' : 'var(--color-text-2)',

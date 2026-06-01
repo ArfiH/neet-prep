@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { getRecentlyViewedIds } from '../lib/recentlyViewed';
 import PDFCard from '../components/PDFCard';
 
@@ -18,6 +19,7 @@ type PDF = {
 
 export default function Home() {
   const { isLoggedIn } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [allPdfs, setAllPdfs] = useState<PDF[]>([]);
   const [recentPdfs, setRecentPdfs] = useState<PDF[]>([]);
   const [loading, setLoading] = useState(true);
@@ -48,24 +50,24 @@ export default function Home() {
       {/* Hero Section */}
       <section style={{
         background: 'linear-gradient(135deg, var(--color-paper) 0%, var(--color-accent-muted) 100%)',
-        padding: 'var(--space-16) 0',
+        padding: isMobile ? 'var(--space-10) 0' : 'var(--space-16) 0',
         borderBottom: '1px solid var(--color-border)',
       }}>
         <div className="container">
-          <div style={{ maxWidth: 640 }}>
-            <h1 style={{ fontSize: 40, fontWeight: 800, lineHeight: 1.15, color: 'var(--color-text)', marginBottom: 'var(--space-4)', letterSpacing: '-0.02em' }}>
+          <div style={{ maxWidth: isMobile ? '100%' : 640 }}>
+            <h1 style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, lineHeight: 1.15, color: 'var(--color-text)', marginBottom: 'var(--space-4)', letterSpacing: '-0.02em' }}>
               Ace your NEET UG with{' '}
               <span style={{ color: 'var(--color-accent)' }}>expert-crafted PDFs</span>
             </h1>
-            <p style={{ fontSize: 17, color: 'var(--color-text-2)', lineHeight: 1.6, marginBottom: 'var(--space-6)' }}>
+            <p style={{ fontSize: isMobile ? 15 : 17, color: 'var(--color-text-2)', lineHeight: 1.6, marginBottom: 'var(--space-5)' }}>
               High-quality study materials, college predictor, and more — all in one place.
               Start your preparation today.
             </p>
-            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap' }}>
-              <Link to="/pdfs" className="btn btn-primary btn-lg">Browse PDFs</Link>
-              <Link to="/colleges" className="btn btn-outline btn-lg">Predict Colleges</Link>
+            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
+              <Link to="/pdfs" className="btn btn-primary btn-lg" style={{ width: isMobile ? '100%' : 'auto' }}>Browse PDFs</Link>
+              <Link to="/colleges" className="btn btn-outline btn-lg" style={{ width: isMobile ? '100%' : 'auto' }}>Predict Colleges</Link>
             </div>
-            <div style={{ display: 'flex', gap: 'var(--space-5)', marginTop: 'var(--space-6)', alignItems: 'center' }}>
+            <div style={{ display: 'flex', gap: 'var(--space-5)', marginTop: 'var(--space-5)', alignItems: 'center', flexWrap: 'wrap' }}>
               <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Over 50+ PDFs available</span>
               <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>NEET 2026 aligned</span>
             </div>
@@ -75,10 +77,10 @@ export default function Home() {
 
       {/* Recently Viewed */}
       {recentPdfs.length > 0 && (
-        <section style={{ padding: 'var(--space-8) 0 0 0' }}>
+        <section style={{ padding: isMobile ? 'var(--space-6) 0 0 0' : 'var(--space-8) 0 0 0' }}>
           <div className="container">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-5)' }}>
-              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)' }}>Recently viewed</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-4)' }}>
+              <h2 style={{ fontSize: isMobile ? 18 : 20, fontWeight: 700, color: 'var(--color-text)' }}>Recently viewed</h2>
               <Link to="/pdfs" style={{ fontSize: 14, fontWeight: 600, color: 'var(--color-accent)' }}>
                 View all &rarr;
               </Link>
@@ -93,11 +95,11 @@ export default function Home() {
       )}
 
       {/* Featured PDFs */}
-      <section style={{ padding: 'var(--space-12) 0' }}>
+      <section style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
         <div className="container">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 'var(--space-6)' }}>
             <div>
-              <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>Featured PDFs</h2>
+              <h2 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--color-text)' }}>Featured PDFs</h2>
               <p style={{ fontSize: 14, color: 'var(--color-text-2)', marginTop: 2 }}>
                 {freeCount} free &bull; {paidCount} paid
               </p>
@@ -132,7 +134,7 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section style={{ padding: 'var(--space-12) 0', background: 'var(--color-paper-2)' }}>
+      <section style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0', background: 'var(--color-paper-2)' }}>
         <div className="container">
           <h2 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', textAlign: 'center', marginBottom: 'var(--space-8)' }}>
             Everything you need
@@ -156,7 +158,7 @@ export default function Home() {
 
       {/* CTA */}
       {!isLoggedIn && (
-        <section style={{ padding: 'var(--space-16) 0', textAlign: 'center' }}>
+        <section style={{ padding: isMobile ? 'var(--space-10) 0' : 'var(--space-16) 0', textAlign: 'center' }}>
           <div className="container">
             <h2 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-3)' }}>
               Ready to start preparing?

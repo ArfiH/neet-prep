@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import PDFCard from '../components/PDFCard';
 
 type PDF = {
@@ -20,6 +21,7 @@ const FILTERS = ['all', 'free', 'paid'] as const;
 
 export default function PDFs() {
   const { isLoggedIn } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [pdfs, setPdfs] = useState<PDF[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -149,7 +151,7 @@ export default function PDFs() {
     <div style={{ padding: 'var(--space-8) 0' }}>
       <div className="container">
         {/* Header */}
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Browse PDFs</h1>
+        <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Browse PDFs</h1>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexWrap: 'wrap', marginBottom: 'var(--space-6)' }}>
           <p style={{ fontSize: 15, color: 'var(--color-text-2)' }}>
             {filtered.length} of {pdfs.length} PDF{pdfs.length !== 1 ? 's' : ''}

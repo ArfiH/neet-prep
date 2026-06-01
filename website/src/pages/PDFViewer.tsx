@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -11,6 +12,7 @@ pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 export default function PDFViewer() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [pdfBytes, setPdfBytes] = useState<ArrayBuffer | null>(null);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
@@ -88,43 +90,48 @@ export default function PDFViewer() {
   return (
     <div style={{ background: '#1a1a1a', minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{
-        display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
-        padding: 'var(--space-3) var(--space-5)', background: '#222',
+        display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center',
+        gap: isMobile ? 'var(--space-2)' : 'var(--space-4)',
+        padding: isMobile ? 'var(--space-2) var(--space-3)' : 'var(--space-3) var(--space-5)', background: '#222',
         borderBottom: '1px solid #333',
       }}>
-        <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14 }}>&larr; Back</Link>
-        <span style={{ color: '#ccc', fontSize: 14, fontWeight: 600, flex: 1, textAlign: 'center' }}>
-          {title}
-        </span>
-        {numPages > 0 && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
+          <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14, flexShrink: 0 }}>&larr; Back</Link>
+          <span style={{ color: '#ccc', fontSize: isMobile ? 13 : 14, fontWeight: 600, flex: 1, textAlign: isMobile ? 'left' : 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {title}
+          </span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 'var(--space-3)' : 'var(--space-4)', justifyContent: isMobile ? 'center' : 'flex-end' }}>
+          {numPages > 0 && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage <= 1}
+                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
+              >&lt;</button>
+              <span style={{ color: '#999', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
+                {currentPage} / {numPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
+                disabled={currentPage >= numPages}
+                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
+              >&gt;</button>
+            </div>
+          )}
+          <div style={{ display: 'flex', gap: 4 }}>
             <button
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              disabled={currentPage <= 1}
-              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
-            >&lt;</button>
-            <span style={{ color: '#999', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
-              {currentPage} / {numPages}
+              onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
+              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
+            title="Zoom out">A-</button>
+            <span style={{ color: '#999', fontSize: 12, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>
+              {Math.round(scale * 100)}%
             </span>
             <button
-              onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
-              disabled={currentPage >= numPages}
-              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
-            >&gt;</button>
+              onClick={() => setScale(s => Math.min(3, s + 0.1))}
+              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
+            title="Zoom in">A+</button>
           </div>
-        )}
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button
-            onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
-            style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
-          title="Zoom out">A-</button>
-          <span style={{ color: '#999', fontSize: 12, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>
-            {Math.round(scale * 100)}%
-          </span>
-          <button
-            onClick={() => setScale(s => Math.min(3, s + 0.1))}
-            style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
-          title="Zoom in">A+</button>
         </div>
       </div>
 

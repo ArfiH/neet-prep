@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import * as api from '../lib/api';
 
 export default function Profile() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -33,7 +35,7 @@ export default function Profile() {
   return (
     <div style={{ padding: 'var(--space-8) 0' }}>
       <div className="container" style={{ maxWidth: 600 }}>
-        <h1 style={{ fontSize: 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-6)' }}>Profile</h1>
+        <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-5)' }}>Profile</h1>
 
         {error && (
           <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--color-danger-muted)', color: 'var(--color-danger)', borderRadius: 'var(--radius-md)', fontSize: 14, marginBottom: 'var(--space-4)' }}>

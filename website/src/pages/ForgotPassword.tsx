@@ -1,8 +1,10 @@
 import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import * as api from '../lib/api';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 export default function ForgotPassword() {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -26,7 +28,7 @@ export default function ForgotPassword() {
 
   if (sent) {
     return (
-      <div style={{ padding: 'var(--space-12) 0' }}>
+      <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
         <div className="container" style={{ maxWidth: 420 }}>
           <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
             <div style={{ width: 56, height: 56, borderRadius: 28, background: 'var(--color-success-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--space-4)' }}>
@@ -44,7 +46,7 @@ export default function ForgotPassword() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-12) 0' }}>
+    <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
       <div className="container" style={{ maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Forgot Password</h1>

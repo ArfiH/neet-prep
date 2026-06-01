@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import * as api from '../lib/api';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 type College = {
   id: string;
@@ -29,6 +30,7 @@ type College = {
 
 export default function CollegeDetail() {
   const { id } = useParams<{ id: string }>();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [college, setCollege] = useState<College | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -74,17 +76,17 @@ export default function CollegeDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-5)' }}>
           {/* Header */}
           <div className="card">
-            <div style={{ display: 'flex', gap: 'var(--space-5)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
-              {college.image_url && (
-                <img
-                  src={college.image_url}
-                  alt={college.name}
-                  style={{ width: 100, height: 100, borderRadius: 'var(--radius-md)', objectFit: 'cover' }}
-                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
-              <div style={{ flex: 1 }}>
-                <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>{college.name}</h1>
+              <div style={{ display: 'flex', gap: isMobile ? 'var(--space-3)' : 'var(--space-5)', alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                {college.image_url && (
+                  <img
+                    src={college.image_url}
+                    alt={college.name}
+                    style={{ width: isMobile ? 72 : 100, height: isMobile ? 72 : 100, borderRadius: 'var(--radius-md)', objectFit: 'cover' }}
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                  />
+                )}
+                <div style={{ flex: 1, minWidth: isMobile ? '100%' : 0 }}>
+                  <h1 style={{ fontSize: isMobile ? 20 : 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>{college.name}</h1>
                 <p style={{ fontSize: 14, color: 'var(--color-text-2)', marginBottom: 'var(--space-3)' }}>
                   {college.city ? `${college.city}, ` : ''}{college.state}
                 </p>

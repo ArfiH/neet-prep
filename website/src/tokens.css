@@ -88,6 +88,74 @@ pre, code {
   .container { padding: 0 var(--space-4); }
 }
 
+@media (max-width: 768px) {
+  .desktop-only { display: none !important; }
+}
+
+@media (min-width: 769px) {
+  .mobile-only { display: none !important; }
+}
+
+/* Hamburger toggle button */
+.nav-toggle {
+  display: none;
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: var(--color-text);
+  padding: 4px;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .nav-toggle { display: flex; }
+}
+
+/* Mobile nav panel */
+.nav-mobile {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-3) var(--space-4) var(--space-4);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-paper);
+}
+
+.nav-mobile.open { display: flex; }
+
+.nav-mobile a,
+.nav-mobile button {
+  padding: 10px 12px;
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  color: var(--color-text-2);
+  background: none;
+  border: none;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-ui);
+}
+
+.nav-mobile a:hover,
+.nav-mobile button:hover {
+  background: var(--color-paper-2);
+}
+
+.nav-mobile a.active {
+  color: var(--color-accent);
+  background: var(--color-accent-muted);
+}
+
+/* Responsive text truncation */
+.text-ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Button base */
 .btn {
   display: inline-flex;

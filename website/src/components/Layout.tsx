@@ -1,6 +1,7 @@
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
@@ -12,11 +13,15 @@ export default function Layout({ children }: { children: ReactNode }) {
   const { isLoggedIn, user, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const handleLogout = async () => {
     await logout();
     navigate('/');
   };
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
@@ -30,7 +35,7 @@ export default function Layout({ children }: { children: ReactNode }) {
       }}>
         <div className="container" style={{ display: 'flex', alignItems: 'center', height: 60 }}>
           {/* Logo */}
-          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
             <span style={{
               width: 32, height: 32, borderRadius: 8, background: 'var(--color-accent)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -39,8 +44,8 @@ export default function Layout({ children }: { children: ReactNode }) {
             <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-text)' }}>NEET Zyme</span>
           </Link>
 
-          {/* Nav Links */}
-          <nav style={{ display: 'flex', gap: 4, marginLeft: 'var(--space-8)' }}>
+          {/* Desktop nav links */}
+          <nav className="desktop-only" style={{ display: 'flex', gap: 4, marginLeft: 'var(--space-8)' }}>
             {NAV_LINKS.map(link => (
               <Link
                 key={link.to}
@@ -50,9 +55,9 @@ export default function Layout({ children }: { children: ReactNode }) {
                   borderRadius: 'var(--radius-md)',
                   fontSize: 14,
                   fontWeight: 500,
-                  color: location.pathname === link.to ? 'var(--color-accent)' : 'var(--color-text-2)',
+                  color: isActive(link.to) ? 'var(--color-accent)' : 'var(--color-text-2)',
                   textDecoration: 'none',
-                  background: location.pathname === link.to ? 'var(--color-accent-muted)' : 'transparent',
+                  background: isActive(link.to) ? 'var(--color-accent-muted)' : 'transparent',
                 }}
               >
                 {link.label}
@@ -63,8 +68,8 @@ export default function Layout({ children }: { children: ReactNode }) {
           {/* Spacer */}
           <div style={{ flex: 1 }} />
 
-          {/* Auth buttons */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
+          {/* Desktop auth buttons */}
+          <div className="desktop-only" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)' }}>
             {isLoggedIn ? (
               <>
                 <span style={{ fontSize: 14, color: 'var(--color-text-2)' }}>
@@ -88,6 +93,44 @@ export default function Layout({ children }: { children: ReactNode }) {
               </>
             )}
           </div>
+
+          {/* Mobile hamburger toggle */}
+          <button
+            className="nav-toggle"
+            onClick={() => setMobileOpen(!mobileOpen)}
+            aria-label="Toggle navigation"
+          >
+            {mobileOpen ? '✕' : '☰'}
+          </button>
+        </div>
+
+        {/* Mobile nav panel */}
+        <div className={`nav-mobile ${mobileOpen ? 'open' : ''}`}>
+          {NAV_LINKS.map(link => (
+            <Link
+              key={link.to}
+              to={link.to}
+              onClick={() => setMobileOpen(false)}
+              className={isActive(link.to) ? 'active' : ''}
+            >
+              {link.label}
+            </Link>
+          ))}
+          <hr style={{ border: 'none', borderTop: '1px solid var(--color-border)', margin: 'var(--space-2) 0' }} />
+          {isLoggedIn ? (
+            <>
+              <div style={{ padding: '10px 12px', fontSize: 13, color: 'var(--color-text-3)' }}>
+                {user?.name || user?.email}
+              </div>
+              <Link to="/profile" onClick={() => setMobileOpen(false)}>Profile</Link>
+              <button onClick={() => { setMobileOpen(false); handleLogout(); }}>Sign Out</button>
+            </>
+          ) : (
+            <>
+              <Link to="/login" onClick={() => setMobileOpen(false)}>Log In</Link>
+              <Link to="/register" onClick={() => setMobileOpen(false)}>Sign Up</Link>
+            </>
+          )}
         </div>
       </header>
 

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 import { addRecentlyViewed } from '../lib/recentlyViewed';
 
 type PDF = {
@@ -23,6 +24,7 @@ export default function PDFDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { isLoggedIn, user } = useAuth();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [pdf, setPdf] = useState<PDF | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -168,7 +170,7 @@ export default function PDFDetail() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-6)' }}>
           {/* Hero */}
           <div className="card" style={{
-            padding: 'var(--space-8)', borderLeft: `4px solid ${subjectColor}`,
+            padding: isMobile ? 'var(--space-5)' : 'var(--space-8)', borderLeft: `4px solid ${subjectColor}`,
           }}>
             <div style={{ display: 'flex', gap: 'var(--space-2)', marginBottom: 'var(--space-3)', alignItems: 'center' }}>
               <span style={{ fontSize: 12, fontWeight: 600, color: subjectColor, textTransform: 'uppercase', letterSpacing: '0.04em' }}>{pdf.subject}</span>
@@ -185,7 +187,7 @@ export default function PDFDetail() {
                 </>
               )}
             </div>
-            <h1 style={{ fontSize: 28, fontWeight: 700, lineHeight: 1.3, color: 'var(--color-text)', marginBottom: 'var(--space-3)' }}>
+            <h1 style={{ fontSize: isMobile ? 22 : 28, fontWeight: 700, lineHeight: 1.3, color: 'var(--color-text)', marginBottom: 'var(--space-3)' }}>
               {pdf.title}
             </h1>
             <p style={{ fontSize: 15, color: 'var(--color-text-2)', lineHeight: 1.6, marginBottom: 'var(--space-4)' }}>
@@ -209,7 +211,7 @@ export default function PDFDetail() {
                 onClick={handlePurchase}
                 disabled={paying}
                 className={`btn ${pdf.is_free || purchased ? 'btn-primary' : 'btn-primary'}`}
-                style={{ padding: '12px 32px', fontSize: 16, opacity: paying ? 0.6 : 1 }}
+                style={{ padding: '12px 32px', fontSize: 16, opacity: paying ? 0.6 : 1, width: isMobile ? '100%' : 'auto' }}
               >
                 {paying ? (
                   <><div className="spinner" style={{ width: 20, height: 20, borderWidth: 2 }} /> Processing...</>

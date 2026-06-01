@@ -1,8 +1,10 @@
 import { useState, FormEvent } from 'react';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import * as api from '../lib/api';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 export default function ResetPassword() {
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const token = searchParams.get('token') || '';
@@ -32,7 +34,7 @@ export default function ResetPassword() {
 
   if (success) {
     return (
-      <div style={{ padding: 'var(--space-12) 0' }}>
+      <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
         <div className="container" style={{ maxWidth: 420 }}>
           <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
             <div style={{ width: 56, height: 56, borderRadius: 28, background: 'var(--color-success-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto var(--space-4)' }}>
@@ -51,7 +53,7 @@ export default function ResetPassword() {
 
   if (!token) {
     return (
-      <div style={{ padding: 'var(--space-12) 0' }}>
+      <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
         <div className="container" style={{ maxWidth: 420, textAlign: 'center' }}>
           <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-danger)', marginBottom: 'var(--space-2)' }}>Invalid Link</h2>
           <p style={{ fontSize: 14, color: 'var(--color-text-2)', marginBottom: 'var(--space-4)' }}>Missing reset token.</p>
@@ -62,7 +64,7 @@ export default function ResetPassword() {
   }
 
   return (
-    <div style={{ padding: 'var(--space-12) 0' }}>
+    <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
       <div className="container" style={{ maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Reset Password</h1>

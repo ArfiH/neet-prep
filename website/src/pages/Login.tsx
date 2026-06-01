@@ -1,10 +1,12 @@
 import { useState, FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { useMediaQuery } from '../lib/useMediaQuery';
 
 export default function Login() {
   const { login } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useMediaQuery('(max-width: 768px)');
   const location = useLocation();
   const from = (location.state as any)?.from || '/';
 
@@ -42,7 +44,7 @@ export default function Login() {
   };
 
   return (
-    <div style={{ padding: 'var(--space-12) 0' }}>
+    <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
       <div className="container" style={{ maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Welcome back</h1>
