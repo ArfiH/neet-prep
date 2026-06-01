@@ -206,7 +206,7 @@ export default function PDFs() {
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                    style={chipBtnStyle(activeCategory === cat)}
+                    style={sectionBtnStyle(activeCategory === cat)}
                   >
                     {cat}
                   </button>
