@@ -1,11 +1,12 @@
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { BookOpen } from 'lucide-react-native';
-import { COLORS, SHADOWS } from '@/constants/colors';
+import { BookOpen, Download } from 'lucide-react-native';
+import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
 import { api, formatPrice } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { getDownloadedIds } from '@/lib/downloadManager';
 
 type PDF = {
   id: string;
@@ -43,6 +44,7 @@ export default function PDFsScreen() {
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
+  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     fetchPdfs();
@@ -51,6 +53,7 @@ export default function PDFsScreen() {
   useFocusEffect(
     useCallback(() => {
       fetchPurchased();
+      fetchDownloaded();
     }, [])
   );
 
@@ -79,6 +82,15 @@ export default function PDFsScreen() {
       }
     } catch (e) {
       // not logged in or error — silently ignore
+    }
+  }
+
+  async function fetchDownloaded() {
+    try {
+      const ids = await getDownloadedIds();
+      setDownloadedIds(new Set(ids));
+    } catch {
+      // ignore
     }
   }
 
@@ -210,6 +222,11 @@ export default function PDFsScreen() {
                 </View>
                 <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
                 <Text style={styles.tileMeta} numberOfLines={1}>{getMetaLine(item)}</Text>
+                {downloadedIds.has(String(item.id)) && (
+                  <View style={styles.downloadBadge}>
+                    <Download size={9} color="#fff" strokeWidth={3} />
+                  </View>
+                )}
                 {item.is_free ? (
                   <Text style={styles.freeTag}>FREE</Text>
                 ) : purchasedIds.has(String(item.id)) ? (
@@ -265,6 +282,7 @@ const styles = StyleSheet.create({
   freeTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primary, color: '#fff', letterSpacing: 0.06 },
   paidTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.fg, color: '#fff', letterSpacing: 0.06 },
   ownedTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06 },
+  downloadBadge: { position: 'absolute', top: 10, left: 10, width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
 
   loadingContainer: { paddingVertical: 60, alignItems: 'center' },
   emptyContainer: { paddingVertical: 60, alignItems: 'center', gap: 8 },

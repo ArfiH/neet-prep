@@ -1,59 +1,57 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
-import { useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, Alert } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
-import { ArrowLeft, BookOpen, Download } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Trash2 } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
-import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getDownloadedIds } from '@/lib/downloadManager';
-
-type PDF = {
-  id: string;
-  title: string;
-  description: string;
-  subject: string;
-  price: number;
-  is_free: boolean;
-  pages_count: number;
-  class: string | null;
-};
+import { getDownloadedPDFs, deleteLocalPDF, DownloadedPDF } from '@/lib/downloadManager';
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
-export default function PurchasedScreen() {
+export default function DownloadedScreen() {
   const router = useRouter();
-  const [pdfs, setPdfs] = useState<PDF[]>([]);
+  const [pdfs, setPdfs] = useState<DownloadedPDF[]>([]);
   const [loading, setLoading] = useState(true);
-  const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
+
+  useEffect(() => {
+    loadDownloads();
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      fetchPurchased();
-      fetchDownloaded();
+      refreshDownloads();
     }, [])
   );
 
-  async function fetchPurchased() {
-    try {
-      const data = await api.getPurchasedPdfs();
-      if (data && Array.isArray(data)) {
-        setPdfs(data);
-      }
-    } catch (e) {
-      // not logged in or error
-    } finally {
-      setLoading(false);
-    }
+  async function loadDownloads() {
+    setLoading(true);
+    const data = await getDownloadedPDFs();
+    setPdfs(data);
+    setLoading(false);
   }
 
-  async function fetchDownloaded() {
-    try {
-      const ids = await getDownloadedIds();
-      setDownloadedIds(new Set(ids));
-    } catch {
-      // ignore
-    }
+  async function refreshDownloads() {
+    const data = await getDownloadedPDFs();
+    setPdfs(data);
+  }
+
+  async function handleDelete(id: string, title: string) {
+    Alert.alert(
+      'Delete PDF',
+      `Remove "${title}" from offline storage? You can download it again anytime.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteLocalPDF(id);
+            loadDownloads();
+          },
+        },
+      ]
+    );
   }
 
   return (
@@ -62,7 +60,7 @@ export default function PurchasedScreen() {
         <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
           <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
         </TouchableOpacity>
-        <Text style={styles.topbarText}>MY PURCHASED PDFs</Text>
+        <Text style={styles.topbarText}>DOWNLOADED PDFs</Text>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false}>
@@ -73,8 +71,8 @@ export default function PurchasedScreen() {
         ) : pdfs.length === 0 ? (
           <View style={styles.centerBox}>
             <BookOpen size={48} color={COLORS.border} strokeWidth={1.5} />
-            <Text style={styles.emptyTitle}>No purchased PDFs yet</Text>
-            <Text style={styles.emptySubtitle}>Browse the library and buy PDFs to see them here</Text>
+            <Text style={styles.emptyTitle}>No downloaded PDFs</Text>
+            <Text style={styles.emptySubtitle}>Download a PDF from the library to read it offline</Text>
             <TouchableOpacity style={styles.browseBtn} onPress={() => router.push('/(tabs)/pdfs' as any)} activeOpacity={0.85}>
               <Text style={styles.browseBtnText}>Browse PDFs</Text>
             </TouchableOpacity>
@@ -85,20 +83,22 @@ export default function PurchasedScreen() {
               <TouchableOpacity
                 key={item.id}
                 style={[styles.tile, { backgroundColor: getTileBg(item.subject) }]}
-                onPress={() => router.push(`/pdf/${item.id}` as any)}
+                onPress={() => router.push(`/pdf/viewer/${item.id}` as any)}
                 activeOpacity={0.88}
               >
-                {downloadedIds.has(String(item.id)) && (
-                  <View style={styles.downloadBadge}>
-                    <Download size={9} color="#fff" strokeWidth={3} />
-                  </View>
-                )}
+                <TouchableOpacity
+                  style={styles.deleteBtn}
+                  onPress={() => handleDelete(item.id, item.title)}
+                  hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                >
+                  <Trash2 size={12} color={COLORS.muted} strokeWidth={2} />
+                </TouchableOpacity>
                 <View style={[styles.glyph, { backgroundColor: getGlyphColor(item.subject) }]}>
                   <Text style={styles.glyphText}>{getGlyphLetter(item.subject)}</Text>
                 </View>
                 <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.tileMeta} numberOfLines={1}>{item.pages_count} pages</Text>
-                <Text style={styles.ownedTag}>OWNED</Text>
+                <Text style={styles.tileMeta} numberOfLines={1}>{item.pagesCount} pages</Text>
+                <Text style={styles.downloadedTag}>OFFLINE</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -112,23 +112,20 @@ export default function PurchasedScreen() {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
-
   topbar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 22, paddingTop: 8, paddingBottom: 6 },
   backCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   topbarText: { fontSize: 12, fontWeight: '600', color: COLORS.muted, fontFamily: monoFont, letterSpacing: 0.14 },
-
   centerBox: { alignItems: 'center', justifyContent: 'center', paddingTop: 60, paddingHorizontal: 32, gap: 12 },
   emptyTitle: { fontSize: 17, fontWeight: '700', color: COLORS.fg, textAlign: 'center' },
   emptySubtitle: { fontSize: 13, color: COLORS.muted, textAlign: 'center', lineHeight: 20 },
   browseBtn: { backgroundColor: COLORS.primary, paddingVertical: 12, paddingHorizontal: 28, borderRadius: 999, marginTop: 8 },
   browseBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
-
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingTop: 14, gap: 12 },
   tile: { width: '46.5%', borderRadius: 18, padding: 16, minHeight: 150, position: 'relative' },
+  deleteBtn: { position: 'absolute', top: 8, right: 8, width: 24, height: 24, borderRadius: 12, backgroundColor: 'rgba(0,0,0,0.08)', alignItems: 'center', justifyContent: 'center', zIndex: 10 },
   glyph: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   glyphText: { fontSize: 14, fontWeight: '800', color: '#fff' },
   tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17, flex: 1 },
   tileMeta: { fontSize: 10.5, color: COLORS.muted, fontFamily: monoFont, marginTop: 6 },
-  ownedTag: { alignSelf: 'flex-start', marginTop: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06, overflow: 'hidden' },
-  downloadBadge: { position: 'absolute', top: 10, left: 10, width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  downloadedTag: { alignSelf: 'flex-start', marginTop: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primary, color: '#fff', letterSpacing: 0.06, overflow: 'hidden' },
 });

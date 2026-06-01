@@ -22,7 +22,7 @@ const faqs = [
   },
   {
     q: 'Can I read PDFs offline?',
-    a: 'Currently PDFs require an internet connection to load. Offline support may be added in a future update.',
+    a: 'Yes! Tap "Download Offline" on any PDF detail screen to save it to your device. Downloaded PDFs are encrypted and can be read without an internet connection from the Downloaded section in your Profile.',
   },
   {
     q: 'How does the College Predictor work?',

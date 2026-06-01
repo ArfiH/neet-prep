@@ -12,7 +12,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import CustomAlert from '@/components/CustomAlert';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Bug } from 'lucide-react-native';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Bug, Download } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
@@ -147,6 +147,16 @@ export default function ProfileScreen() {
                 <Text style={styles.menuLabel}>My Purchased PDFs</Text>
                 <Text style={styles.menuSublabel}>{pdfsOwned} PDFs in library</Text>
               </View> */}
+              <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} onPress={() => router.push('/downloaded' as any)} activeOpacity={0.75}>
+              <View style={styles.menuIcon}>
+                <Download size={18} color={COLORS.primaryDark} strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Downloaded PDFs</Text>
+                <Text style={styles.menuSublabel}>Read offline anytime</Text>
+              </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} onPress={() => router.push('/(tabs)/colleges' as any)} activeOpacity={0.75}>

@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useRef } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions, TouchableOpacity, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Pdf from 'react-native-pdf';
@@ -9,6 +9,8 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { COLORS } from '@/constants/colors';
 import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
+import { hasLocalPDF, getDecryptedTempPath } from '@/lib/downloadManager';
+import ReactNativeBlobUtil from 'react-native-blob-util';
 
 const { width, height } = Dimensions.get('window');
 
@@ -22,6 +24,9 @@ export default function PdfViewerScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
   const [pdfReady, setPdfReady] = useState(false);
+  const [isLocal, setIsLocal] = useState(false);
+  const [localTempPath, setLocalTempPath] = useState<string | null>(null);
+  const tempPathRef = useRef<string | null>(null);
 
   usePreventScreenCapture();
   const { user } = useAuth();
@@ -32,17 +37,40 @@ export default function PdfViewerScreen() {
 
   useEffect(() => {
     fetchViewUrl();
+    return () => {
+      if (tempPathRef.current) {
+        ReactNativeBlobUtil.fs.unlink(tempPathRef.current).catch(() => {});
+      }
+    };
   }, [id]);
 
   useEffect(() => {
+    if (isLocal) {
+      setPdfReady(true);
+      return;
+    }
     if (viewData && viewData.is_free && !hasWatchedAd(id)) {
       setShowAdOverlay(true);
     } else if (viewData) {
       setPdfReady(true);
     }
-  }, [viewData, id]);
+  }, [viewData, id, isLocal]);
 
   async function fetchViewUrl() {
+    try {
+      const local = await hasLocalPDF(id);
+      if (local) {
+        const tempPath = await getDecryptedTempPath(id);
+        setLocalTempPath(tempPath);
+        tempPathRef.current = tempPath;
+        setIsLocal(true);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // Local file error — fall through to network
+    }
+
     try {
       const data = await api.getPdfViewUrl(id);
       if (!data || !data.url) {
@@ -93,13 +121,16 @@ export default function PdfViewerScreen() {
   }
 
   const pdfSource = useMemo(() => {
+    if (localTempPath) {
+      return { uri: `file://${localTempPath}`, cache: false };
+    }
     if (!viewData) return undefined;
     const src: any = { uri: viewData.url };
     if (viewData.headers && Object.keys(viewData.headers).length > 0) {
       src.headers = viewData.headers;
     }
     return src;
-  }, [viewData]);
+  }, [viewData, localTempPath]);
 
   if (loading) {
     return (

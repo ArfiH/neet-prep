@@ -2,9 +2,9 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag, Download, Trash2 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { COLORS, SHADOWS } from '@/constants/colors';
+import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
 import { api, API_BASE_URL, formatPrice } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
@@ -12,6 +12,8 @@ import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomAlert from '@/components/CustomAlert';
 import { resetPaymentHandled, markPaymentHandled, paymentHandled } from '@/lib/paymentSession';
+import { downloadPDF, isPDFDownloaded, hasLocalPDF, deleteLocalPDF } from '@/lib/downloadManager';
+import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
 import Toast from 'react-native-toast-message';
 
 type PDF = {
@@ -49,6 +51,10 @@ export default function PDFDetailScreen() {
   const [paying, setPaying] = useState(false);
   const hasStartedPayment = useRef(false);
   const [alertConfig, setAlertConfig] = useState<any>(null);
+  const [downloading, setDownloading] = useState(false);
+  const [downloadProgress, setDownloadProgress] = useState(0);
+  const [showDownloadAdOverlay, setShowDownloadAdOverlay] = useState(false);
+  const [alreadyDownloaded, setAlreadyDownloaded] = useState(false);
 
   useEffect(() => {
     fetchPdf();
@@ -69,6 +75,7 @@ export default function PDFDetailScreen() {
       api.checkPdfPurchase(id).then(({ hasPurchased }) => {
         setPurchased(hasPurchased);
       }).catch(() => {});
+      hasLocalPDF(id).then(setAlreadyDownloaded).catch(() => {});
     }, [id])
   );
 
@@ -149,6 +156,73 @@ export default function PDFDetailScreen() {
       if (k) params[k] = decodeURIComponent(v || '');
     });
     return params;
+  }
+
+  async function handleStartDownload() {
+    if (!pdf || !pdf.file_url) {
+      setAlertConfig({
+        type: 'warning',
+        title: 'Unavailable',
+        message: 'This PDF file is not available for download yet.',
+        buttons: [{ text: 'OK' }],
+      });
+      return;
+    }
+
+    if (alreadyDownloaded) {
+      setAlertConfig({
+        type: 'default',
+        title: 'Delete Download',
+        message: `Remove "${pdf.title}" from offline storage?`,
+        buttons: [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => handleDeleteDownload() },
+        ],
+      });
+      return;
+    }
+
+    if (pdf.is_free && !hasWatchedAd('download_' + pdf.id)) {
+      setShowDownloadAdOverlay(true);
+      return;
+    }
+
+    doDownload();
+  }
+
+  async function handleDeleteDownload() {
+    if (!pdf) return;
+    await deleteLocalPDF(pdf.id);
+    setAlreadyDownloaded(false);
+    Toast.show({ type: 'success', text1: 'Deleted', text2: '"' + pdf.title + '" removed from offline storage.' });
+  }
+
+  async function doDownload() {
+    if (!pdf || !pdf.file_url) return;
+    setDownloading(true);
+    setDownloadProgress(0);
+    try {
+      const viewData = await api.getPdfViewUrl(pdf.id);
+      const url = viewData?.url || pdf.file_url;
+      const headers = viewData?.headers || {};
+      await downloadPDF(pdf.id, pdf.title, pdf.subject, pdf.pages_count, url, headers, (received, total) => {
+        const pct = Math.min(99, Math.round((received / total) * 100));
+        setDownloadProgress(pct);
+      });
+      setDownloadProgress(100);
+      Toast.show({ type: 'success', text1: 'Download complete', text2: '"' + pdf.title + '" is now available offline.' });
+    } catch (e: any) {
+      Toast.show({ type: 'error', text1: 'Download failed', text2: e?.message || 'Could not download PDF.' });
+    }
+    setDownloading(false);
+  }
+
+  async function handleWatchAdForDownload() {
+    const result = await showInterstitialAd('download_' + pdf!.id);
+    if (result.canViewPdf) {
+      setShowDownloadAdOverlay(false);
+      doDownload();
+    }
   }
 
   function handleReadOrBuy() {
@@ -275,8 +349,51 @@ export default function PDFDetailScreen() {
           )}
         </TouchableOpacity>
 
+        {/* Download / Delete / Progress */}
+        {downloading ? (
+          <View style={styles.downloadingBox}>
+            <View style={styles.downloadingRow}>
+              <Download size={14} color={COLORS.primary} strokeWidth={2} />
+              <Text style={styles.downloadingLabel}>Downloading...</Text>
+              <Text style={styles.downloadingPct}>{downloadProgress}%</Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: `${downloadProgress}%` }]} />
+            </View>
+          </View>
+        ) : alreadyDownloaded ? (
+          <TouchableOpacity style={styles.deleteDownloadBtn} onPress={handleStartDownload} activeOpacity={0.7}>
+            <Trash2 size={14} color="#ef4444" strokeWidth={2} />
+            <Text style={styles.deleteDownloadBtnText}>Delete Download</Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={styles.downloadBtn}
+            onPress={handleStartDownload}
+          >
+            <Download size={14} color={COLORS.primary} strokeWidth={2} />
+            <Text style={styles.downloadBtnText}>Download Offline</Text>
+          </TouchableOpacity>
+        )}
+
         <View style={{ height: 20 }} />
       </ScrollView>
+
+      {/* Download Ad Overlay */}
+      {showDownloadAdOverlay && (
+        <View style={styles.adOverlay}>
+          <View style={styles.adOverlayContent}>
+            <Text style={styles.adOverlayTitle}>Watch Ad to Download</Text>
+            <Text style={styles.adOverlayText}>This free PDF requires watching an ad before downloading.</Text>
+            <TouchableOpacity style={styles.watchAdButton} onPress={handleWatchAdForDownload}>
+              <Text style={styles.watchAdButtonText}>Watch Ad</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelAdButton} onPress={() => setShowDownloadAdOverlay(false)}>
+              <Text style={styles.cancelAdButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
       <CustomAlert
         visible={!!alertConfig}
@@ -318,4 +435,26 @@ const styles = StyleSheet.create({
   startBtnDisabled: { marginHorizontal: 18, marginVertical: 10, paddingVertical: 14, borderRadius: 999, backgroundColor: COLORS.muted, alignItems: 'center', justifyContent: 'center' },
   startBtnPaid: { marginHorizontal: 18, marginVertical: 10, paddingVertical: 14, borderRadius: 999, backgroundColor: COLORS.fg, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8 },
   startBtnText: { fontSize: 14, fontWeight: '600', color: '#fff', letterSpacing: 0.04 },
+
+  downloadBtn: { marginHorizontal: 18, marginBottom: 4, paddingVertical: 12, borderRadius: 999, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, borderWidth: 1, borderColor: COLORS.border },
+  downloadBtnText: { fontSize: 13, fontWeight: '600', color: COLORS.primary },
+
+  downloadingBox: { marginHorizontal: 18, marginBottom: 4, paddingVertical: 14, paddingHorizontal: 18, borderRadius: 999, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, gap: 8 },
+  downloadingRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  downloadingLabel: { fontSize: 13, fontWeight: '600', color: COLORS.primary, flex: 1 },
+  downloadingPct: { fontSize: 11, fontWeight: '600', color: COLORS.muted, fontFamily: monoFont },
+  progressBarBg: { height: 4, borderRadius: 999, backgroundColor: COLORS.border, overflow: 'hidden' },
+  progressBarFill: { height: '100%', borderRadius: 999, backgroundColor: COLORS.primary },
+
+  deleteDownloadBtn: { marginHorizontal: 18, marginBottom: 4, paddingVertical: 12, borderRadius: 999, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, borderWidth: 1, borderColor: '#fca5a5' },
+  deleteDownloadBtnText: { fontSize: 13, fontWeight: '600', color: '#ef4444' },
+
+  adOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
+  adOverlayContent: { backgroundColor: '#fff', padding: 30, borderRadius: 16, alignItems: 'center', marginHorizontal: 20 },
+  adOverlayTitle: { fontSize: 20, fontWeight: '700', color: COLORS.fg, marginBottom: 12 },
+  adOverlayText: { fontSize: 14, color: COLORS.muted, textAlign: 'center', marginBottom: 24 },
+  watchAdButton: { backgroundColor: COLORS.primary, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 999 },
+  watchAdButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  cancelAdButton: { marginTop: 16, paddingVertical: 10 },
+  cancelAdButtonText: { color: COLORS.muted, fontSize: 14 },
 });

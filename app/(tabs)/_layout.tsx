@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Hop as Home, BookOpen, GraduationCap, User, HomeIcon } from 'lucide-react-native';
+import { Download, BookOpen, GraduationCap, User, HomeIcon } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { StyleSheet, Platform } from 'react-native';
 
@@ -34,6 +34,13 @@ export default function TabLayout() {
         options={{
           title: 'COLLEGE',
           tabBarIcon: ({ color, size }) => <GraduationCap size={size} color={color} strokeWidth={2} />,
+        }}
+      />
+      <Tabs.Screen
+        name="downloaded"
+        options={{
+          title: 'OFFLINE',
+          tabBarIcon: ({ color, size }) => <Download size={size} color={color} strokeWidth={2} />,
         }}
       />
       <Tabs.Screen
