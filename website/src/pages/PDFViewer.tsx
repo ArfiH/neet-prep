@@ -1,9 +1,8 @@
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
+﻿import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Document, Page, pdfjs } from 'react-pdf';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
-import { useMediaQuery } from '../lib/useMediaQuery';
 
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
@@ -12,16 +11,15 @@ pdfjs.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 export default function PDFViewer() {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
-  const isMobile = useMediaQuery('(max-width: 768px)');
   const [pdfBytes, setPdfBytes] = useState<ArrayBuffer | null>(null);
   const [title, setTitle] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [numPages, setNumPages] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1);
   const [scale, setScale] = useState(1.0);
   const containerRef = useRef<HTMLDivElement>(null);
 
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
   const watermarkText = user?.email;
 
   useEffect(() => {
@@ -90,35 +88,20 @@ export default function PDFViewer() {
   return (
     <div style={{ background: '#1a1a1a', minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{
-        display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: isMobile ? 'stretch' : 'center',
-        gap: isMobile ? 'var(--space-2)' : 'var(--space-4)',
-        padding: isMobile ? 'var(--space-2) var(--space-3)' : 'var(--space-3) var(--space-5)', background: '#222',
+        display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
+        padding: 'var(--space-3) var(--space-5)', background: '#222',
         borderBottom: '1px solid #333',
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', minWidth: 0 }}>
-          <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14, flexShrink: 0 }}>&larr; Back</Link>
-          <span style={{ color: '#ccc', fontSize: isMobile ? 13 : 14, fontWeight: 600, flex: 1, textAlign: isMobile ? 'left' : 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-            {title}
+        <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14 }}>&larr; Back</Link>
+        <span style={{ color: '#ccc', fontSize: 14, fontWeight: 600, flex: 1, textAlign: 'center' }}>
+          {title}
+        </span>
+        {numPages > 0 && (
+          <span style={{ color: '#666', fontSize: 12, fontFamily: 'var(--font-mono)' }}>
+            {numPages} {numPages === 1 ? 'page' : 'pages'}
           </span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 'var(--space-3)' : 'var(--space-4)', justifyContent: isMobile ? 'center' : 'flex-end' }}>
-          {numPages > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
-              <button
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage <= 1}
-                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
-              >&lt;</button>
-              <span style={{ color: '#999', fontSize: 13, fontFamily: 'var(--font-mono)' }}>
-                {currentPage} / {numPages}
-              </span>
-              <button
-                onClick={() => setCurrentPage(p => Math.min(numPages, p + 1))}
-                disabled={currentPage >= numPages}
-                style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 18 }}
-              >&gt;</button>
-            </div>
-          )}
+        )}
+        {!isMobile && (
           <div style={{ display: 'flex', gap: 4 }}>
             <button
               onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
@@ -132,7 +115,7 @@ export default function PDFViewer() {
               style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
             title="Zoom in">A+</button>
           </div>
-        </div>
+        )}
       </div>
 
       <div
@@ -145,7 +128,8 @@ export default function PDFViewer() {
       >
         <style>{`
           @media print { .pdf-viewer-wrapper { display: none !important; } }
-          .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; }
+          .pdf-viewer-wrapper { text-align: center; }
+          .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; max-width: 100% !important; height: auto !important; }
         `}</style>
 
         <div className="pdf-viewer-wrapper" style={{ position: 'relative', maxWidth: '100%' }}>
@@ -159,30 +143,32 @@ export default function PDFViewer() {
               </div>
             }
           >
-            <div style={{ position: 'relative', display: 'inline-block' }}>
-              <Page
-                pageNumber={currentPage}
-                scale={scale}
-                renderTextLayer={false}
-                renderAnnotationLayer={false}
-              />
-              <div style={{
-                position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                display: 'flex', justifyContent: 'center', alignItems: 'center',
-                pointerEvents: 'none', userSelect: 'none',
-              }}>
-                <span style={{
-                  fontFamily: 'Arial, sans-serif',
-                  fontSize: 40,
-                  fontWeight: 'bold',
-                  color: 'rgba(0, 0, 0, 0.15)',
-                  transform: 'rotate(-45deg)',
-                  whiteSpace: 'nowrap',
+            {Array.from({ length: numPages }, (_, i) => (
+              <div key={i} style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
+                <Page
+                  pageNumber={i + 1}
+                  scale={scale}
+                  renderTextLayer={false}
+                  renderAnnotationLayer={false}
+                />
+                <div style={{
+                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                  display: 'flex', justifyContent: 'center', alignItems: 'center',
+                  pointerEvents: 'none', userSelect: 'none',
                 }}>
-                  {watermarkText}
-                </span>
+                  <span style={{
+                    fontFamily: 'Arial, sans-serif',
+                    fontSize: isMobile ? 22 : 40,
+                    fontWeight: 'bold',
+                    color: 'rgba(0, 0, 0, 0.15)',
+                    transform: 'rotate(-45deg)',
+                    whiteSpace: 'nowrap',
+                  }}>
+                    {watermarkText}
+                  </span>
+                </div>
               </div>
-            </div>
+            ))}
           </Document>
         </div>
       </div>
