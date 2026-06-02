@@ -17,6 +17,7 @@ export default function PDFViewer() {
   const [error, setError] = useState('');
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.0);
+  const [containerWidth, setContainerWidth] = useState<number | undefined>();
   const containerRef = useRef<HTMLDivElement>(null);
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
@@ -44,6 +45,18 @@ export default function PDFViewer() {
         setLoading(false);
       });
   }, [id]);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    const observer = new ResizeObserver(entries => {
+      for (const entry of entries) {
+        setContainerWidth(entry.contentRect.width);
+      }
+    });
+    observer.observe(container);
+    return () => observer.disconnect();
+  }, []);
 
   const pdfSource = useMemo(
     () => pdfBytes ? { data: pdfBytes } : null,
@@ -129,7 +142,7 @@ export default function PDFViewer() {
         <style>{`
           @media print { .pdf-viewer-wrapper { display: none !important; } }
           .pdf-viewer-wrapper { text-align: center; }
-          .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; max-width: 100% !important; height: auto !important; }
+          .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; }
         `}</style>
 
         <div className="pdf-viewer-wrapper" style={{ position: 'relative', maxWidth: '100%' }}>
@@ -147,7 +160,7 @@ export default function PDFViewer() {
               <div key={i} style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
                 <Page
                   pageNumber={i + 1}
-                  scale={scale}
+                  width={containerWidth ? containerWidth * scale : undefined}
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                 />

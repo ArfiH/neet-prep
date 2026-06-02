@@ -6,6 +6,7 @@ import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVis
 import { api, formatPrice } from '@/lib/api';
 import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useAuth } from '@/lib/authContext';
 
 type PDF = {
   id: string;
@@ -32,8 +33,16 @@ function Indicator({ scrollX, contentWidth, layoutWidth }: { scrollX: Animated.V
   return <Animated.View style={[styles.scrollIndicator, { width: indicatorWidth, transform: [{ translateX }] }]} />;
 }
 
+function getGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour < 12) return 'Good morning';
+  if (hour < 17) return 'Good afternoon';
+  return 'Good evening';
+}
+
 export default function HomeScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const [pdfs, setPdfs] = useState<PDF[]>([]);
   const [recentPdfs, setRecentPdfs] = useState<PDF[]>([]);
   const scrollX = useRef(new Animated.Value(0)).current;
@@ -92,7 +101,7 @@ export default function HomeScreen() {
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
         {/* Greeting */}
         <View style={styles.greeting}>
-          <Text style={styles.greetingTitle}>Good morning, Arfi</Text>
+          <Text style={styles.greetingTitle}>{getGreeting()}, {user?.name || 'there'}</Text>
           <Text style={styles.greetingSub}>Continue where you left off</Text>
         </View>
 
