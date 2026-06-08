@@ -2,11 +2,11 @@ import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { logout } from '../lib/api';
 
 const navItems = [
-  { to: '/', label: 'Dashboard', icon: '◈' },
-  { to: '/pdfs', label: 'PDFs', icon: '▤' },
-  { to: '/colleges', label: 'Colleges', icon: '◇' },
-  { to: '/cutoffs', label: 'Cutoffs', icon: '⫧' },
-  { to: '/users', label: 'Users', icon: '◎' },
+  { to: '/', label: 'Dashboard' },
+  { to: '/pdfs', label: 'PDFs' },
+  { to: '/colleges', label: 'Colleges' },
+  { to: '/cutoffs', label: 'Cutoffs' },
+  { to: '/users', label: 'Users' },
 ];
 
 export default function Layout() {
@@ -21,7 +21,6 @@ export default function Layout() {
     <div style={styles.wrapper}>
       <aside style={styles.sidebar}>
         <div style={styles.brand}>
-          <span style={styles.brandIcon}>◆</span>
           <span style={styles.brandText}>NEET Zyme</span>
           <span style={styles.brandBadge}>admin</span>
         </div>
@@ -36,7 +35,6 @@ export default function Layout() {
                 ...(isActive ? styles.navLinkActive : {}),
               })}
             >
-              <span style={styles.navIcon}>{item.icon}</span>
               {item.label}
             </NavLink>
           ))}
@@ -73,7 +71,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderBottom: '1px solid var(--color-border)',
     marginBottom: 'var(--space-4)',
   },
-  brandIcon: { fontSize: 20, color: 'var(--color-accent)' },
   brandText: { fontWeight: 700, fontSize: 16, color: 'var(--color-text)' },
   brandBadge: {
     fontSize: 10,
@@ -103,7 +100,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: 'var(--color-accent)',
     fontWeight: 600,
   },
-  navIcon: { fontSize: 16, width: 20, textAlign: 'center' as const },
   spacer: { flex: 1 },
   logoutBtn: {
     background: 'none',

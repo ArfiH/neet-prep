@@ -62,7 +62,7 @@ export default function CollegeDetail() {
     );
   }
 
-  const fees = (college.tuition_fee_annual || 0) + (college.hostel_fee_annual || 0) + (college.other_charges || 0);
+  const fees = Number(college.tuition_fee_annual || 0) + Number(college.hostel_fee_annual || 0) + Number(college.other_charges || 0);
 
   return (
     <div style={{ padding: 'var(--space-8) 0' }}>
@@ -142,8 +142,7 @@ export default function CollegeDetail() {
                 )}
                 <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 'var(--space-1)', paddingTop: 'var(--space-2)', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 600 }}>Total</span>
-                  {/* <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{api.formatPrice(fees)}</span> */}
-                  <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{fees.toFixed(2)}</span>
+                  <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{api.formatPrice(fees)}</span>
                 </div>
               </div>
             </div>
