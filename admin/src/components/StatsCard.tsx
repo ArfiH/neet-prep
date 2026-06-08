@@ -1,7 +1,9 @@
+import type { ReactNode } from 'react';
+
 interface StatsCardProps {
   label: string;
   value: number;
-  icon: string;
+  icon: ReactNode;
   color?: string;
 }
 
@@ -23,6 +25,8 @@ export default function StatsCard({ label, value, icon, color }: StatsCardProps)
         <span style={{
           fontSize: 24,
           color: color || 'var(--color-accent)',
+          display: 'flex',
+          alignItems: 'center',
         }}>{icon}</span>
         <span style={{
           fontSize: 28,

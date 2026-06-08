@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { FileText, Building2, Users, ShoppingCart } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import { getDashboard } from '../lib/api';
 
@@ -21,10 +22,10 @@ export default function Dashboard() {
         gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
         gap: 'var(--space-4)',
       }}>
-        <StatsCard label="PDFs" value={stats.pdfCount} icon="▤" />
-        <StatsCard label="Colleges" value={stats.collegeCount} icon="◇" />
-        <StatsCard label="Users" value={stats.userCount} icon="◎" />
-        <StatsCard label="Purchases" value={stats.purchaseCount} icon="◈" />
+        <StatsCard label="PDFs" value={stats.pdfCount} icon={<FileText size={24} />} />
+        <StatsCard label="Colleges" value={stats.collegeCount} icon={<Building2 size={24} />} />
+        <StatsCard label="Users" value={stats.userCount} icon={<Users size={24} />} />
+        <StatsCard label="Purchases" value={stats.purchaseCount} icon={<ShoppingCart size={24} />} />
       </div>
     </div>
   );
