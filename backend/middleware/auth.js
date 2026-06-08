@@ -12,9 +12,13 @@ const auth = async (req, res, next) => {
     const token = authHeader.split(' ')[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    const [users] = await pool.query('SELECT token_version FROM users WHERE id = ?', [decoded.userId]);
+    const [users] = await pool.query('SELECT token_version, is_banned FROM users WHERE id = ?', [decoded.userId]);
     if (users.length === 0) {
       return res.status(401).json({ error: 'User not found' });
+    }
+
+    if (users[0].is_banned) {
+      return res.status(403).json({ error: 'Your account has been suspended.' });
     }
 
     const dbVersion = users[0].token_version || 0;
@@ -44,8 +48,8 @@ const optionalAuth = async (req, res, next) => {
       const token = authHeader.split(' ')[1];
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-      const [users] = await pool.query('SELECT token_version FROM users WHERE id = ?', [decoded.userId]);
-      if (users.length > 0) {
+      const [users] = await pool.query('SELECT token_version, is_banned FROM users WHERE id = ?', [decoded.userId]);
+      if (users.length > 0 && !users[0].is_banned) {
         const dbVersion = users[0].token_version || 0;
         if (decoded.tokenVersion === undefined || decoded.tokenVersion === dbVersion) {
           req.userId = decoded.userId;

@@ -10,7 +10,8 @@ import CollegeForm from './pages/CollegeForm';
 import CutoffList from './pages/CutoffList';
 import CutoffForm from './pages/CutoffForm';
 import UserList from './pages/UserList';
-import { getStoredToken, getDashboard } from './lib/api';
+import UserPurchases from './pages/UserPurchases';
+import { getStoredToken, getDashboard, getUrlToken } from './lib/api';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
   const [checking, setChecking] = useState(true);
@@ -27,8 +28,7 @@ function AuthGuard({ children }: { children: React.ReactNode }) {
       .then(() => setValid(true))
       .catch(() => {
         sessionStorage.removeItem('admin_token');
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('token')) {
+        if (getUrlToken()) {
           window.location.href = window.location.pathname;
         }
       })
@@ -71,6 +71,7 @@ export default function App() {
         <Route path="cutoffs/new" element={<CutoffForm />} />
         <Route path="cutoffs/:id/edit" element={<CutoffForm />} />
         <Route path="users" element={<UserList />} />
+        <Route path="users/:id/purchases" element={<UserPurchases />} />
       </Route>
     </Routes>
   );

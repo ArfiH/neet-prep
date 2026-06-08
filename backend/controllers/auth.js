@@ -123,6 +123,26 @@ const login = async (req, res) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
+    if (user.role === 'admin' && forceLogin) {
+      // Admin login: skip session management entirely
+      const accessToken = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.JWT_SECRET,
+        { expiresIn: process.env.JWT_EXPIRES_IN }
+      );
+
+      return res.json({
+        message: 'Login successful',
+        token: accessToken,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          role: 'admin',
+        },
+      });
+    }
+
     const hasActiveSession = user.has_active_session ? true : false;
     if (hasActiveSession && !forceLogin) {
       return res.status(409).json({

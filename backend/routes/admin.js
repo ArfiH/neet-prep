@@ -26,5 +26,10 @@ router.delete('/cutoffs/:id', c.deleteCutoff);
 
 router.get('/users', c.getUsers);
 router.put('/users/:id/role', c.updateUserRole);
+router.put('/users/:id/ban', c.banUser);
+router.put('/users/:id/unban', c.unbanUser);
+router.get('/users/:id/purchases', c.getUserPurchases);
+router.post('/users/:id/purchases', c.grantPdfAccess);
+router.delete('/users/:id/purchases/:pdfId', c.revokePdfAccess);
 
 module.exports = router;

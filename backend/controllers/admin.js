@@ -274,7 +274,7 @@ const deleteCutoff = async (req, res) => {
 const getUsers = async (req, res) => {
   try {
     const [users] = await pool.query(
-      'SELECT id, email, name, role, email_verified, created_at FROM users ORDER BY id'
+      'SELECT id, email, name, role, is_banned, email_verified, created_at FROM users ORDER BY id'
     );
     res.json(users);
   } catch (error) {
@@ -300,10 +300,120 @@ const updateUserRole = async (req, res) => {
   }
 };
 
+const banUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [existing] = await pool.query('SELECT id, role FROM users WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'User not found' });
+    if (existing[0].role === 'admin') return res.status(400).json({ error: 'Cannot ban an admin' });
+
+    await pool.query('UPDATE users SET is_banned = 1 WHERE id = ?', [id]);
+    res.json({ message: 'User banned' });
+  } catch (error) {
+    console.error('Admin ban user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const unbanUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'User not found' });
+
+    await pool.query('UPDATE users SET is_banned = 0 WHERE id = ?', [id]);
+    res.json({ message: 'User unbanned' });
+  } catch (error) {
+    console.error('Admin unban user error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const getUserPurchases = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'User not found' });
+
+    const [purchases] = await pool.query(
+      `SELECT p.id, p.pdf_id, p.amount, p.status, p.purchased_at,
+              pdf.title AS pdf_title, pdf.subject AS pdf_subject
+       FROM purchases p
+       JOIN pdfs pdf ON p.pdf_id = pdf.id
+       WHERE p.user_id = ?
+       ORDER BY p.purchased_at DESC`,
+      [id]
+    );
+    res.json(purchases);
+  } catch (error) {
+    console.error('Admin get user purchases error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const grantPdfAccess = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { pdf_id } = req.body;
+    if (!pdf_id) return res.status(400).json({ error: 'pdf_id is required' });
+
+    const [user] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
+    if (!user.length) return res.status(404).json({ error: 'User not found' });
+
+    const [pdf] = await pool.query('SELECT id, title FROM pdfs WHERE id = ?', [pdf_id]);
+    if (!pdf.length) return res.status(404).json({ error: 'PDF not found' });
+
+    const [dup] = await pool.query(
+      'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ? AND status = ?',
+      [id, pdf_id, 'completed']
+    );
+    if (dup.length) return res.status(409).json({ error: 'User already has access to this PDF' });
+
+    const [result] = await pool.query(
+      'INSERT INTO purchases (user_id, pdf_id, status, amount) VALUES (?, ?, ?, ?)',
+      [id, pdf_id, 'completed', 0]
+    );
+
+    const { createNotification } = require('./notifications');
+    createNotification(Number(id), 'Access Granted', `Admin granted you access to "${pdf[0].title}"`).catch(() => {});
+
+    res.status(201).json({ id: result.insertId, message: 'Access granted' });
+  } catch (error) {
+    console.error('Admin grant PDF access error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const revokePdfAccess = async (req, res) => {
+  try {
+    const { id, pdfId } = req.params;
+    const [existing] = await pool.query(
+      'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ?',
+      [id, pdfId]
+    );
+    if (!existing.length) return res.status(404).json({ error: 'Purchase not found' });
+
+    await pool.query(
+      'DELETE FROM purchases WHERE user_id = ? AND pdf_id = ?',
+      [id, pdfId]
+    );
+
+    const { createNotification } = require('./notifications');
+    createNotification(Number(id), 'Access Revoked', `Your access to a PDF has been revoked by an admin.`).catch(() => {});
+
+    res.json({ message: 'Access revoked' });
+  } catch (error) {
+    console.error('Admin revoke PDF access error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf,
   getColleges, getCollege, createCollege, updateCollege, deleteCollege,
   getCutoffs, createCutoff, updateCutoff, deleteCutoff,
   getUsers, updateUserRole,
+  banUser, unbanUser,
+  getUserPurchases, grantPdfAccess, revokePdfAccess,
 };

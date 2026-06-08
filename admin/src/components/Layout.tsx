@@ -1,5 +1,4 @@
-import { ReactNode } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { logout } from '../lib/api';
 
 const navItems = [
@@ -10,7 +9,7 @@ const navItems = [
   { to: '/users', label: 'Users', icon: '◎' },
 ];
 
-export default function Layout({ children }: { children: ReactNode }) {
+export default function Layout() {
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -49,7 +48,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         <header style={styles.header}>
           <h1 style={styles.pageTitle}>Admin Panel</h1>
         </header>
-        <div style={styles.content}>{children}</div>
+        <div style={styles.content}><Outlet /></div>
       </main>
     </div>
   );

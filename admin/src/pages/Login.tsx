@@ -1,11 +1,10 @@
 import { useState, FormEvent } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { adminLogin, loginWithToken } from '../lib/api';
+import { useNavigate } from 'react-router-dom';
+import { adminLogin, loginWithToken, getUrlToken } from '../lib/api';
 
 export default function Login() {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const tokenParam = searchParams.get('token');
+  const tokenParam = getUrlToken();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');

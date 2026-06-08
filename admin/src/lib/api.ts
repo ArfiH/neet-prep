@@ -1,8 +1,11 @@
 const API_BASE = import.meta.env.VITE_API_BASE || '/api';
 
 function getToken(): string | null {
-  const params = new URLSearchParams(window.location.search);
-  return params.get('token') || sessionStorage.getItem('admin_token');
+  return sessionStorage.getItem('admin_token');
+}
+
+export function getUrlToken(): string | null {
+  return new URLSearchParams(window.location.search).get('token');
 }
 
 function setToken(token: string) {
@@ -22,8 +25,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
   if (res.status === 401) {
     clearToken();
-    const params = new URLSearchParams(window.location.search);
-    if (params.has('token')) {
+    if (getUrlToken()) {
       window.location.href = window.location.pathname;
     }
     throw new Error('Unauthorized');
@@ -43,8 +45,9 @@ export async function adminLogin(email: string, password: string) {
   const res = await fetch(`${API_BASE}/auth/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, forceLogin: true }),
   });
+
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     throw new Error(data.error || 'Login failed');
@@ -97,3 +100,10 @@ export const deleteCutoff = (id: number) => request<any>(`/cutoffs/${id}`, { met
 // Users
 export const getUsers = () => request<any[]>('/users');
 export const updateUserRole = (id: number, role: string) => request<any>(`/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
+export const banUser = (id: number) => request<any>(`/users/${id}/ban`, { method: 'PUT' });
+export const unbanUser = (id: number) => request<any>(`/users/${id}/unban`, { method: 'PUT' });
+export const getUserPurchases = (id: number) => request<any[]>(`/users/${id}/purchases`);
+export const grantPdfAccess = (userId: number, pdfId: number) =>
+  request<any>(`/users/${userId}/purchases`, { method: 'POST', body: JSON.stringify({ pdf_id: pdfId }) });
+export const revokePdfAccess = (userId: number, pdfId: number) =>
+  request<any>(`/users/${userId}/purchases/${pdfId}`, { method: 'DELETE' });

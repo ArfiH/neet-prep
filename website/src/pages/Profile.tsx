@@ -5,7 +5,7 @@ import { useMediaQuery } from '../lib/useMediaQuery';
 import * as api from '../lib/api';
 
 export default function Profile() {
-  const { user, logout } = useAuth();
+  const { user, logout, isAdmin } = useAuth();
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [profile, setProfile] = useState<any>(null);
@@ -66,6 +66,17 @@ export default function Profile() {
           <Link to="/purchased" className="btn btn-primary" style={{ justifyContent: 'center' }}>
             My Purchased PDFs
           </Link>
+          {isAdmin && (
+            <a
+              href={`/admin?token=${localStorage.getItem('neet_zyme_token')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn-outline"
+              style={{ justifyContent: 'center' }}
+            >
+              Admin Panel
+            </a>
+          )}
           <button onClick={handleLogout} className="btn btn-outline" style={{ padding: '12px', fontSize: 14 }}>
             Sign Out
           </button>
