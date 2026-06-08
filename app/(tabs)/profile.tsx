@@ -12,12 +12,11 @@ import * as WebBrowser from 'expo-web-browser';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import CustomAlert from '@/components/CustomAlert';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Bug, Download } from 'lucide-react-native';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Download } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
 import { useFocusEffect } from 'expo-router';
-import { resetOnboarding } from '@/lib/onboardingStorage';
 
 type ProfileData = {
   id: number;
@@ -269,19 +268,7 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {__DEV__ && (
-          <TouchableOpacity
-            style={styles.devBtn}
-            onPress={async () => {
-              await resetOnboarding();
-              router.replace('/onboarding');
-            }}
-            activeOpacity={0.7}
-          >
-            <Bug size={14} color={COLORS.muted} strokeWidth={2} />
-            <Text style={styles.devBtnText}>Reset Onboarding</Text>
-          </TouchableOpacity>
-        )}
+
         <Text style={styles.version}>NEET Zyme v1.0.0</Text>
         <View style={{ height: 24 }} />
       </ScrollView>
