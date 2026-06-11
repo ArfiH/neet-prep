@@ -231,6 +231,13 @@ class ApiClient {
     return this.request<{ message: string }>(`/notifications/${id}/read`, { method: 'POST' });
   }
 
+  async registerDeviceToken(expoPushToken: string) {
+    return this.request<{ message: string }>('/auth/device-token', {
+      method: 'POST',
+      body: JSON.stringify({ expoPushToken }),
+    });
+  }
+
   async getAdminUrl(path: string = ''): Promise<string | null> {
     const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
     if (!token) return null;

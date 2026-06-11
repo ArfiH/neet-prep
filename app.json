@@ -21,6 +21,7 @@
     },
     "android": {
       "package": "com.ahmad.neetzyme",
+      "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "icon": "./assets/images/icon.png",
       "intentFilters": [
@@ -72,7 +73,8 @@
       "@config-plugins/react-native-blob-util",
       "@config-plugins/react-native-pdf",
       "@react-native-google-signin/google-signin",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-notifications"
     ],
     "experiments": {
       "typedRoutes": true

@@ -8,6 +8,8 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import * as Linking from 'expo-linking';
 import { initAdMob } from '@/lib/adService';
+import { setupNotificationHandler } from '@/lib/pushNotifications';
+import * as Notifications from 'expo-notifications';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
 
 const toastConfig = {
@@ -142,10 +144,20 @@ function AuthRouter() {
 }
 
 export default function RootLayout() {
+  const router = useRouter();
   useFrameworkReady();
 
   useEffect(() => {
     initAdMob();
+    setupNotificationHandler();
+
+    const sub = Notifications.addNotificationResponseReceivedListener(response => {
+      const data = response.notification.request.content.data;
+      if (data?.pdfId) {
+        router.replace(`/pdf/viewer/${data.pdfId}`);
+      }
+    });
+    return () => sub.remove();
   }, []);
 
   return (

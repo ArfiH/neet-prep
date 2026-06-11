@@ -495,4 +495,20 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout };
+const registerDeviceToken = async (req, res) => {
+  try {
+    const { expoPushToken } = req.body;
+    if (!expoPushToken) return res.status(400).json({ error: 'Push token is required' });
+
+    await pool.query(
+      'INSERT INTO device_tokens (user_id, expo_push_token) VALUES (?, ?) ON DUPLICATE KEY UPDATE updated_at = NOW()',
+      [req.userId, expoPushToken]
+    );
+    res.json({ message: 'Device token registered' });
+  } catch (error) {
+    console.error('Register device token error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout, registerDeviceToken };

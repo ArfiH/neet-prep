@@ -435,6 +435,68 @@ const broadcastNotification = async (req, res) => {
       'INSERT INTO notifications (user_id, title, body) SELECT id, ?, ? FROM users WHERE is_banned = 0',
       [title.trim(), body?.trim() || '']
     );
+
+    // Send push notifications via Expo Push API
+    (async () => {
+      try {
+        const [tokens] = await pool.query(
+          'SELECT DISTINCT dt.expo_push_token FROM device_tokens dt JOIN users u ON dt.user_id = u.id WHERE u.is_banned = 0'
+        );
+        const pushTokens = tokens.map(t => t.expo_push_token);
+
+        if (pushTokens.length > 0) {
+          const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+          const BATCH_SIZE = 100;
+
+          for (let i = 0; i < pushTokens.length; i += BATCH_SIZE) {
+            const batch = pushTokens.slice(i, i + BATCH_SIZE);
+            try {
+              const pushRes = await fetch(EXPO_PUSH_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  to: batch,
+                  title: title.trim(),
+                  body: body?.trim() || '',
+                  sound: 'default',
+                  priority: 'high',
+                  channelId: 'default',
+                }),
+              });
+              const pushData = await pushRes.json();
+
+              if (pushData.errors) {
+                console.error('Expo push API errors:', pushData.errors);
+              }
+
+              if (pushData.data) {
+                const invalidTokens = pushData.data
+                  .filter((receipt, idx) => {
+                    if (receipt.status === 'error' && ['DeviceNotRegistered', 'InvalidCredentials', 'MessageTooBig'].includes(receipt.details?.error)) {
+                      return true;
+                    }
+                    return false;
+                  })
+                  .map((_, idx) => batch[idx])
+                  .filter(Boolean);
+
+                if (invalidTokens.length > 0) {
+                  pool.query(
+                    'DELETE FROM device_tokens WHERE expo_push_token IN (?)',
+                    [invalidTokens]
+                  ).catch(err => console.error('Error cleaning invalid tokens:', err));
+                }
+              }
+            } catch (batchErr) {
+              console.error('Expo push batch error:', batchErr);
+            }
+          }
+        }
+      } catch (pushErr) {
+        console.error('Push notification error:', pushErr);
+      }
+    })();
+
     res.json({ message: `Notification sent to ${result.affectedRows} users` });
   } catch (error) {
     console.error('Broadcast notification error:', error);

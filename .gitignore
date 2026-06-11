@@ -42,3 +42,6 @@ neetzyme1_neet_prep.sql
 backend/admin-dist/
 backend/web-dist/
 *.sql
+app.json
+neetzymee-f9f20-5102a55dab4d.json
+google-services.json

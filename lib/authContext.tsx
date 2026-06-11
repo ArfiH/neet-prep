@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { api } from '@/lib/api';
 import { configureGoogleSignIn, signInWithGoogle } from '@/lib/googleAuth';
+import { registerForPushNotificationsAsync } from '@/lib/pushNotifications';
 
 const AUTH_TOKEN_KEY = 'auth_token';
 const USER_DATA_KEY = 'user_data';
@@ -48,6 +49,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
+  async function registerPushToken() {
+    try {
+      const token = await registerForPushNotificationsAsync();
+      if (token) {
+        await api.registerDeviceToken(token);
+      }
+    } catch (e) {
+      console.error('Error registering push token:', e);
+    }
+  }
+
   async function loadStoredAuth() {
     try {
       const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
@@ -58,6 +70,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           if (profileData && profileData.email_verified) {
             setUser(profileData);
             await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(profileData));
+            registerPushToken();
             return;
           }
         } catch {}
@@ -83,6 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
       setUser(data.user);
       await api.init();
+      registerPushToken();
     } catch (error: any) {
       if (error?.code === 'SIGN_IN_CANCELLED') return;
       throw error;
@@ -95,6 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
     await api.init();
+    registerPushToken();
   }
 
   async function register(email: string, password: string, name?: string) {
@@ -119,6 +134,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
     setUser(data.user);
     await api.init();
+    registerPushToken();
   }
 
   async function resendVerification(email: string): Promise<string> {
