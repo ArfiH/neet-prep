@@ -78,7 +78,7 @@ export default function PDFViewer() {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
         <div style={{ textAlign: 'center' }}>
           <div className="spinner" style={{ margin: '0 auto var(--space-4)' }} />
           <p style={{ color: 'var(--color-text-3)', fontSize: 14 }}>Loading PDF...</p>
@@ -89,7 +89,7 @@ export default function PDFViewer() {
 
   if (error) {
     return (
-      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: 'var(--color-danger)', fontSize: 16, marginBottom: 'var(--space-4)' }}>{error}</p>
           <Link to="/pdfs" className="btn btn-outline">Back to PDFs</Link>
@@ -99,90 +99,114 @@ export default function PDFViewer() {
   }
 
   return (
-    <div style={{ background: '#1a1a1a', minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
-        padding: isMobile ? 'var(--space-2) var(--space-3)' : 'var(--space-3) var(--space-5)',
-        background: '#222', borderBottom: '1px solid #333',
-      }}>
-        <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14 }}>&larr; Back</Link>
-        <span style={{ color: '#ccc', fontSize: 14, fontWeight: 600, flex: 1, textAlign: 'center' }}>
-          {title}
-        </span>
-        {numPages > 0 && (
-          <span style={{ color: '#666', fontSize: 12, fontFamily: 'var(--font-mono)' }}>
-            {numPages} {numPages === 1 ? 'page' : 'pages'}
-          </span>
-        )}
-        <div style={{ display: 'flex', gap: 4 }}>
-          <button
-            onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
-            style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: isMobile ? 16 : 14, padding: '2px 6px' }}
-          title="Zoom out">A-</button>
-          <span style={{ color: '#999', fontSize: 12, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>
-            {Math.round(zoom * 100)}%
-          </span>
-          <button
-            onClick={() => setZoom(z => Math.min(3, z + 0.1))}
-            style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: isMobile ? 16 : 14, padding: '2px 6px' }}
-          title="Zoom in">A+</button>
-        </div>
-      </div>
-
+    <div style={{ background: '#1a1a1a', height: '100vh', display: 'flex', flexDirection: 'column' }}>
       <div
         ref={containerRef}
         onContextMenu={handleContextMenu}
         style={{
-          flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          padding: isMobile ? 'var(--space-2)' : 'var(--space-4)',
-          position: 'relative', userSelect: 'none',
+          flex: 1, overflow: 'auto', position: 'relative',
         }}
       >
-        <style>{`
-          @media print { .pdf-viewer-wrapper { display: none !important; } }
-          .pdf-viewer-wrapper { text-align: center; }
-          .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; }
-        `}</style>
+        <div style={{
+          position: 'sticky', top: 0, zIndex: 10,
+          display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
+          padding: isMobile ? '8px var(--space-3)' : '10px var(--space-5)',
+          background: 'rgba(26, 26, 26, 0.88)',
+          backdropFilter: 'blur(14px)',
+          WebkitBackdropFilter: 'blur(14px)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)',
+        }}>
+          <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap' }}>&larr; Back</Link>
+          <span style={{ color: '#ccc', fontSize: 14, fontWeight: 600, flex: 1, textAlign: 'center', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {title}
+          </span>
+          {numPages > 0 && (
+            <span style={{ color: '#555', fontSize: 12, fontFamily: 'var(--font-mono)', whiteSpace: 'nowrap' }}>
+              {numPages}p
+            </span>
+          )}
+          <div style={{
+            display: 'flex', gap: 2,
+            background: 'rgba(255,255,255,0.06)',
+            borderRadius: 8, padding: 2, alignItems: 'center',
+          }}>
+            <button
+              onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
+              style={{
+                background: 'none', border: 'none', color: '#ccc', cursor: 'pointer',
+                borderRadius: 6, padding: '4px 9px', fontSize: 17, lineHeight: 1,
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            title="Zoom out">−</button>
+            <span style={{ color: '#999', fontSize: 12, fontFamily: 'var(--font-mono)', padding: '0 5px', minWidth: 36, textAlign: 'center' }}>
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+              style={{
+                background: 'none', border: 'none', color: '#ccc', cursor: 'pointer',
+                borderRadius: 6, padding: '4px 9px', fontSize: 17, lineHeight: 1,
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.1)')}
+              onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+            title="Zoom in">+</button>
+          </div>
+        </div>
 
-        <div className="pdf-viewer-wrapper" style={{ position: 'relative', maxWidth: '100%' }}>
-          <Document
-            file={pdfSource}
-            onLoadSuccess={onDocumentLoadSuccess}
-            onLoadError={onDocumentLoadError}
-            loading={
-              <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
-                <div className="spinner" style={{ margin: '0 auto' }} />
-              </div>
-            }
-          >
-            {Array.from({ length: numPages }, (_, i) => (
-              <div key={i} style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
-                <Page
-                  pageNumber={i + 1}
-                  width={containerWidth || undefined}
-                  scale={zoom}
-                  renderTextLayer={false}
-                  renderAnnotationLayer={false}
-                />
-                <div style={{
-                  position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
-                  display: 'flex', justifyContent: 'center', alignItems: 'center',
-                  pointerEvents: 'none', userSelect: 'none',
-                }}>
-                  <span style={{
-                    fontFamily: 'Arial, sans-serif',
-                    fontSize: isMobile ? 22 : 40,
-                    fontWeight: 'bold',
-                    color: 'rgba(0, 0, 0, 0.15)',
-                    transform: 'rotate(-45deg)',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {watermarkText}
-                  </span>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center',
+          padding: isMobile ? 'var(--space-2)' : 'var(--space-4)',
+          userSelect: 'none',
+        }}>
+          <style>{`
+            @media print { .pdf-viewer-wrapper { display: none !important; } }
+            .pdf-viewer-wrapper { text-align: center; }
+            .pdf-viewer-wrapper .react-pdf__Page__canvas { display: block; margin: 0 auto; border-radius: 2px; box-shadow: 0 2px 16px rgba(0,0,0,0.3); }
+          `}</style>
+
+          <div className="pdf-viewer-wrapper" style={{ position: 'relative', maxWidth: '100%' }}>
+            <Document
+              file={pdfSource}
+              onLoadSuccess={onDocumentLoadSuccess}
+              onLoadError={onDocumentLoadError}
+              loading={
+                <div style={{ padding: 'var(--space-8)', textAlign: 'center' }}>
+                  <div className="spinner" style={{ margin: '0 auto' }} />
                 </div>
-              </div>
-            ))}
-          </Document>
+              }
+            >
+              {Array.from({ length: numPages }, (_, i) => (
+                <div key={i} style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
+                  <Page
+                    pageNumber={i + 1}
+                    width={containerWidth || undefined}
+                    scale={zoom}
+                    renderTextLayer={false}
+                    renderAnnotationLayer={false}
+                  />
+                  <div style={{
+                    position: 'absolute', top: 0, left: 0, right: 0, bottom: 0,
+                    display: 'flex', justifyContent: 'center', alignItems: 'center',
+                    pointerEvents: 'none', userSelect: 'none',
+                  }}>
+                    <span style={{
+                      fontFamily: 'Arial, sans-serif',
+                      fontSize: isMobile ? 22 : 40,
+                      fontWeight: 'bold',
+                      color: 'rgba(0, 0, 0, 0.15)',
+                      transform: 'rotate(-45deg)',
+                      whiteSpace: 'nowrap',
+                    }}>
+                      {watermarkText}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </Document>
+          </div>
         </div>
       </div>
     </div>

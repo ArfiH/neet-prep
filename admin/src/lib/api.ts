@@ -157,3 +157,10 @@ export const grantPdfAccess = (userId: number, pdfId: number) =>
   request<any>(`/users/${userId}/purchases`, { method: 'POST', body: JSON.stringify({ pdf_id: pdfId }) });
 export const revokePdfAccess = (userId: number, pdfId: number) =>
   request<any>(`/users/${userId}/purchases/${pdfId}`, { method: 'DELETE' });
+
+// Notifications
+export const broadcastNotification = (title: string, body: string) =>
+  request<{ message: string }>('/notifications/broadcast', {
+    method: 'POST',
+    body: JSON.stringify({ title, body }),
+  });

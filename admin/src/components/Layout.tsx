@@ -7,6 +7,7 @@ const navItems = [
   { to: '/colleges', label: 'Colleges' },
   { to: '/cutoffs', label: 'Cutoffs' },
   { to: '/users', label: 'Users' },
+  { to: '/notifications/broadcast', label: 'Broadcast' },
 ];
 
 export default function Layout() {

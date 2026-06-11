@@ -417,11 +417,27 @@ const revokePdfAccess = async (req, res) => {
     );
 
     const { createNotification } = require('./notifications');
-    createNotification(Number(id), 'Access Revoked', `Your access to a PDF has been revoked by an admin.`).catch(() => {});
+    createNotification(Number(id), 'Access Revoked', `Your access to a PDF has been revoked by admin.`).catch(() => {});
 
     res.json({ message: 'Access revoked' });
   } catch (error) {
     console.error('Admin revoke PDF access error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const broadcastNotification = async (req, res) => {
+  try {
+    const { title, body } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Title is required' });
+
+    const [result] = await pool.query(
+      'INSERT INTO notifications (user_id, title, body) SELECT id, ?, ? FROM users WHERE is_banned = 0',
+      [title.trim(), body?.trim() || '']
+    );
+    res.json({ message: `Notification sent to ${result.affectedRows} users` });
+  } catch (error) {
+    console.error('Broadcast notification error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -434,4 +450,5 @@ module.exports = {
   getUsers, updateUserRole,
   banUser, unbanUser,
   getUserPurchases, grantPdfAccess, revokePdfAccess,
+  broadcastNotification,
 };

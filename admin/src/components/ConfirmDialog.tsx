@@ -5,12 +5,13 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmLabel?: string;
+  variant?: 'danger' | 'primary';
   onConfirm: () => void;
   onCancel: () => void;
 }
 
 export default function ConfirmDialog({
-  open, title, message, confirmLabel = 'Delete', onConfirm, onCancel,
+  open, title, message, confirmLabel = 'Delete', variant = 'danger', onConfirm, onCancel,
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
 
@@ -69,7 +70,7 @@ export default function ConfirmDialog({
               padding: 'var(--space-2) var(--space-5)',
               border: 'none',
               borderRadius: 'var(--radius-md)',
-              background: 'var(--color-danger)',
+              background: variant === 'primary' ? 'var(--color-accent)' : 'var(--color-danger)',
               color: '#fff',
               fontSize: 13,
               fontWeight: 600,

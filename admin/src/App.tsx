@@ -11,6 +11,7 @@ import CutoffList from './pages/CutoffList';
 import CutoffForm from './pages/CutoffForm';
 import UserList from './pages/UserList';
 import UserPurchases from './pages/UserPurchases';
+import BroadcastNotification from './pages/BroadcastNotification';
 import { getStoredToken, getDashboard, getUrlToken } from './lib/api';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -72,6 +73,7 @@ export default function App() {
         <Route path="cutoffs/:id/edit" element={<CutoffForm />} />
         <Route path="users" element={<UserList />} />
         <Route path="users/:id/purchases" element={<UserPurchases />} />
+        <Route path="notifications/broadcast" element={<BroadcastNotification />} />
       </Route>
     </Routes>
   );
