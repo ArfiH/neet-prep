@@ -1,10 +1,16 @@
-import { useState, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
+declare global {
+  interface Window { google?: any; }
+}
+
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
 export default function Login() {
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const location = useLocation();
@@ -13,8 +19,61 @@ export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState('');
   const [showConflict, setShowConflict] = useState(false);
+
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+  const pendingGoogleToken = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    let cancelled = false;
+    let attempts = 0;
+
+    function tryInit() {
+      if (cancelled) return;
+      if (window.google?.accounts?.id) {
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: async (response: any) => {
+            if (!response?.credential) return;
+            setGoogleLoading(true);
+            setError('');
+            try {
+              await loginWithGoogle(response.credential);
+              navigate(from, { replace: true });
+            } catch (err: any) {
+              if (err?.active_session_exists) {
+                pendingGoogleToken.current = response.credential;
+                setShowConflict(true);
+                return;
+              }
+              setError(err.message || 'Google sign-in failed');
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+          cancel_on_tap_outside: false,
+        });
+
+        if (googleBtnRef.current) {
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            theme: 'outline',
+            size: 'large',
+            text: 'signin_with',
+            width: googleBtnRef.current.offsetWidth || 340,
+          });
+        }
+      } else {
+        attempts++;
+        if (attempts < 30) setTimeout(tryInit, 300);
+      }
+    }
+
+    tryInit();
+    return () => { cancelled = true; };
+  }, [navigate, from, loginWithGoogle]);
 
   async function handleLogin(force = false) {
     setLoading(true);
@@ -38,10 +97,32 @@ export default function Login() {
     }
   }
 
+  async function handleConflictContinue() {
+    setShowConflict(false);
+    if (pendingGoogleToken.current) {
+      const idToken = pendingGoogleToken.current;
+      pendingGoogleToken.current = null;
+      setGoogleLoading(true);
+      setError('');
+      try {
+        await loginWithGoogle(idToken, true);
+        navigate(from, { replace: true });
+      } catch (err: any) {
+        setError(err.message || 'Google sign-in failed');
+      } finally {
+        setGoogleLoading(false);
+      }
+    } else {
+      handleLogin(true);
+    }
+  }
+
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
     handleLogin(false);
   };
+
+  const isBusy = loading || googleLoading;
 
   return (
     <div style={{ padding: isMobile ? 'var(--space-8) 0' : 'var(--space-12) 0' }}>
@@ -92,13 +173,30 @@ export default function Login() {
             </div>
             <button
               type="submit"
-              disabled={loading}
+              disabled={isBusy}
               className="btn btn-primary btn-lg"
-              style={{ width: '100%', opacity: loading ? 0.6 : 1 }}
+              style={{ width: '100%', opacity: isBusy ? 0.6 : 1 }}
             >
               {loading ? 'Signing in...' : 'Sign In'}
             </button>
           </form>
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', margin: 'var(--space-5) 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                <span style={{ fontSize: 13, color: 'var(--color-text-3)', whiteSpace: 'nowrap' }}>or continue with</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+              </div>
+              {googleLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
+                  <div className="spinner" style={{ width: 20, height: 20 }} />
+                </div>
+              ) : (
+                <div ref={googleBtnRef} style={{ display: 'flex', justifyContent: 'center', minHeight: 44 }} />
+              )}
+            </>
+          )}
 
           <div style={{ marginTop: 'var(--space-4)', textAlign: 'center' }}>
             <Link to="/forgot-password" style={{ fontSize: 14, color: 'var(--color-text-2)' }}>
@@ -155,7 +253,7 @@ export default function Login() {
                 Cancel
               </button>
               <button
-                onClick={() => { setShowConflict(false); handleLogin(true); }}
+                onClick={handleConflictContinue}
                 className="btn btn-primary"
                 style={{ padding: '10px 24px', fontSize: 14 }}
               >

@@ -16,6 +16,7 @@ type AuthContextType = {
   isLoggedIn: boolean;
   isAdmin: boolean;
   login: (email: string, password: string, forceLogin?: boolean) => Promise<void>;
+  loginWithGoogle: (idToken: string, forceLogin?: boolean) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<{ message: string; email: string }>;
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<void>;
@@ -66,6 +67,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(data.user);
   }, []);
 
+  const loginWithGoogle = useCallback(async (idToken: string, forceLogin = false) => {
+    const data = await api.googleLogin(idToken, forceLogin);
+    setUser(data.user);
+  }, []);
+
   const register = useCallback(async (email: string, password: string, name?: string) => {
     return api.register(email, password, name);
   }, []);
@@ -110,6 +116,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLoggedIn: !!user,
         isAdmin: user?.role === 'admin',
         login,
+        loginWithGoogle,
         register,
         logout,
         verifyEmail,

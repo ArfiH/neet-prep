@@ -82,6 +82,18 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
 // ---------------------------------------------------------------------------
 // Auth
 // ---------------------------------------------------------------------------
+export async function googleLogin(idToken: string, forceLogin = false) {
+  const body: any = { idToken };
+  if (forceLogin) body.forceLogin = true;
+  const data: any = await request('/auth/google', {
+    method: 'POST',
+    body: JSON.stringify(body),
+    skipAuth: true,
+  });
+  setToken(data.token);
+  return data;
+}
+
 export async function login(email: string, password: string, forceLogin = false) {
   const body: any = { email, password };
   if (forceLogin) body.forceLogin = true;
