@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl, serveRawPdf } = require('../controllers/pdfs');
+const { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf } = require('../controllers/pdfs');
 const { auth, optionalAuth } = require('../middleware/auth');
 
 router.get('/', getAllPdfs);
+router.post('/razorpay-webhook', razorpayWebhook);
 router.get('/:id', getPdfById);
 router.get('/:id/check', optionalAuth, checkPurchase);
 router.get('/user/purchased', optionalAuth, getPurchasedPdfs);

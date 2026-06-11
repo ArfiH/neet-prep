@@ -351,4 +351,90 @@ const serveRawPdf = async (req, res) => {
   }
 };
 
-module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, getPdfViewUrl, serveRawPdf };
+const razorpayWebhook = async (req, res) => {
+  try {
+    const secret = process.env.RAZORPAY_WEBHOOK_SECRET;
+    if (!secret) {
+      console.error('[webhook] RAZORPAY_WEBHOOK_SECRET not configured');
+      return res.status(500).json({ error: 'Webhook not configured' });
+    }
+
+    const signature = req.headers['x-razorpay-signature'];
+    if (!signature) {
+      return res.status(400).json({ error: 'Missing signature' });
+    }
+
+    const expectedSig = crypto
+      .createHmac('sha256', secret)
+      .update(req.rawBody)
+      .digest('hex');
+
+    const sigBuffer = Buffer.from(signature);
+    const expectedBuffer = Buffer.from(expectedSig);
+    if (
+      sigBuffer.length !== expectedBuffer.length ||
+      !crypto.timingSafeEqual(sigBuffer, expectedBuffer)
+    ) {
+      return res.status(400).json({ error: 'Invalid signature' });
+    }
+
+    const event = req.body.event;
+    if (event !== 'payment.captured') {
+      return res.status(200).json({ status: 'ignored' });
+    }
+
+    const orderId = req.body?.payload?.payment?.entity?.order_id;
+    if (!orderId) {
+      return res.status(400).json({ error: 'Missing order_id in payload' });
+    }
+
+    const [purchases] = await pool.query(
+      'SELECT user_id, pdf_id, status FROM purchases WHERE razorpay_order_id = ?',
+      [orderId]
+    );
+
+    if (purchases.length === 0) {
+      return res.status(200).json({ status: 'ok' });
+    }
+
+    const purchase = purchases[0];
+
+    if (purchase.status === 'completed') {
+      return res.status(200).json({ status: 'ok' });
+    }
+
+    await pool.query(
+      "UPDATE purchases SET status = 'completed' WHERE razorpay_order_id = ? AND status = 'pending'",
+      [orderId]
+    );
+
+    const { user_id, pdf_id } = purchase;
+
+    const [pdfRows] = await pool.query('SELECT title, price FROM pdfs WHERE id = ?', [pdf_id]);
+    const pdfTitle = pdfRows[0]?.title || 'a PDF';
+    const pdfPrice = pdfRows[0]?.price || 0;
+
+    createNotification(user_id, 'Purchase Successful', `You now have access to "${pdfTitle}". Happy studying!`);
+
+    const [users] = await pool.query('SELECT email FROM users WHERE id = ?', [user_id]);
+    if (users.length > 0) {
+      const { sendInvoiceEmail } = require('../services/email');
+      const paymentId = req.body?.payload?.payment?.entity?.id || '';
+      sendInvoiceEmail(
+        users[0].email,
+        pdfTitle,
+        Number(pdfPrice).toFixed(2),
+        paymentId,
+        orderId
+      ).catch(() => {});
+    }
+
+    console.log(`[webhook] payment.captured: order=${orderId} user=${user_id} pdf=${pdf_id}`);
+    return res.status(200).json({ status: 'ok' });
+  } catch (err) {
+    console.error('[webhook] Error:', err);
+    return res.status(500).json({ error: 'Webhook processing failed' });
+  }
+};
+
+module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf };
