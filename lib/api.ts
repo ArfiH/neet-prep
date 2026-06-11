@@ -1,4 +1,5 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setOnlineStatus } from '@/lib/networkStatus';
 
 export const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || 'http://localhost:3000/api';
 
@@ -50,6 +51,7 @@ class ApiClient {
         headers: { ...headers, ...options.headers },
       });
     } catch {
+      setOnlineStatus(false);
       const err = new Error('No internet connection. Please check your network.') as any;
       err.isNetworkError = true;
       throw err;
@@ -57,6 +59,7 @@ class ApiClient {
 
     // Android fetch sometimes resolves with status 0 when offline
     if (response.status === 0) {
+      setOnlineStatus(false);
       const err = new Error('No internet connection. Please check your network.') as any;
       err.isNetworkError = true;
       throw err;
@@ -65,7 +68,6 @@ class ApiClient {
     const contentType = response.headers.get('content-type') || '';
 
     if (!contentType.includes('application/json')) {
-      const text = await response.text();
       throw new Error(`Server returned ${response.status} — expected JSON, got ${contentType}`);
     }
 
@@ -83,9 +85,11 @@ class ApiClient {
       }
       if (data.needs_verification) err.needs_verification = true;
       if (data.email) err.email = data.email;
+      setOnlineStatus(true);
       throw err;
     }
 
+    setOnlineStatus(true);
     return data;
   }
 

@@ -3,12 +3,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
-import { api, formatPrice, isNetworkError } from '@/lib/api';
+import { api, formatPrice } from '@/lib/api';
 import { getRecentlyViewedIds } from '@/lib/recentlyViewed';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
-import AlertBanner from '@/components/AlertBanner';
-import { getDownloadedPDFs } from '@/lib/downloadManager';
 
 type PDF = {
   id: string;
@@ -51,8 +49,6 @@ export default function HomeScreen() {
   const contentWidth = useRef(0);
   const layoutWidth = useRef(0);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
-  const [isOffline, setIsOffline] = useState(false);
-  const [offlineCount, setOfflineCount] = useState(0);
 
   useEffect(() => {
     fetchPdfs();
@@ -74,14 +70,7 @@ export default function HomeScreen() {
     try {
       const data = await api.getPdfs();
       if (data) setPdfs(data);
-      setIsOffline(false);
-    } catch (e: any) {
-      if (isNetworkError(e)) {
-        setIsOffline(true);
-        const downloaded = await getDownloadedPDFs();
-        setOfflineCount(downloaded.length);
-      }
-    }
+    } catch (e) {}
   }
 
   async function fetchPurchased() {
@@ -90,9 +79,7 @@ export default function HomeScreen() {
       if (data && Array.isArray(data)) {
         setPurchasedIds(new Set(data.map((p: any) => String(p.id))));
       }
-    } catch (e: any) {
-      if (isNetworkError(e)) setIsOffline(true);
-    }
+    } catch (e) {}
   }
 
   async function loadRecentPdfs() {
@@ -112,19 +99,6 @@ export default function HomeScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
-        {/* Offline Banner */}
-        {isOffline && (
-          <View style={styles.offlineBanner}>
-            <AlertBanner
-              type="info"
-              message={`You're offline. ${offlineCount > 0 ? `${offlineCount} downloaded PDF${offlineCount > 1 ? 's' : ''} available.` : 'Only downloaded PDFs are accessible.'}`}
-              action={offlineCount > 0 ? { label: 'View Offline PDFs', onPress: () => router.push('/(tabs)/downloaded') } : undefined}
-              dismissable
-              onDismiss={() => setIsOffline(false)}
-            />
-          </View>
-        )}
-
         {/* Greeting */}
         <View style={styles.greeting}>
           <Text style={styles.greetingTitle}>{getGreeting()}, {user?.name || 'there'}</Text>
@@ -217,7 +191,6 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   container: { flex: 1 },
 
-  offlineBanner: { paddingHorizontal: 14, paddingTop: 8 },
   greeting: { paddingHorizontal: 22, paddingTop: 4 },
   greetingTitle: { fontSize: 22, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
   greetingSub: { fontSize: 12.5, color: COLORS.muted, marginTop: 2 },

@@ -4,10 +4,9 @@ import { useRouter, useFocusEffect } from 'expo-router';
 import { BookOpen, Download } from 'lucide-react-native';
 import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor, getGlyphLetter } from '@/constants/subjectVisuals';
-import { api, formatPrice, isNetworkError } from '@/lib/api';
+import { api, formatPrice } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { getDownloadedIds, getDownloadedPDFs } from '@/lib/downloadManager';
-import AlertBanner from '@/components/AlertBanner';
+import { getDownloadedIds } from '@/lib/downloadManager';
 
 type PDF = {
   id: string;
@@ -46,8 +45,6 @@ export default function PDFsScreen() {
   const [activeClass, setActiveClass] = useState<string | null>(null);
   const [purchasedIds, setPurchasedIds] = useState<Set<string>>(new Set());
   const [downloadedIds, setDownloadedIds] = useState<Set<string>>(new Set());
-  const [isOffline, setIsOffline] = useState(false);
-  const [offlineCount, setOfflineCount] = useState(0);
 
   useEffect(() => {
     fetchPdfs();
@@ -71,13 +68,8 @@ export default function PDFsScreen() {
       if (data) {
         setPdfs(data);
       }
-      setIsOffline(false);
-    } catch (e: any) {
-      if (isNetworkError(e)) {
-        setIsOffline(true);
-        const downloaded = await getDownloadedPDFs();
-        setOfflineCount(downloaded.length);
-      }
+    } catch (e) {
+      // ignore
     }
     setLoading(false);
   }
@@ -88,8 +80,8 @@ export default function PDFsScreen() {
       if (data && Array.isArray(data)) {
         setPurchasedIds(new Set(data.map((p: any) => String(p.id))));
       }
-    } catch (e: any) {
-      if (isNetworkError(e)) setIsOffline(true);
+    } catch (e) {
+      // not logged in or error — silently ignore
     }
   }
 
@@ -138,19 +130,6 @@ export default function PDFsScreen() {
           </View>
         </View>
         </View>
-
-        {/* Offline Banner */}
-        {isOffline && (
-          <View style={styles.offlineBanner}>
-            <AlertBanner
-              type="info"
-              message={`You're offline. PDFs will appear when connected. ${offlineCount > 0 ? `${offlineCount} downloaded PDF${offlineCount > 1 ? 's' : ''} available.` : ''}`}
-              action={offlineCount > 0 ? { label: 'View Downloaded', onPress: () => router.push('/(tabs)/downloaded') } : undefined}
-              dismissable
-              onDismiss={() => setIsOffline(false)}
-            />
-          </View>
-        )}
 
         {/* Subject Bar */}
         <Text style={styles.barLabel}>Subjects</Text>
@@ -275,7 +254,6 @@ const styles = StyleSheet.create({
   pillFree: { fontSize: 10, fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, backgroundColor: COLORS.primaryLight, color: COLORS.primaryDark, fontWeight: '600' },
   pillPaid: { fontSize: 10, fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 7, borderRadius: 999, backgroundColor: '#fef3e0', color: '#b5651d', fontWeight: '600' },
 
-  offlineBanner: { paddingHorizontal: 14, paddingTop: 4 },
   barLabel: { fontSize: 10.5, fontWeight: '700', fontFamily: monoFont, letterSpacing: 0.16, color: COLORS.muted, textTransform: 'uppercase', paddingHorizontal: 14, paddingTop: 10, paddingBottom: 8 },
 
   subjectBar: { flexDirection: 'row', paddingHorizontal: 14, paddingBottom: 8, gap: 6 },

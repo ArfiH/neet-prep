@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/lib/authContext';
+import { NetworkProvider } from '@/lib/networkContext';
 import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import * as Linking from 'expo-linking';
@@ -162,11 +163,13 @@ export default function RootLayout() {
 
   return (
     <SafeAreaProvider>
-      <AuthProvider>
-        <AuthRouter />
-      </AuthProvider>
-      <StatusBar style="dark" backgroundColor="#ffffff" />
-      <Toast config={toastConfig} />
+      <NetworkProvider>
+        <AuthProvider>
+          <AuthRouter />
+        </AuthProvider>
+        <StatusBar style="dark" backgroundColor="#ffffff" />
+        <Toast config={toastConfig} />
+      </NetworkProvider>
     </SafeAreaProvider>
   );
 }
