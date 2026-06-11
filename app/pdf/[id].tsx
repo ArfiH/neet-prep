@@ -2,15 +2,16 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag, Download, Trash2 } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag, Download, Trash2, WifiOff } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
-import { api, API_BASE_URL, formatPrice } from '@/lib/api';
+import { api, API_BASE_URL, formatPrice, isNetworkError } from '@/lib/api';
 import { addRecentlyViewed } from '@/lib/recentlyViewed';
 import { useAuth } from '@/lib/authContext';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import CustomAlert from '@/components/CustomAlert';
+import AlertBanner from '@/components/AlertBanner';
 import { resetPaymentHandled, markPaymentHandled, paymentHandled } from '@/lib/paymentSession';
 import { downloadPDF, isPDFDownloaded, hasLocalPDF, deleteLocalPDF } from '@/lib/downloadManager';
 import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
@@ -55,6 +56,7 @@ export default function PDFDetailScreen() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showDownloadAdOverlay, setShowDownloadAdOverlay] = useState(false);
   const [alreadyDownloaded, setAlreadyDownloaded] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   useEffect(() => {
     fetchPdf();
@@ -74,7 +76,9 @@ export default function PDFDetailScreen() {
       if (!id) return;
       api.checkPdfPurchase(id).then(({ hasPurchased }) => {
         setPurchased(hasPurchased);
-      }).catch(() => {});
+      }).catch((e: any) => {
+        if (isNetworkError(e)) setIsOffline(true);
+      });
       hasLocalPDF(id).then(setAlreadyDownloaded).catch(() => {});
     }, [id])
   );
@@ -94,8 +98,11 @@ export default function PDFDetailScreen() {
           }
         }
       }
-    } catch (e) {
-      // ignore
+      setIsOffline(false);
+    } catch (e: any) {
+      if (isNetworkError(e)) {
+        setIsOffline(true);
+      }
     }
     setLoading(false);
   }
@@ -253,9 +260,17 @@ export default function PDFDetailScreen() {
   if (!pdf) {
     return (
       <SafeAreaView style={styles.loadingScreen}>
-        <Text style={{ color: COLORS.fg }}>PDF not found.</Text>
+        {isOffline ? (
+          <>
+            <WifiOff size={44} color={COLORS.muted} strokeWidth={1.5} />
+            <Text style={{ color: COLORS.fg, marginTop: 14, fontSize: 16, fontWeight: '600' }}>No internet connection</Text>
+            <Text style={{ color: COLORS.muted, marginTop: 4, fontSize: 13, textAlign: 'center', paddingHorizontal: 40 }}>Internet is required to load PDF details.</Text>
+          </>
+        ) : (
+          <Text style={{ color: COLORS.fg, fontSize: 16, fontWeight: '600' }}>PDF not found.</Text>
+        )}
         <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: COLORS.primary, marginTop: 12 }}>Go back</Text>
+          <Text style={{ color: COLORS.primary, marginTop: 16, fontSize: 14, fontWeight: '600' }}>Go back</Text>
         </TouchableOpacity>
       </SafeAreaView>
     );
@@ -281,6 +296,19 @@ export default function PDFDetailScreen() {
           </TouchableOpacity>
           <Text style={styles.topbarText}>PDF DETAIL · {subjectLabel}</Text>
         </View>
+
+        {/* Offline Banner */}
+        {isOffline && (
+          <View style={styles.offlineBanner}>
+            <AlertBanner
+              type="info"
+              message={alreadyDownloaded ? 'You\'re offline. You can view the downloaded version.' : 'You\'re offline. Internet is required to view this PDF.'}
+              action={alreadyDownloaded ? { label: 'View Offline', onPress: () => router.replace(`/pdf/viewer/${pdf.id}`) } : undefined}
+              dismissable={alreadyDownloaded}
+              onDismiss={() => setIsOffline(false)}
+            />
+          </View>
+        )}
 
         {/* Hero Card */}
         <LinearGradient
@@ -411,6 +439,7 @@ const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   loadingScreen: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background },
 
+  offlineBanner: { paddingHorizontal: 14, paddingTop: 4 },
   topbar: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 22, paddingTop: 8, paddingBottom: 6 },
   backCircle: { width: 28, height: 28, borderRadius: 14, backgroundColor: COLORS.border, alignItems: 'center', justifyContent: 'center' },
   topbarText: { fontSize: 12, fontWeight: '600', color: COLORS.muted, fontFamily: monoFont, letterSpacing: 0.14 },

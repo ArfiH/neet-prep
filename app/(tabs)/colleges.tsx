@@ -13,8 +13,9 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { GraduationCap, ChevronRight, TrendingUp, Award } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
-import { api } from '@/lib/api';
+import { api, isNetworkError } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import AlertBanner from '@/components/AlertBanner';
 
 type PredictedCollege = {
   id: string;
@@ -50,6 +51,7 @@ export default function CollegesScreen() {
   const [predicted, setPredicted] = useState(false);
   const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [stateSearch, setStateSearch] = useState('');
+  const [isOffline, setIsOffline] = useState(false);
 
   async function doPredict() {
     if (!rank || isNaN(Number(rank))) return;
@@ -60,7 +62,9 @@ export default function CollegesScreen() {
     try {
       const predictions = await api.predictColleges(userRank, category, state);
       setResults(predictions || []);
-    } catch (e) {
+      setIsOffline(false);
+    } catch (e: any) {
+      if (isNetworkError(e)) setIsOffline(true);
       setResults([]);
     }
     setLoading(false);
@@ -89,6 +93,18 @@ export default function CollegesScreen() {
           <Text style={styles.headerTitle}>College Predictor</Text>
           <Text style={styles.headerSubtitle}>Find colleges based on your NEET rank</Text>
         </View>
+
+        {/* Offline Banner */}
+        {isOffline && (
+          <View style={styles.offlineBanner}>
+            <AlertBanner
+              type="info"
+              message="You're offline. Prediction requires an internet connection."
+              dismissable
+              onDismiss={() => setIsOffline(false)}
+            />
+          </View>
+        )}
 
         {/* Prediction Form */}
         <View style={styles.formCard}>
@@ -208,6 +224,7 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 24, fontWeight: '700', color: COLORS.fg, letterSpacing: -0.01 },
   headerSubtitle: { fontSize: 13, color: COLORS.muted, marginTop: 2 },
 
+  offlineBanner: { paddingHorizontal: 14, paddingTop: 4 },
   formCard: { marginHorizontal: 16, marginTop: 8, backgroundColor: COLORS.surface, borderRadius: 18, padding: 20, borderWidth: 1, borderColor: COLORS.border },
   formTitle: { fontSize: 16, fontWeight: '700', color: COLORS.fg, marginBottom: 16 },
 

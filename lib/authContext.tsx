@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { api } from '@/lib/api';
+import { api, isNetworkError } from '@/lib/api';
 import { configureGoogleSignIn, signInWithGoogle } from '@/lib/googleAuth';
 import { registerForPushNotificationsAsync } from '@/lib/pushNotifications';
 
@@ -73,7 +73,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             registerPushToken();
             return;
           }
-        } catch {}
+        } catch {
+          const cached = await AsyncStorage.getItem(USER_DATA_KEY);
+          if (cached) {
+            try {
+              const parsed = JSON.parse(cached);
+              if (parsed?.email_verified) {
+                setUser(parsed);
+                return;
+              }
+            } catch {}
+          }
+        }
         setUser(null);
         await AsyncStorage.multiRemove([AUTH_TOKEN_KEY, USER_DATA_KEY]);
       }

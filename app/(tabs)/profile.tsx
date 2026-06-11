@@ -9,9 +9,10 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { api } from '@/lib/api';
+import { api, isNetworkError } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import CustomAlert from '@/components/CustomAlert';
+import AlertBanner from '@/components/AlertBanner';
 import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Download } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -36,6 +37,7 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -52,8 +54,8 @@ export default function ProfileScreen() {
     try {
       const data = await api.getNotifications();
       setUnreadCount(data.filter((n: any) => !n.is_read).length);
-    } catch (e) {
-      // ignore
+    } catch (e: any) {
+      if (isNetworkError(e)) setIsOffline(true);
     }
   }
 
@@ -61,8 +63,9 @@ export default function ProfileScreen() {
     try {
       const data = await api.getProfile();
       setProfile(data);
-    } catch (e) {
-      console.log('Error fetching profile:', e);
+      setIsOffline(false);
+    } catch (e: any) {
+      if (isNetworkError(e)) setIsOffline(true);
     } finally {
       setLoading(false);
     }
@@ -97,6 +100,18 @@ export default function ProfileScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView showsVerticalScrollIndicator={false}>
+        {/* Offline Banner */}
+        {isOffline && (
+          <View style={styles.offlineBanner}>
+            <AlertBanner
+              type="info"
+              message="You're offline. Some profile data may not be up to date."
+              dismissable
+              onDismiss={() => setIsOffline(false)}
+            />
+          </View>
+        )}
+
         {/* Profile Header */}
         <View style={styles.profileHeader}>
           <View style={styles.avatar}>
@@ -291,6 +306,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: COLORS.background },
   centered: { flex: 1, justifyContent: 'center' },
+  offlineBanner: { paddingHorizontal: 14, paddingTop: 4 },
 
   profileHeader: { paddingTop: 20, paddingBottom: 20, alignItems: 'center', backgroundColor: COLORS.stage },
   avatar: { width: 72, height: 72, borderRadius: 36, backgroundColor: COLORS.border, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },

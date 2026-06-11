@@ -10,6 +10,10 @@ export function formatPrice(price: number | string): string {
   return Number.isInteger(num) ? String(num) : num.toFixed(2);
 }
 
+export function isNetworkError(err: any): boolean {
+  return err?.isNetworkError === true || err?.message === 'Network request failed';
+}
+
 class ApiClient {
   private token: string | null = null;
   private onSessionInvalidated: (() => void) | null = null;
@@ -39,10 +43,24 @@ class ApiClient {
     const url = `${API_BASE_URL}${endpoint}`;
     const headers = await this.getHeaders();
 
-    const response = await fetch(url, {
-      ...options,
-      headers: { ...headers, ...options.headers },
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: { ...headers, ...options.headers },
+      });
+    } catch {
+      const err = new Error('No internet connection. Please check your network.') as any;
+      err.isNetworkError = true;
+      throw err;
+    }
+
+    // Android fetch sometimes resolves with status 0 when offline
+    if (response.status === 0) {
+      const err = new Error('No internet connection. Please check your network.') as any;
+      err.isNetworkError = true;
+      throw err;
+    }
 
     const contentType = response.headers.get('content-type') || '';
 
