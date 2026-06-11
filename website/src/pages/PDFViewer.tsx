@@ -16,7 +16,7 @@ export default function PDFViewer() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [numPages, setNumPages] = useState(0);
-  const [scale, setScale] = useState(1.0);
+  const [zoom, setZoom] = useState(1.0);
   const [containerWidth, setContainerWidth] = useState<number | undefined>();
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -102,8 +102,8 @@ export default function PDFViewer() {
     <div style={{ background: '#1a1a1a', minHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 'var(--space-4)',
-        padding: 'var(--space-3) var(--space-5)', background: '#222',
-        borderBottom: '1px solid #333',
+        padding: isMobile ? 'var(--space-2) var(--space-3)' : 'var(--space-3) var(--space-5)',
+        background: '#222', borderBottom: '1px solid #333',
       }}>
         <Link to={`/pdfs/${id}`} style={{ color: '#999', fontSize: 14 }}>&larr; Back</Link>
         <span style={{ color: '#ccc', fontSize: 14, fontWeight: 600, flex: 1, textAlign: 'center' }}>
@@ -114,21 +114,19 @@ export default function PDFViewer() {
             {numPages} {numPages === 1 ? 'page' : 'pages'}
           </span>
         )}
-        {!isMobile && (
-          <div style={{ display: 'flex', gap: 4 }}>
-            <button
-              onClick={() => setScale(s => Math.max(0.5, s - 0.1))}
-              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
-            title="Zoom out">A-</button>
-            <span style={{ color: '#999', fontSize: 12, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>
-              {Math.round(scale * 100)}%
-            </span>
-            <button
-              onClick={() => setScale(s => Math.min(3, s + 0.1))}
-              style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: 14, padding: '2px 6px' }}
-            title="Zoom in">A+</button>
-          </div>
-        )}
+        <div style={{ display: 'flex', gap: 4 }}>
+          <button
+            onClick={() => setZoom(z => Math.max(0.5, z - 0.1))}
+            style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: isMobile ? 16 : 14, padding: '2px 6px' }}
+          title="Zoom out">A-</button>
+          <span style={{ color: '#999', fontSize: 12, fontFamily: 'var(--font-mono)', display: 'flex', alignItems: 'center' }}>
+            {Math.round(zoom * 100)}%
+          </span>
+          <button
+            onClick={() => setZoom(z => Math.min(3, z + 0.1))}
+            style={{ background: 'none', border: 'none', color: '#999', cursor: 'pointer', fontSize: isMobile ? 16 : 14, padding: '2px 6px' }}
+          title="Zoom in">A+</button>
+        </div>
       </div>
 
       <div
@@ -136,7 +134,8 @@ export default function PDFViewer() {
         onContextMenu={handleContextMenu}
         style={{
           flex: 1, overflow: 'auto', display: 'flex', flexDirection: 'column', alignItems: 'center',
-          padding: 'var(--space-4)', position: 'relative', userSelect: 'none',
+          padding: isMobile ? 'var(--space-2)' : 'var(--space-4)',
+          position: 'relative', userSelect: 'none',
         }}
       >
         <style>{`
@@ -160,7 +159,8 @@ export default function PDFViewer() {
               <div key={i} style={{ position: 'relative', display: 'inline-block', marginBottom: 16 }}>
                 <Page
                   pageNumber={i + 1}
-                  width={containerWidth ? containerWidth * scale : undefined}
+                  width={containerWidth || undefined}
+                  scale={zoom}
                   renderTextLayer={false}
                   renderAnnotationLayer={false}
                 />
