@@ -384,6 +384,24 @@ const grantPdfAccess = async (req, res) => {
   }
 };
 
+const uploadPdf = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'No file uploaded' });
+
+    const { buffer, originalname, mimetype } = req.file;
+    const crypto = require('crypto');
+    const sha1 = crypto.createHash('sha1').update(buffer).digest('hex');
+
+    const { uploadFile } = require('../services/b2');
+    const fileUrl = await uploadFile(originalname, mimetype, sha1, buffer);
+
+    res.json({ file_url: fileUrl });
+  } catch (error) {
+    console.error('Admin upload PDF error:', error);
+    res.status(500).json({ error: error.message || 'Upload failed' });
+  }
+};
+
 const revokePdfAccess = async (req, res) => {
   try {
     const { id, pdfId } = req.params;
@@ -410,7 +428,7 @@ const revokePdfAccess = async (req, res) => {
 
 module.exports = {
   getDashboard,
-  getPdfs, getPdf, createPdf, updatePdf, deletePdf,
+  getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
   getColleges, getCollege, createCollege, updateCollege, deleteCollege,
   getCutoffs, createCutoff, updateCutoff, deleteCutoff,
   getUsers, updateUserRole,

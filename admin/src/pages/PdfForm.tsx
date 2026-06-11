@@ -1,6 +1,7 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getPdf, createPdf, updatePdf } from '../lib/api';
+import { Upload, Check } from 'lucide-react';
+import { getPdf, createPdf, updatePdf, uploadPdfWithProgress } from '../lib/api';
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Practice'];
 
@@ -16,6 +17,10 @@ export default function PdfForm() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [uploadProgress, setUploadProgress] = useState(-1); // -1 = idle, 0-99 uploading, 100 = done
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (isEdit && id) {
@@ -65,6 +70,26 @@ export default function PdfForm() {
 
   const update = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
 
+  const handleUpload = async () => {
+    if (!selectedFile) return;
+    console.log('[Upload] User initiated upload for:', selectedFile.name);
+    setUploadProgress(0);
+    setError('');
+    setUploadSuccess(false);
+    try {
+      const result = await uploadPdfWithProgress(selectedFile, (pct) => setUploadProgress(pct));
+      update('file_url', result.file_url);
+      setUploadProgress(100);
+      setUploadSuccess(true);
+      setSelectedFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    } catch (e: any) {
+      console.error('[Upload] Failed:', e.message);
+      setError(e.message);
+      setUploadProgress(-1);
+    }
+  };
+
   return (
     <div>
       <h2 style={{ fontSize: 16, fontWeight: 600, marginBottom: 'var(--space-5)' }}>
@@ -107,6 +132,69 @@ export default function PdfForm() {
             <input type="checkbox" checked={form.is_free} onChange={e => update('is_free', e.target.checked)} style={{ width: 16, height: 16 }} />
             Mark as free
           </label>
+        </FormField>
+        <FormField label="Upload PDF">
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)' }}>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".pdf"
+                onChange={e => {
+                  setSelectedFile(e.target.files?.[0] || null);
+                  setUploadProgress(-1);
+                  setUploadSuccess(false);
+                }}
+                style={{ flex: 1, fontSize: 13, color: 'var(--color-text)' }}
+                disabled={uploadProgress >= 0 && uploadProgress < 100}
+              />
+              {uploadProgress === -1 || uploadProgress === 100 ? (
+                <button
+                  type="button"
+                  onClick={handleUpload}
+                  disabled={!selectedFile}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 4,
+                    padding: 'var(--space-1) var(--space-3)',
+                    border: 'none', borderRadius: 'var(--radius-sm)',
+                    background: selectedFile ? 'var(--color-accent)' : 'var(--color-border)',
+                    color: '#fff', fontSize: 13, fontWeight: 600,
+                    cursor: selectedFile ? 'pointer' : 'default',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {uploadSuccess ? <Check size={14} /> : <Upload size={14} />}
+                  {uploadSuccess ? 'Uploaded' : 'Upload'}
+                </button>
+              ) : (
+                <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--color-accent)', whiteSpace: 'nowrap' }}>
+                  {uploadProgress}%
+                </span>
+              )}
+            </div>
+            {uploadProgress >= 0 && uploadProgress < 100 && (
+              <div style={{
+                marginTop: 'var(--space-1)',
+                height: 6,
+                borderRadius: 3,
+                background: 'var(--color-paper-3)',
+                overflow: 'hidden',
+              }}>
+                <div style={{
+                  width: `${uploadProgress}%`,
+                  height: '100%',
+                  background: 'var(--color-accent)',
+                  borderRadius: 3,
+                  transition: 'width 0.3s ease',
+                }} />
+              </div>
+            )}
+            {uploadSuccess && (
+              <div style={{ fontSize: 12, color: 'var(--color-success)', marginTop: 'var(--space-1)' }}>
+                ✓ File uploaded — URL filled below
+              </div>
+            )}
+          </div>
         </FormField>
         <FormField label="File URL">
           <input value={form.file_url} onChange={e => update('file_url', e.target.value)} style={inputStyle} placeholder="https://..." />

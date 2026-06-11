@@ -84,6 +84,56 @@ export const createPdf = (data: any) => request<any>('/pdfs', { method: 'POST', 
 export const updatePdf = (id: number, data: any) => request<any>(`/pdfs/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deletePdf = (id: number) => request<any>(`/pdfs/${id}`, { method: 'DELETE' });
 
+export function uploadPdfWithProgress(
+  file: File,
+  onProgress: (pct: number) => void
+): Promise<{ file_url: string }> {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+
+  return new Promise((resolve, reject) => {
+    console.log(`[Upload] Starting upload: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+    const xhr = new XMLHttpRequest();
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) {
+        const pct = Math.round((e.loaded / e.total) * 100);
+        onProgress(pct);
+        if (pct % 25 === 0) console.log(`[Upload] ${pct}% — ${(e.loaded / 1024 / 1024).toFixed(2)} of ${(e.total / 1024 / 1024).toFixed(2)} MB`);
+      }
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const data = JSON.parse(xhr.responseText);
+        console.log('[Upload] Success — file URL:', data.file_url);
+        resolve(data);
+      } else {
+        let msg = 'Upload failed';
+        try { msg = JSON.parse(xhr.responseText).error || msg; } catch { }
+        console.error('[Upload] Server error:', msg);
+        reject(new Error(msg));
+      }
+    };
+
+    xhr.onerror = () => {
+      console.error('[Upload] Network error — request failed');
+      reject(new Error('Upload failed — network error'));
+    };
+
+    xhr.onabort = () => {
+      console.warn('[Upload] Aborted by user');
+      reject(new Error('Upload cancelled'));
+    };
+
+    xhr.open('POST', `${API_BASE}/admin/pdfs/upload`);
+    if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.send(formData);
+  });
+}
+
 // Colleges
 export const getColleges = (state?: string) => request<any[]>(`/colleges${state ? `?state=${encodeURIComponent(state)}` : ''}`);
 export const getCollege = (id: number) => request<any>(`/colleges/${id}`);

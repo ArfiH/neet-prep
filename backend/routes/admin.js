@@ -1,7 +1,10 @@
 const express = require('express');
 const router = express.Router();
+const multer = require('multer');
 const { adminAuth } = require('../middleware/adminAuth');
 const c = require('../controllers/admin');
+
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
 router.use(adminAuth);
 
@@ -12,6 +15,7 @@ router.get('/pdfs/:id', c.getPdf);
 router.post('/pdfs', c.createPdf);
 router.put('/pdfs/:id', c.updatePdf);
 router.delete('/pdfs/:id', c.deletePdf);
+router.post('/pdfs/upload', upload.single('file'), c.uploadPdf);
 
 router.get('/colleges', c.getColleges);
 router.get('/colleges/:id', c.getCollege);
