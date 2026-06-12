@@ -340,8 +340,8 @@ const verifyEmailWeb = async (req, res) => {
             <span style="font-size:28px">✓</span>
           </div>
           <h2 style="color:#1a1d23;margin-bottom:8px">Email Verified!</h2>
-          <p style="color:#5f6570;margin-bottom:24px">Your account is now active. You can log in to NEET Zyme.</p>
-          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zyme</a>
+          <p style="color:#5f6570;margin-bottom:24px">Your account is now active. You can log in to NEET Zymee.</p>
+          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zymee</a>
         </div>
       </body></html>
     `);
@@ -356,7 +356,7 @@ const verifyEmailWeb = async (req, res) => {
           </div>
           <h2 style="color:#1a1d23;margin-bottom:8px">Verification Failed</h2>
           <p style="color:#5f6570;margin-bottom:8px">${error.message}</p>
-          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zyme</a>
+          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zymee</a>
         </div>
       </body></html>
     `);
@@ -511,4 +511,165 @@ const registerDeviceToken = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout, registerDeviceToken };
+// ---------------------------------------------------------------------------
+// WhatsApp OTP auth
+// ---------------------------------------------------------------------------
+const whatsapp = require('../services/whatsapp');
+
+function normalizePhone(raw) {
+  const digits = String(raw).replace(/\D/g, '');
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return '91' + digits;
+  }
+  if (digits.length >= 10 && digits.length <= 15) {
+    return digits;
+  }
+  return null;
+}
+
+const sendWhatsappOtp = async (req, res) => {
+  try {
+    const phone = normalizePhone(req.body.phone);
+    if (!phone) {
+      return res.status(400).json({ error: 'Please enter a valid phone number.' });
+    }
+    await whatsapp.sendOtp(phone);
+    res.json({ message: 'OTP sent to your WhatsApp.' });
+  } catch (error) {
+    console.error('sendWhatsappOtp error:', error);
+    res.status(400).json({ error: error.message || 'Failed to send OTP.' });
+  }
+};
+
+const verifyWhatsappOtp = async (req, res) => {
+  try {
+    const { otp, forceLogin } = req.body;
+    const phone = normalizePhone(req.body.phone);
+
+    if (!phone) {
+      return res.status(400).json({ error: 'Please enter a valid phone number.' });
+    }
+    if (!otp || String(otp).trim().length !== 6) {
+      return res.status(400).json({ error: 'Please enter the 6-digit OTP.' });
+    }
+
+    await whatsapp.verifyOtp(phone, otp);
+
+    const [existing] = await pool.query('SELECT * FROM users WHERE phone = ?', [phone]);
+    let user;
+
+    if (existing.length > 0) {
+      user = existing[0];
+      if (!user.phone_verified) {
+        await pool.query('UPDATE users SET phone_verified = TRUE WHERE id = ?', [user.id]);
+      }
+    } else {
+      const [result] = await pool.query(
+        'INSERT INTO users (phone, phone_verified) VALUES (?, TRUE)',
+        [phone]
+      );
+      user = { id: result.insertId, phone, email: null, name: null, category: null, role: 'user', email_verified: false };
+    }
+
+    const hasActiveSession = user.has_active_session ? true : false;
+    if (hasActiveSession && !forceLogin) {
+      return res.status(409).json({
+        error: 'ACTIVE_SESSION_EXISTS',
+        message: 'Another device is already signed in to this account. Continue? That device will be logged out.',
+      });
+    }
+
+    const [vRows] = await pool.query('SELECT token_version FROM users WHERE id = ?', [user.id]);
+    const tokenVersion = (vRows[0]?.token_version || 0) + 1;
+
+    const { accessToken, refreshToken } = issueTokens(user.id, user.email || null, tokenVersion);
+
+    await pool.query(
+      'UPDATE users SET token_version = ?, has_active_session = TRUE, refresh_token = ? WHERE id = ?',
+      [tokenVersion, refreshToken, user.id]
+    );
+
+    res.json({
+      message: 'WhatsApp sign-in successful',
+      token: accessToken,
+      refreshToken,
+      user: {
+        id: user.id,
+        email: user.email || null,
+        email_verified: false,
+        phone: user.phone || phone,
+        phone_verified: true,
+        name: user.name || null,
+        category: user.category || null,
+        role: user.role || 'user',
+      },
+    });
+  } catch (error) {
+    console.error('verifyWhatsappOtp error:', error);
+    res.status(400).json({ error: error.message || 'OTP verification failed.' });
+  }
+};
+
+// ---------------------------------------------------------------------------
+// Secondary phone verification (existing user adds phone to profile)
+// ---------------------------------------------------------------------------
+const sendSecondaryPhoneOtp = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const phone = normalizePhone(req.body.phone);
+
+    if (!phone) {
+      return res.status(400).json({ error: 'Please enter a valid phone number.' });
+    }
+
+    const [existing] = await pool.query(
+      'SELECT id FROM users WHERE phone = ? AND id != ?',
+      [phone, userId]
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ error: 'Phone number already in use by another account.' });
+    }
+
+    await whatsapp.sendOtp(phone);
+
+    await pool.query(
+      'UPDATE users SET phone = ?, phone_verified = FALSE WHERE id = ?',
+      [phone, userId]
+    );
+
+    res.json({ message: 'OTP sent to your WhatsApp.' });
+  } catch (error) {
+    console.error('sendSecondaryPhoneOtp error:', error);
+    res.status(400).json({ error: error.message || 'Failed to send OTP.' });
+  }
+};
+
+const verifySecondaryPhone = async (req, res) => {
+  try {
+    const userId = req.userId;
+    const { otp } = req.body;
+
+    if (!otp || String(otp).trim().length !== 6) {
+      return res.status(400).json({ error: 'Please enter the 6-digit OTP.' });
+    }
+
+    const [users] = await pool.query('SELECT phone FROM users WHERE id = ?', [userId]);
+    if (!users[0]?.phone) {
+      return res.status(400).json({ error: 'No phone number set on your profile.' });
+    }
+
+    await whatsapp.verifyOtp(users[0].phone, otp);
+
+    await pool.query(
+      'UPDATE users SET phone_verified = TRUE WHERE id = ?',
+      [userId]
+    );
+
+    res.json({ message: 'Phone number verified successfully.' });
+  } catch (error) {
+    console.error('verifySecondaryPhone error:', error);
+    res.status(400).json({ error: error.message || 'Verification failed.' });
+  }
+};
+
+module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout, registerDeviceToken, sendWhatsappOtp, verifyWhatsappOtp, sendSecondaryPhoneOtp, verifySecondaryPhone };

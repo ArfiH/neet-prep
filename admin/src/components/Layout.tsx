@@ -22,7 +22,7 @@ export default function Layout() {
     <div style={styles.wrapper}>
       <aside style={styles.sidebar}>
         <div style={styles.brand}>
-          <span style={styles.brandText}>NEET Zyme</span>
+          <span style={styles.brandText}>NEET Zymee</span>
           <span style={styles.brandBadge}>admin</span>
         </div>
         <nav style={styles.nav}>

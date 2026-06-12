@@ -83,7 +83,7 @@ export default function PDFDetail() {
         key: order.key_id,
         amount: Math.round(pdf.price * 100),
         currency: 'INR',
-        name: 'NEET Zyme',
+        name: 'NEET Zymee',
         description: pdf.title,
         order_id: order.order_id,
         handler: async function (response: any) {

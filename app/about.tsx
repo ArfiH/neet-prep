@@ -7,7 +7,7 @@ import { COLORS } from '@/constants/colors';
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
 
 const info = [
-  { label: 'App Name', value: 'NEET Zyme' },
+  { label: 'App Name', value: 'NEET Zymee' },
   { label: 'Version', value: '1.0.0' },
   { label: 'Platform', value: 'Android' },
   { label: 'Contact', value: 'support@neetzymee.com' },
@@ -32,7 +32,7 @@ export default function AboutScreen() {
           <View style={styles.logoCircle}>
             <Text style={styles.logoText}>NZ</Text>
           </View>
-          <Text style={styles.appName}>NEET Zyme</Text>
+          <Text style={styles.appName}>NEET Zymee</Text>
           <Text style={styles.tagline}>Your NEET preparation companion</Text>
         </View>
 
@@ -47,10 +47,10 @@ export default function AboutScreen() {
         </View>
 
         <Text style={styles.desc}>
-          NEET Zyme helps NEET aspirants access high-quality study material, predict college admissions based on rank, and track their preparation journey.
+          NEET Zymee helps NEET aspirants access high-quality study material, predict college admissions based on rank, and track their preparation journey.
         </Text>
 
-        <Text style={styles.copy}>© 2026 NEET Zyme. All rights reserved.</Text>
+        <Text style={styles.copy}>© 2026 NEET ZymeSe. All rights reserved.</Text>
 
         <View style={{ height: 32 }} />
       </ScrollView>

@@ -73,7 +73,7 @@ export default function Login() {
             </span>
           </div>
           <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Admin Login</h1>
-          <p style={{ fontSize: 13, color: 'var(--color-text-3)' }}>NEET Zyme Admin Panel</p>
+          <p style={{ fontSize: 13, color: 'var(--color-text-3)' }}>NEET Zymee Admin Panel</p>
         </div>
 
         {/* Mode toggle */}

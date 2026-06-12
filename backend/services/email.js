@@ -20,7 +20,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Reset Your NEET Zyme Password',
+    subject: 'Reset Your NEET Zymee Password',
     html: `
       <!DOCTYPE html>
       <html>
@@ -45,7 +45,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>NEET Zyme</h1>
+            <h1>NEET Zymee</h1>
           </div>
           <div class="content">
             <h2>Reset Your Password</h2>
@@ -53,7 +53,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
             <p>We received a request to reset your password.</p>
             
             <center>
-            <a href="${deepLinkUrl}" class="button">Open NEET Zyme App</a>
+            <a href="${deepLinkUrl}" class="button">Open NEET Zymee App</a>
             </center>
             
             <p class="or-divider">- OR -</p>
@@ -69,7 +69,7 @@ const sendPasswordResetEmail = async (email, resetToken) => {
             <p>If you didn't request a password reset, please ignore this email.</p>
           </div>
           <div class="footer">
-            <p>NEET Zyme - Your NEET Preparation Companion</p>
+            <p>NEET Zymee - Your NEET Preparation Companion</p>
           </div>
         </div>
       </body>
@@ -86,7 +86,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Verify your NEET Zyme account',
+    subject: 'Verify your NEET Zymee account',
     html: `
       <!DOCTYPE html>
       <html>
@@ -105,10 +105,10 @@ const sendVerificationEmail = async (email, verificationToken) => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>NEET Zyme</h1>
+            <h1>NEET Zymee</h1>
           </div>
           <div class="content">
-            <h2>Welcome to NEET Zyme!</h2>
+            <h2>Welcome to NEET Zymee!</h2>
             <p>Click below to verify your email address and activate your account.</p>
             <center>
             <a href="${deepLinkUrl}" class="button">Verify Email</a>
@@ -122,7 +122,7 @@ const sendVerificationEmail = async (email, verificationToken) => {
             </p>
           </div>
           <div class="footer">
-            <p>NEET Zyme - Your NEET Preparation Companion</p>
+            <p>NEET Zymee - Your NEET Preparation Companion</p>
           </div>
         </div>
       </body>
@@ -137,7 +137,7 @@ const sendInvoiceEmail = async (email, pdfTitle, amount, paymentId, orderId) => 
   const mailOptions = {
     from: process.env.EMAIL_USER,
     to: email,
-    subject: 'Your NEET Zyme Purchase — Invoice',
+    subject: 'Your NEET Zymee Purchase — Invoice',
     html: `<!DOCTYPE html>
 <html>
 <head>
@@ -156,7 +156,7 @@ const sendInvoiceEmail = async (email, pdfTitle, amount, paymentId, orderId) => 
 </head>
 <body>
   <div class="container">
-    <div class="header"><h1>NEET Zyme</h1></div>
+    <div class="header"><h1>NEET Zymee</h1></div>
     <div class="content">
       <h2>Purchase Confirmation</h2>
       <p>Thank you for your purchase! You now have access to your PDF.</p>
@@ -171,11 +171,11 @@ const sendInvoiceEmail = async (email, pdfTitle, amount, paymentId, orderId) => 
         <hr>
         <div class="total">Amount Paid: ₹${amount}</div>
       </div>
-      <p>You can view this PDF anytime from your library in the NEET Zyme app.</p>
+      <p>You can view this PDF anytime from your library in the NEET Zymee app.</p>
       <p style="color: #666; font-size: 14px;">Happy studying!</p>
     </div>
     <div class="footer">
-      <p>NEET Zyme - Your NEET Preparation Companion</p>
+      <p>NEET Zymee - Your NEET Preparation Companion</p>
     </div>
   </div>
 </body>

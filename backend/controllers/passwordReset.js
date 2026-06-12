@@ -208,7 +208,7 @@ const resetPasswordWebSubmit = async (req, res) => {
           </div>
           <h2 style="color:#1a1d23;margin-bottom:8px">Password Reset!</h2>
           <p style="color:#5f6570;margin-bottom:24px">Your password has been updated. You can now log in.</p>
-          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zyme</a>
+          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zymee</a>
         </div>
       </body></html>
     `);

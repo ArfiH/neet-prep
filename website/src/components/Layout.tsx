@@ -41,7 +41,7 @@ export default function Layout({ children }: { children: ReactNode }) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 700, fontSize: 14, color: '#fff',
             }}>NZ</span>
-            <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-text)' }}>NEET Zyme</span>
+            <span style={{ fontWeight: 700, fontSize: 18, color: 'var(--color-text)' }}>NEET Zymee</span>
           </Link>
 
           {/* Desktop nav links */}
@@ -149,7 +149,7 @@ export default function Layout({ children }: { children: ReactNode }) {
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
               <span style={{ width: 24, height: 24, borderRadius: 6, background: 'var(--color-accent)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: 11, color: '#fff' }}>NZ</span>
-              <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--color-text)' }}>NEET Zyme</span>
+              <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--color-text)' }}>NEET Zymee</span>
             </div>
             <p style={{ fontSize: 13, color: 'var(--color-text-3)', maxWidth: 300 }}>
               Your NEET UG preparation companion.

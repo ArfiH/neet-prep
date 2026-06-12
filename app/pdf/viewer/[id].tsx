@@ -31,7 +31,7 @@ export default function PdfViewerScreen() {
   usePreventScreenCapture();
   const { user } = useAuth();
 
-  const watermarkEmail = user?.email || 'NEET ZYME';
+  const watermarkEmail = user?.email || 'NEET ZYMEE';
   const watermarkPhone = user?.phone ? ` | ${user.phone}` : '';
   const watermarkText = `${watermarkEmail}${watermarkPhone}`;
 

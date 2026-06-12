@@ -260,6 +260,43 @@ class ApiClient {
     });
   }
 
+  // WhatsApp OTP methods
+  async sendWhatsappOtp(phone: string) {
+    return this.request<{ message: string }>('/auth/whatsapp/send-otp', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+  }
+
+  async verifyWhatsappOtp(phone: string, otp: string, forceLogin = false) {
+    const data = await this.request<{ token: string; refreshToken: string; user: any }>(
+      '/auth/whatsapp/verify-otp',
+      {
+        method: 'POST',
+        body: JSON.stringify({ phone, otp, forceLogin }),
+      }
+    );
+    this.token = data.token;
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
+    await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
+    return data;
+  }
+
+  // Secondary phone verification (existing user)
+  async sendSecondaryPhoneOtp(phone: string) {
+    return this.request<{ message: string }>('/auth/whatsapp/send-secondary', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    });
+  }
+
+  async verifySecondaryPhone(phone: string, otp: string) {
+    return this.request<{ message: string }>('/auth/whatsapp/verify-secondary', {
+      method: 'POST',
+      body: JSON.stringify({ phone, otp }),
+    });
+  }
+
   async getAdminUrl(path: string = ''): Promise<string | null> {
     const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
     if (!token) return null;

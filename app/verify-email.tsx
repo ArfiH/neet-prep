@@ -140,7 +140,7 @@ export default function VerifyEmailScreen() {
           <View style={styles.stepRow}>
             <View style={styles.stepNum}><Text style={styles.stepNumText}>3</Text></View>
             <View style={styles.stepContent}>
-              <Text style={styles.stepTitle}>Start using NEET Zyme</Text>
+              <Text style={styles.stepTitle}>Start using NEET Zymee</Text>
               <Text style={styles.stepDesc}>You'll be logged in automatically</Text>
             </View>
           </View>

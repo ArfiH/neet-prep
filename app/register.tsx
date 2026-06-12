@@ -16,6 +16,7 @@ import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
+import WhatsAppSignInButton from '@/components/WhatsAppSignInButton';
 import AlertBanner from '@/components/AlertBanner';
 
 export default function RegisterScreen() {
@@ -89,10 +90,12 @@ export default function RegisterScreen() {
         >
           <View style={styles.header}>
             <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join NEET Zyme today</Text>
+            <Text style={styles.subtitle}>Join NEET Zymee today</Text>
           </View>
 
           <GoogleSignInButton onPress={handleGoogleSignIn} loading={googleLoading} label="Sign up with Google" />
+
+          <WhatsAppSignInButton onPress={() => router.push('/whatsapp-otp' as any)} label="Sign up with WhatsApp" />
 
           <View style={styles.dividerRow}>
             <View style={styles.dividerLine} />

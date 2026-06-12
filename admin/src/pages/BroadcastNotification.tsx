@@ -125,7 +125,7 @@ export default function BroadcastNotification() {
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#eab308' }} />
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e' }} />
               <div style={{ flex: 1, textAlign: 'center', fontSize: 10, color: 'var(--color-text-3)', fontWeight: 500, letterSpacing: '0.5px' }}>
-                NEET Zyme
+                NEET Zymee
               </div>
             </div>
             <div style={{ padding: '14px 16px', display: 'flex', gap: 12, alignItems: 'flex-start' }}>

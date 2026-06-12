@@ -129,7 +129,7 @@ export default function Login() {
       <div className="container" style={{ maxWidth: 420 }}>
         <div style={{ textAlign: 'center', marginBottom: 'var(--space-6)' }}>
           <h1 style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)', marginBottom: 4 }}>Welcome back</h1>
-          <p style={{ fontSize: 15, color: 'var(--color-text-2)' }}>Sign in to your NEET Zyme account</p>
+          <p style={{ fontSize: 15, color: 'var(--color-text-2)' }}>Sign in to your NEET Zymee account</p>
         </div>
 
         <div className="card" style={{ padding: 'var(--space-6)' }}>

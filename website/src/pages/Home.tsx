@@ -164,7 +164,7 @@ export default function Home() {
               Ready to start preparing?
             </h2>
             <p style={{ fontSize: 16, color: 'var(--color-text-2)', marginBottom: 'var(--space-6)', maxWidth: 480, margin: '0 auto var(--space-6)' }}>
-              Join thousands of NEET aspirants using NEET Zyme to ace their exam.
+              Join thousands of NEET aspirants using NEET Zymee to ace their exam.
             </p>
             <Link to="/register" className="btn btn-primary btn-lg">Get Started Free</Link>
           </div>

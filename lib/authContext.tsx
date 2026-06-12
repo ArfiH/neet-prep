@@ -11,6 +11,7 @@ type User = {
   id: number;
   email: string;
   phone: string | null;
+  phone_verified?: boolean;
   name: string | null;
   category: string | null;
   role?: string;
@@ -25,6 +26,7 @@ type AuthContextType = {
   isAdmin: boolean;
   login: (email: string, password: string, forceLogin?: boolean) => Promise<void>;
   loginWithGoogle: (forceLogin?: boolean) => Promise<void>;
+  loginWithWhatsapp: (phone: string, otp: string, forceLogin?: boolean) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   logout: () => Promise<void>;
   forgotPassword: (email: string) => Promise<string>;
@@ -99,6 +101,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isLoggedIn = !!user && !!user.id;
   const isAdmin = user?.role === 'admin';
 
+  async function loginWithWhatsapp(phone: string, otp: string, forceLogin = false) {
+    const data = await api.verifyWhatsappOtp(phone, otp, forceLogin);
+    await AsyncStorage.setItem(AUTH_TOKEN_KEY, data.token);
+    await AsyncStorage.setItem(USER_DATA_KEY, JSON.stringify(data.user));
+    setUser(data.user);
+    await api.init();
+    registerPushToken();
+  }
+
   async function loginWithGoogle(forceLogin = false) {
     try {
       const { idToken } = await signInWithGoogle();
@@ -171,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, isAdmin, login, loginWithGoogle, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
+    <AuthContext.Provider value={{ user, loading, initialized, isLoggedIn, isAdmin, login, loginWithGoogle, loginWithWhatsapp, register, logout, forgotPassword, resetPassword, refreshUser, verifyEmail, resendVerification }}>
       {children}
     </AuthContext.Provider>
   );
