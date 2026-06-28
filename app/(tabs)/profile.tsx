@@ -12,7 +12,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import CustomAlert from '@/components/CustomAlert';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Download, Phone, CheckCircle } from 'lucide-react-native';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Download } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
@@ -200,23 +200,6 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
-            {user && (
-              <TouchableOpacity style={styles.menuItem} activeOpacity={0.75} onPress={() => router.push('/verify-phone' as any)}>
-                <View style={styles.menuIcon}>
-                  <Phone size={18} color={COLORS.primaryDark} strokeWidth={2} />
-                </View>
-                <View style={styles.menuText}>
-                  <Text style={styles.menuLabel}>
-                    {user.phone ? (user.phone_verified ? 'Phone Verified' : 'Verify Phone Number') : 'Add Phone Number'}
-                  </Text>
-                  <Text style={styles.menuSublabel}>
-                    {user.phone ? (user.phone_verified ? `${user.phone}` : `${user.phone} — not verified`) : 'Link WhatsApp to your profile'}
-                  </Text>
-                </View>
-                {user.phone_verified && <CheckCircle size={16} color={COLORS.success} strokeWidth={2.5} />}
-                {!user.phone_verified && <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />}
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 

@@ -17,7 +17,6 @@ import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@/lib/authContext';
 import GoogleSignInButton from '@/components/GoogleSignInButton';
-import WhatsAppSignInButton from '@/components/WhatsAppSignInButton';
 import AlertBanner from '@/components/AlertBanner';
 import CustomAlert from '@/components/CustomAlert';
 
@@ -241,8 +240,6 @@ export default function LoginScreen() {
           </View>
 
           <GoogleSignInButton onPress={() => handleGoogleSignIn()} loading={googleLoading} />
-
-          <WhatsAppSignInButton onPress={() => router.push('/whatsapp-otp' as any)} />
 
           <View style={styles.footer}>
             <Text style={styles.footerText}>Don't have an account? </Text>

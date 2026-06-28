@@ -672,4 +672,4 @@ const verifySecondaryPhone = async (req, res) => {
   }
 };
 
-module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout, registerDeviceToken, sendWhatsappOtp, verifyWhatsappOtp, sendSecondaryPhoneOtp, verifySecondaryPhone };
+module.exports = { register, login, googleAuth, getProfile, updateProfile, refresh, verifyEmail, verifyEmailWeb, resendVerification, logout, registerDeviceToken };

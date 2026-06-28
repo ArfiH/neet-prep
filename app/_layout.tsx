@@ -117,7 +117,6 @@ function AuthRouter() {
         <Stack.Screen name="verify-email" />
         <Stack.Screen name="forgot-password" />
         <Stack.Screen name="reset-password" />
-        <Stack.Screen name="whatsapp-otp" />
         <Stack.Screen name="+not-found" />
       </Stack>
     );
@@ -140,8 +139,6 @@ function AuthRouter() {
       <Stack.Screen name="privacy" />
       <Stack.Screen name="help" />
       <Stack.Screen name="about" />
-      <Stack.Screen name="whatsapp-otp" />
-      <Stack.Screen name="verify-phone" />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
