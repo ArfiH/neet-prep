@@ -164,3 +164,8 @@ export const broadcastNotification = (title: string, body: string) =>
     method: 'POST',
     body: JSON.stringify({ title, body }),
   });
+
+// Delivery Requests
+export const getDeliveryRequests = () => request<any[]>('/delivery-requests');
+export const updateDeliveryRequest = (id: number, status: string) =>
+  request<any>(`/delivery-requests/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });

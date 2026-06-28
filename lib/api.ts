@@ -297,6 +297,20 @@ class ApiClient {
     });
   }
 
+  async requestDelivery(pdfId: string, data: {
+    recipient_name: string;
+    phone: string;
+    address: string;
+    city: string;
+    state: string;
+    pincode: string;
+  }) {
+    return this.request<{ id: number; message: string }>(`/pdfs/${pdfId}/delivery`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   async getAdminUrl(path: string = ''): Promise<string | null> {
     const token = await AsyncStorage.getItem(AUTH_TOKEN_KEY);
     if (!token) return null;

@@ -132,6 +132,7 @@ function AuthRouter() {
       <Stack.Screen name="purchased" />
 
       <Stack.Screen name="pdf/[id]" />
+      <Stack.Screen name="pdf/delivery/[id]" />
       <Stack.Screen name="pdf/viewer/[id]" />
       <Stack.Screen name="college/[id]" />
       <Stack.Screen name="razorpay-callback" />

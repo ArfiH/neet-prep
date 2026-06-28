@@ -38,4 +38,7 @@ router.delete('/users/:id/purchases/:pdfId', c.revokePdfAccess);
 
 router.post('/notifications/broadcast', c.broadcastNotification);
 
+router.get('/delivery-requests', c.getDeliveryRequests);
+router.put('/delivery-requests/:id', c.updateDeliveryRequest);
+
 module.exports = router;

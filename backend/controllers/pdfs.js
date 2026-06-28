@@ -12,6 +12,7 @@ const parsePdf = (pdf) => ({
   tags: pdf.tags ? JSON.parse(pdf.tags) : [],
   details: pdf.details ? JSON.parse(pdf.details) : [],
   is_free: Boolean(pdf.is_free),
+  is_deliverable: Boolean(pdf.is_deliverable),
 });
 
 const getAllPdfs = async (req, res) => {
@@ -437,4 +438,40 @@ const razorpayWebhook = async (req, res) => {
   }
 };
 
-module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf };
+const requestDelivery = async (req, res) => {
+  try {
+    const { id: pdfId } = req.params;
+    const userId = req.userId;
+    const { recipient_name, phone, address, city, state, pincode } = req.body;
+
+    if (!recipient_name?.trim() || !phone?.trim() || !address?.trim() || !city?.trim() || !state?.trim() || !pincode?.trim()) {
+      return res.status(400).json({ error: 'All delivery fields are required.' });
+    }
+
+    const [pdfs] = await pool.query('SELECT id, is_deliverable, is_free, title FROM pdfs WHERE id = ?', [pdfId]);
+    if (!pdfs.length) return res.status(404).json({ error: 'PDF not found' });
+    if (!pdfs[0].is_deliverable) return res.status(400).json({ error: 'This PDF is not available for delivery.' });
+
+    const hasAccess = pdfs[0].is_free;
+    if (!hasAccess) {
+      const [purchases] = await pool.query(
+        'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ? AND status = "completed"',
+        [userId, pdfId]
+      );
+      if (!purchases.length) return res.status(403).json({ error: 'You need to purchase this PDF to request delivery.' });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO delivery_requests (user_id, pdf_id, recipient_name, phone, address, city, state, pincode)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, pdfId, recipient_name.trim(), phone.trim(), address.trim(), city.trim(), state.trim(), pincode.trim()]
+    );
+
+    res.status(201).json({ id: result.insertId, message: 'Delivery request submitted successfully.' });
+  } catch (error) {
+    console.error('Request delivery error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf, requestDelivery };

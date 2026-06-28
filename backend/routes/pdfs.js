@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf } = require('../controllers/pdfs');
+const { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf, requestDelivery } = require('../controllers/pdfs');
 const { auth, optionalAuth } = require('../middleware/auth');
 
 router.get('/', getAllPdfs);
@@ -13,5 +13,6 @@ router.post('/verify-payment', auth, verifyPayment);
 router.all('/payment-callback/:pdfId', paymentCallback);
 router.get('/:id/view', optionalAuth, getPdfViewUrl);
 router.get('/:id/watermarked', auth, serveRawPdf);
+router.post('/:id/delivery', auth, requestDelivery);
 
 module.exports = router;

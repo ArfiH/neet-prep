@@ -46,6 +46,12 @@ export default function PdfList() {
         ? <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>Free</span>
         : <span style={{ color: 'var(--color-text-2)' }}>Paid</span>,
     },
+    {
+      key: 'is_deliverable', label: 'Delivery',
+      render: (p: any) => p.is_deliverable
+        ? <span style={{ color: 'var(--color-success)', fontWeight: 600 }}>Yes</span>
+        : <span style={{ color: 'var(--color-text-3)' }}>No</span>,
+    },
   ];
 
   return (

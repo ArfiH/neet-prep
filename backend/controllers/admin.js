@@ -5,6 +5,7 @@ const parsePdf = (pdf) => ({
   tags: pdf.tags ? JSON.parse(pdf.tags) : [],
   details: pdf.details ? JSON.parse(pdf.details) : [],
   is_free: Boolean(pdf.is_free),
+  is_deliverable: Boolean(pdf.is_deliverable),
 });
 
 const getDashboard = async (req, res) => {
@@ -43,12 +44,12 @@ const getPdf = async (req, res) => {
 
 const createPdf = async (req, res) => {
   try {
-    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass } = req.body;
+    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass, is_deliverable } = req.body;
     if (!title || !subject) return res.status(400).json({ error: 'Title and subject are required' });
 
     const [result] = await pool.query(
-      `INSERT INTO pdfs (title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, \`class\`)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pdfs (title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, \`class\`, is_deliverable)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title, description || '', subject, author || '', price || 0,
         is_free ? 1 : 0, cover_image_url || '', file_url || '',
@@ -56,6 +57,7 @@ const createPdf = async (req, res) => {
         tags ? JSON.stringify(tags) : '[]',
         details ? JSON.stringify(details) : '[]',
         pdfClass || null,
+        is_deliverable ? 1 : 0,
       ]
     );
     res.status(201).json({ id: result.insertId, message: 'PDF created' });
@@ -68,7 +70,7 @@ const createPdf = async (req, res) => {
 const updatePdf = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass } = req.body;
+    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass, is_deliverable } = req.body;
 
     const [existing] = await pool.query('SELECT id FROM pdfs WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'PDF not found' });
@@ -76,7 +78,7 @@ const updatePdf = async (req, res) => {
     await pool.query(
       `UPDATE pdfs SET title = ?, description = ?, subject = ?, author = ?, price = ?,
        is_free = ?, cover_image_url = ?, file_url = ?, pages_count = ?, tags = ?, details = ?,
-       \`class\` = ?
+       \`class\` = ?, is_deliverable = ?
        WHERE id = ?`,
       [
         title, description || '', subject, author || '', price || 0,
@@ -85,6 +87,7 @@ const updatePdf = async (req, res) => {
         tags ? JSON.stringify(tags) : '[]',
         details ? JSON.stringify(details) : '[]',
         pdfClass || null,
+        is_deliverable ? 1 : 0,
         id,
       ]
     );
@@ -504,6 +507,44 @@ const broadcastNotification = async (req, res) => {
   }
 };
 
+const getDeliveryRequests = async (req, res) => {
+  try {
+    const [requests] = await pool.query(`
+      SELECT dr.*, p.title AS pdf_title, p.subject AS pdf_subject,
+             u.email AS user_email, u.name AS user_name
+      FROM delivery_requests dr
+      JOIN pdfs p ON dr.pdf_id = p.id
+      JOIN users u ON dr.user_id = u.id
+      ORDER BY dr.created_at DESC
+    `);
+    res.json(requests);
+  } catch (error) {
+    console.error('Get delivery requests error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const updateDeliveryRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!['pending', 'shipped', 'delivered', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Invalid status' });
+    }
+
+    const [existing] = await pool.query('SELECT id FROM delivery_requests WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'Delivery request not found' });
+
+    await pool.query('UPDATE delivery_requests SET status = ? WHERE id = ?', [status, id]);
+
+    res.json({ message: `Delivery request ${status}` });
+  } catch (error) {
+    console.error('Update delivery request error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
@@ -513,4 +554,5 @@ module.exports = {
   banUser, unbanUser,
   getUserPurchases, grantPdfAccess, revokePdfAccess,
   broadcastNotification,
+  getDeliveryRequests, updateDeliveryRequest,
 };

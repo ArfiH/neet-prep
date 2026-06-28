@@ -2,7 +2,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
-import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag, Download, Trash2, WifiOff } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, Clock, ShoppingCart, Eye, Tag, Download, Trash2, WifiOff, Package, ChevronRight } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { COLORS } from '@/constants/colors';
 import { getTileBg, getGlyphColor } from '@/constants/subjectVisuals';
@@ -24,6 +24,7 @@ type PDF = {
   subject: string;
   price: number;
   is_free: boolean;
+  is_deliverable: boolean;
   pages_count: number;
   file_url: string;
   details: string[];
@@ -354,6 +355,20 @@ export default function PDFDetailScreen() {
           </View>
         </View>
 
+        {/* Deliver Book */}
+        {pdf.is_deliverable && (
+          <TouchableOpacity style={styles.deliverCard} activeOpacity={0.7} onPress={() => router.push(`/pdf/delivery/${pdf.id}` as any)}>
+            <View style={styles.deliverIcon}>
+              <Package size={18} color={COLORS.primaryDark} strokeWidth={2} />
+            </View>
+            <View style={styles.deliverText}>
+              <Text style={styles.deliverLabel}>Deliver this book</Text>
+              <Text style={styles.deliverSublabel}>Get a physical copy delivered to your address</Text>
+            </View>
+            <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+          </TouchableOpacity>
+        )}
+
         {/* CTA */}
         <TouchableOpacity
           style={paying ? styles.startBtnDisabled : (pdf.is_free || purchased ? styles.startBtn : styles.startBtnPaid)}
@@ -477,6 +492,12 @@ const styles = StyleSheet.create({
 
   deleteDownloadBtn: { marginHorizontal: 18, marginBottom: 4, paddingVertical: 12, borderRadius: 999, backgroundColor: COLORS.surface, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 8, borderWidth: 1, borderColor: '#fca5a5' },
   deleteDownloadBtnText: { fontSize: 13, fontWeight: '600', color: '#ef4444' },
+
+  deliverCard: { marginHorizontal: 18, marginTop: 6, marginBottom: 4, paddingVertical: 14, paddingHorizontal: 16, borderRadius: 14, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  deliverIcon: { width: 36, height: 36, borderRadius: 18, backgroundColor: COLORS.primaryLight, alignItems: 'center', justifyContent: 'center' },
+  deliverText: { flex: 1 },
+  deliverLabel: { fontSize: 14, fontWeight: '600', color: COLORS.fg },
+  deliverSublabel: { fontSize: 11.5, color: COLORS.muted, marginTop: 2, lineHeight: 16 },
 
   adOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
   adOverlayContent: { backgroundColor: '#fff', padding: 30, borderRadius: 16, alignItems: 'center', marginHorizontal: 20 },

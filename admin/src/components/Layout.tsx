@@ -7,6 +7,7 @@ const navItems = [
   { to: '/colleges', label: 'Colleges' },
   { to: '/cutoffs', label: 'Cutoffs' },
   { to: '/users', label: 'Users' },
+  { to: '/delivery-requests', label: 'Deliveries' },
   { to: '/notifications/broadcast', label: 'Broadcast' },
 ];
 

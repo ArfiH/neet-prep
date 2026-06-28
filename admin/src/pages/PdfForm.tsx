@@ -12,7 +12,7 @@ export default function PdfForm() {
 
   const [form, setForm] = useState({
     title: '', description: '', subject: 'Biology', author: '',
-    price: '0', is_free: true, cover_image_url: '', file_url: '',
+    price: '0', is_free: true, is_deliverable: false, cover_image_url: '', file_url: '',
     pages_count: '0', tags: '', details: '', class: '',
   });
   const [loading, setLoading] = useState(false);
@@ -32,6 +32,7 @@ export default function PdfForm() {
           author: pdf.author || '',
           price: String(Number(pdf.price).toFixed(0)),
           is_free: pdf.is_free,
+          is_deliverable: pdf.is_deliverable,
           cover_image_url: pdf.cover_image_url || '',
           file_url: pdf.file_url || '',
           pages_count: String(pdf.pages_count || 0),
@@ -131,6 +132,12 @@ export default function PdfForm() {
           <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 13, cursor: 'pointer' }}>
             <input type="checkbox" checked={form.is_free} onChange={e => update('is_free', e.target.checked)} style={{ width: 16, height: 16 }} />
             Mark as free
+          </label>
+        </FormField>
+        <FormField label="Physical Delivery">
+          <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-2)', fontSize: 13, cursor: 'pointer' }}>
+            <input type="checkbox" checked={form.is_deliverable} onChange={e => update('is_deliverable', e.target.checked)} style={{ width: 16, height: 16 }} />
+            Can be delivered (physical copy available)
           </label>
         </FormField>
         <FormField label="Upload PDF">
