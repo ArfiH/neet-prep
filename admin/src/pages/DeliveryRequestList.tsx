@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import DataTable from '../components/DataTable';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { getDeliveryRequests, updateDeliveryRequest } from '../lib/api';
+import { getDeliveryRequests, updateDeliveryRequest, sendUserNotification, deleteDeliveryRequest } from '../lib/api';
 
 const STATUS_OPTIONS = ['pending', 'shipped', 'delivered', 'cancelled'] as const;
 
@@ -19,6 +19,11 @@ export default function DeliveryRequestList() {
   const [editingRow, setEditingRow] = useState<number | null>(null);
   const [selectedStatus, setSelectedStatus] = useState<string>('');
   const [confirmCancel, setConfirmCancel] = useState<any | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState<any | null>(null);
+  const [notifyRowId, setNotifyRowId] = useState<number | null>(null);
+  const [notifyTitle, setNotifyTitle] = useState('');
+  const [notifyBody, setNotifyBody] = useState('');
+  const [sendingNotify, setSendingNotify] = useState(false);
 
   const load = () => {
     setLoading(true);
@@ -53,6 +58,31 @@ export default function DeliveryRequestList() {
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    try {
+      await deleteDeliveryRequest(confirmDelete.id);
+      setConfirmDelete(null);
+      load();
+    } catch (e: any) {
+      setError(e.message);
+    }
+  };
+
+  const handleSendNotify = async (userId: number) => {
+    if (!notifyTitle.trim()) return;
+    setSendingNotify(true);
+    try {
+      await sendUserNotification(userId, notifyTitle.trim(), notifyBody.trim());
+      setNotifyRowId(null);
+      setNotifyTitle('');
+      setNotifyBody('');
+    } catch (e: any) {
+      setError(e.message);
+    }
+    setSendingNotify(false);
+  };
+
   const columns = [
     { key: 'id', label: 'ID' },
     { key: 'pdf_title', label: 'PDF Title' },
@@ -62,8 +92,42 @@ export default function DeliveryRequestList() {
     },
     { key: 'user_email', label: 'Email' },
     { key: 'phone', label: 'Phone' },
+    {
+      key: 'address', label: 'Address',
+      render: (r: any) => (
+        <span style={{ display: 'inline-flex', alignItems: 'center', gap: 4, maxWidth: 280 }}>
+          <span title={r.address} style={{
+            overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+            cursor: 'default', fontSize: 12,
+          }}>
+            {r.address}
+          </span>
+          <button
+            onClick={e => {
+              navigator.clipboard.writeText(r.address);
+              const btn = e.currentTarget;
+              btn.textContent = 'Copied!';
+              Object.assign(btn.style, { color: 'var(--color-accent)', borderColor: 'var(--color-accent)' });
+              setTimeout(() => {
+                btn.textContent = 'Copy';
+                Object.assign(btn.style, { color: '', borderColor: '' });
+              }, 1500);
+            }}
+            style={{
+              fontSize: 10, padding: '1px 5px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-border)', background: 'transparent',
+              color: 'var(--color-text-3)', cursor: 'pointer', whiteSpace: 'nowrap',
+              flexShrink: 0, lineHeight: 1.4,
+            }}
+          >
+            Copy
+          </button>
+        </span>
+      ),
+    },
     { key: 'city', label: 'City' },
     { key: 'state', label: 'State' },
+    { key: 'pincode', label: 'Pincode' },
     {
       key: 'status', label: 'Status',
       render: (r: any) => (
@@ -93,7 +157,7 @@ export default function DeliveryRequestList() {
               textTransform: 'capitalize', fontSize: 12, padding: '2px 8px',
               borderRadius: 'var(--radius-sm)',
             }}
-            onClick={() => { setEditingRow(r.id); setSelectedStatus(r.status); }}
+            onClick={() => { setEditingRow(r.id); setSelectedStatus(r.status); setNotifyRowId(null); }}
           >
             {r.status}
           </span>
@@ -101,8 +165,91 @@ export default function DeliveryRequestList() {
       ),
     },
     {
+      key: 'notify', label: 'Notify',
+      render: (r: any) => (
+        notifyRowId === r.id ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 4, minWidth: 200 }}>
+            <input
+              value={notifyTitle}
+              onChange={e => setNotifyTitle(e.target.value)}
+              placeholder="Title (e.g. Delivery Update)"
+              style={{
+                fontSize: 12, padding: '4px 6px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-border)', background: 'var(--color-paper-3)',
+                color: 'var(--color-text)', width: '100%',
+              }}
+            />
+            <input
+              value={notifyBody}
+              onChange={e => setNotifyBody(e.target.value)}
+              placeholder="Message (e.g. Expected delivery: 5 Apr)"
+              style={{
+                fontSize: 12, padding: '4px 6px', borderRadius: 'var(--radius-sm)',
+                border: '1px solid var(--color-border)', background: 'var(--color-paper-3)',
+                color: 'var(--color-text)', width: '100%',
+              }}
+            />
+            <div style={{ display: 'flex', gap: 4 }}>
+              <button
+                onClick={() => handleSendNotify(r.user_id)}
+                disabled={sendingNotify || !notifyTitle.trim()}
+                style={{
+                  fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+                  border: 'none', background: 'var(--color-accent)', color: '#fff',
+                  fontWeight: 600, cursor: sendingNotify ? 'default' : 'pointer',
+                  opacity: sendingNotify || !notifyTitle.trim() ? 0.6 : 1,
+                }}
+              >
+                {sendingNotify ? '...' : 'Send'}
+              </button>
+              <button
+                onClick={() => { setNotifyRowId(null); setNotifyTitle(''); setNotifyBody(''); }}
+                style={{
+                  fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+                  border: '1px solid var(--color-border)', background: 'transparent',
+                  color: 'var(--color-text-2)', cursor: 'pointer',
+                }}
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => { setNotifyRowId(r.id); setNotifyTitle(''); setNotifyBody(''); setEditingRow(null); }}
+            style={{
+              fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-accent)', background: 'var(--color-accent-muted)',
+              color: 'var(--color-accent)', fontWeight: 600, cursor: 'pointer',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            + Notify
+          </button>
+        )
+      ),
+    },
+    {
       key: 'created_at', label: 'Date',
       render: (r: any) => new Date(r.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }),
+    },
+    {
+      key: 'actions', label: '',
+      render: (r: any) => (
+        (r.status === 'delivered' || r.status === 'cancelled') ? (
+          <button
+            onClick={() => setConfirmDelete(r)}
+            style={{
+              fontSize: 11, padding: '2px 8px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-danger)', background: 'transparent',
+              color: 'var(--color-danger)', cursor: 'pointer',
+              whiteSpace: 'nowrap', fontWeight: 600,
+            }}
+          >
+            Delete
+          </button>
+        ) : null
+      ),
     },
   ];
 
@@ -138,6 +285,14 @@ export default function DeliveryRequestList() {
         variant="danger"
         onConfirm={confirmCancelAction}
         onCancel={() => setConfirmCancel(null)}
+      />
+      <ConfirmDialog
+        open={!!confirmDelete}
+        title="Delete Delivery Request"
+        message={`Permanently delete this delivery request (${confirmDelete?.recipient_name}, ${confirmDelete?.pdf_title})? This cannot be undone.`}
+        variant="danger"
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(null)}
       />
     </div>
   );

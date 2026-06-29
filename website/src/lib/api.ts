@@ -237,6 +237,23 @@ export async function markAllNotificationsRead(): Promise<any> {
 }
 
 // ---------------------------------------------------------------------------
+// Delivery
+// ---------------------------------------------------------------------------
+export async function requestDelivery(pdfId: string, data: {
+  recipient_name: string;
+  phone: string;
+  address: string;
+  city: string;
+  state: string;
+  pincode: string;
+}): Promise<{ id: number; message: string }> {
+  return request(`/pdfs/${pdfId}/delivery`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+}
+
+// ---------------------------------------------------------------------------
 // Price formatting (mirrors mobile formatPrice)
 // ---------------------------------------------------------------------------
 export function formatPrice(price: number | string): string {

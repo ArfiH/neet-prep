@@ -184,4 +184,39 @@ const sendInvoiceEmail = async (email, pdfTitle, amount, paymentId, orderId) => 
   return transporter.sendMail(mailOptions).catch(() => {});
 };
 
-module.exports = { sendPasswordResetEmail, sendVerificationEmail, sendInvoiceEmail };
+const sendNotificationEmail = async (email, title, body) => {
+  const mailOptions = {
+    from: process.env.EMAIL_USER,
+    to: email,
+    subject: title,
+    html: `<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px }
+    .header { background: #16A34A; color: white; padding: 20px; text-align: center }
+    .content { padding: 30px 20px; background: #f9f9f9 }
+    .message { background: #fff; border-radius: 8px; padding: 20px; margin: 15px 0; font-size: 15px; line-height: 1.7 }
+    .footer { padding: 20px; text-align: center; font-size: 12px; color: #666 }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header"><h1>NEET Zymee</h1></div>
+    <div class="content">
+      <h2>${title}</h2>
+      <div class="message">${body.replace(/\n/g, '<br>')}</div>
+      <p style="color: #666; font-size: 14px;">Open the NEET Zymee app for more details.</p>
+    </div>
+    <div class="footer">
+      <p>NEET Zymee - Your NEET Preparation Companion</p>
+    </div>
+  </div>
+</body>
+</html>`,
+  };
+  return transporter.sendMail(mailOptions);
+};
+
+module.exports = { sendPasswordResetEmail, sendVerificationEmail, sendInvoiceEmail, sendNotificationEmail };

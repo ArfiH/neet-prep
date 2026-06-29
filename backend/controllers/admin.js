@@ -1,4 +1,5 @@
 const { pool } = require('../config/db');
+const { sendNotificationEmail } = require('../services/email');
 
 const parsePdf = (pdf) => ({
   ...pdf,
@@ -507,6 +508,78 @@ const broadcastNotification = async (req, res) => {
   }
 };
 
+const sendUserNotification = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const { title, body } = req.body;
+    if (!title?.trim()) return res.status(400).json({ error: 'Title is required' });
+
+    // Insert into notifications table
+    await pool.query(
+      'INSERT INTO notifications (user_id, title, body) VALUES (?, ?, ?)',
+      [userId, title.trim(), body?.trim() || '']
+    );
+
+    // Send push notification via Expo Push API (fire-and-forget)
+    (async () => {
+      try {
+        const [tokens] = await pool.query(
+          'SELECT expo_push_token FROM device_tokens WHERE user_id = ?',
+          [userId]
+        );
+        const pushTokens = tokens.map(t => t.expo_push_token).filter(Boolean);
+
+        if (pushTokens.length > 0) {
+          const EXPO_PUSH_URL = 'https://exp.host/--/api/v2/push/send';
+          const pushRes = await fetch(EXPO_PUSH_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              to: pushTokens,
+              title: title.trim(),
+              body: body?.trim() || '',
+              sound: 'default',
+              priority: 'high',
+              channelId: 'default',
+            }),
+          });
+          const pushData = await pushRes.json();
+          if (pushData.errors) console.error('Expo push API errors:', pushData.errors);
+          if (pushData.data) {
+            const invalidTokens = pushData.data
+              .filter((receipt) => receipt.status === 'error' && ['DeviceNotRegistered', 'InvalidCredentials', 'MessageTooBig'].includes(receipt.details?.error))
+              .map((_, idx) => pushTokens[idx])
+              .filter(Boolean);
+            if (invalidTokens.length > 0) {
+              pool.query('DELETE FROM device_tokens WHERE expo_push_token IN (?)', [invalidTokens])
+                .catch(err => console.error('Error cleaning invalid tokens:', err));
+            }
+          }
+        }
+      } catch (pushErr) {
+        console.error('Push notification error:', pushErr);
+      }
+    })();
+
+    // Send email (fire-and-forget)
+    (async () => {
+      try {
+        const [[user]] = await pool.query('SELECT email FROM users WHERE id = ?', [userId]);
+        if (user?.email) {
+          await sendNotificationEmail(user.email, title.trim(), body?.trim() || '');
+        }
+      } catch (err) {
+        console.error('Send notification email error:', err);
+      }
+    })();
+
+    res.json({ message: 'Notification sent to user' });
+  } catch (error) {
+    console.error('Send user notification error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 const getDeliveryRequests = async (req, res) => {
   try {
     const [requests] = await pool.query(`
@@ -520,6 +593,26 @@ const getDeliveryRequests = async (req, res) => {
     res.json(requests);
   } catch (error) {
     console.error('Get delivery requests error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const deleteDeliveryRequest = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [existing] = await pool.query('SELECT id, status FROM delivery_requests WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'Delivery request not found' });
+
+    const status = existing[0].status;
+    if (!['delivered', 'cancelled'].includes(status)) {
+      return res.status(400).json({ error: 'Only delivered or cancelled requests can be deleted' });
+    }
+
+    await pool.query('DELETE FROM delivery_requests WHERE id = ?', [id]);
+    res.json({ message: 'Delivery request deleted' });
+  } catch (error) {
+    console.error('Delete delivery request error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -553,6 +646,6 @@ module.exports = {
   getUsers, updateUserRole,
   banUser, unbanUser,
   getUserPurchases, grantPdfAccess, revokePdfAccess,
-  broadcastNotification,
-  getDeliveryRequests, updateDeliveryRequest,
+  broadcastNotification, sendUserNotification,
+  getDeliveryRequests, updateDeliveryRequest, deleteDeliveryRequest,
 };

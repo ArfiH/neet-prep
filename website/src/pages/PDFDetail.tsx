@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Package } from 'lucide-react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import * as api from '../lib/api';
 import { useAuth } from '../lib/auth';
@@ -12,6 +13,7 @@ type PDF = {
   subject: string;
   price: number;
   is_free: boolean;
+  is_deliverable: boolean;
   pages_count: number;
   file_url: string;
   details: string[];
@@ -31,6 +33,18 @@ export default function PDFDetail() {
   const [purchased, setPurchased] = useState(false);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState('');
+  const [showDeliveryForm, setShowDeliveryForm] = useState(false);
+  const [deliveryForm, setDeliveryForm] = useState({
+    recipient_name: user?.name || '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    pincode: '',
+  });
+  const [sendingDelivery, setSendingDelivery] = useState(false);
+  const [deliveryError, setDeliveryError] = useState('');
+  const [deliverySuccess, setDeliverySuccess] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -229,6 +243,22 @@ export default function PDFDetail() {
                 {payError}
               </div>
             )}
+
+            {/* Deliver Book */}
+            {pdf.is_deliverable && !deliverySuccess && (
+              <button
+                onClick={() => { setShowDeliveryForm(true); setDeliveryError(''); }}
+                className="btn btn-outline"
+                style={{ marginTop: 'var(--space-4)', width: '100%', justifyContent: 'center' }}
+              >
+                <Package size={16} /> Get Physical Copy
+              </button>
+            )}
+            {deliverySuccess && (
+              <div style={{ marginTop: 'var(--space-4)', padding: 'var(--space-3) var(--space-4)', background: 'var(--color-success-muted)', color: 'var(--color-success)', borderRadius: 'var(--radius-md)', fontSize: 13 }}>
+                ✓ Delivery request submitted! We will ship the book to your address.
+              </div>
+            )}
           </div>
 
           {/* Description */}
@@ -246,6 +276,206 @@ export default function PDFDetail() {
           </div>
         </div>
       </div>
+
+      {/* Delivery Form Modal */}
+      {showDeliveryForm && (
+        <div
+          style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.45)', display: 'flex',
+            alignItems: 'center', justifyContent: 'center', zIndex: 1000,
+            padding: 'var(--space-4)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+          }}
+          onClick={() => setShowDeliveryForm(false)}
+        >
+          <div
+            style={{
+              background: 'var(--color-paper)', borderRadius: 'var(--radius-lg)',
+              padding: 'var(--space-6)', maxWidth: 480, width: '100%',
+              boxShadow: 'var(--shadow-xl)',
+              maxHeight: '90vh', overflowY: 'auto',
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', marginBottom: 'var(--space-1)' }}>
+              <div style={{
+                width: 40, height: 40, borderRadius: 20,
+                background: 'var(--color-accent-muted)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Package size={18} />
+              </div>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: 'var(--color-text)' }}>Request Physical Copy</h3>
+            </div>
+            <p style={{ fontSize: 14, color: 'var(--color-text-2)', lineHeight: 1.5, marginBottom: 'var(--space-5)' }}>
+              Fill in the delivery details and we'll ship the book to your address.
+            </p>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              setDeliveryError('');
+              setSendingDelivery(true);
+              try {
+                await api.requestDelivery(id!, deliveryForm);
+                setDeliverySuccess(true);
+                setShowDeliveryForm(false);
+                setDeliveryForm({ recipient_name: '', phone: '', address: '', city: '', state: '', pincode: '' });
+              } catch (err: any) {
+                setDeliveryError(err.message || 'Failed to submit delivery request.');
+              }
+              setSendingDelivery(false);
+            }} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-1)' }}>
+                  Recipient Name <span style={{ color: 'var(--color-danger)' }}>*</span>
+                </label>
+                <input
+                  value={deliveryForm.recipient_name}
+                  onChange={e => setDeliveryForm(f => ({ ...f, recipient_name: e.target.value }))}
+                  placeholder="Full name"
+                  style={{
+                    width: '100%', padding: '12px 14px',
+                    border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, outline: 'none',
+                    color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--color-focus)'; e.target.style.boxShadow = '0 0 0 3px oklch(55% 0.2 240 / 15%)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-1)' }}>
+                  Phone Number <span style={{ color: 'var(--color-danger)' }}>*</span>
+                </label>
+                <input
+                  type="tel"
+                  value={deliveryForm.phone}
+                  onChange={e => setDeliveryForm(f => ({ ...f, phone: e.target.value.replace(/\D/g, '').slice(0, 10) }))}
+                  placeholder="10-digit mobile number"
+                  style={{
+                    width: '100%', padding: '12px 14px',
+                    border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, outline: 'none',
+                    color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--color-focus)'; e.target.style.boxShadow = '0 0 0 3px oklch(55% 0.2 240 / 15%)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-1)' }}>
+                  Address <span style={{ color: 'var(--color-danger)' }}>*</span>
+                </label>
+                <textarea
+                  value={deliveryForm.address}
+                  onChange={e => setDeliveryForm(f => ({ ...f, address: e.target.value }))}
+                  placeholder="Street, area, landmark, building..."
+                  rows={3}
+                  style={{
+                    width: '100%', padding: '12px 14px',
+                    border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, outline: 'none', resize: 'vertical', minHeight: 72,
+                    color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                    fontFamily: 'inherit',
+                    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--color-focus)'; e.target.style.boxShadow = '0 0 0 3px oklch(55% 0.2 240 / 15%)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-1)' }}>
+                    City <span style={{ color: 'var(--color-danger)' }}>*</span>
+                  </label>
+                  <input
+                    value={deliveryForm.city}
+                    onChange={e => setDeliveryForm(f => ({ ...f, city: e.target.value }))}
+                    placeholder="City"
+                    style={{
+                      width: '100%', padding: '12px 14px',
+                      border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                      fontSize: 14, outline: 'none',
+                      color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                      transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                    }}
+                    onFocus={e => { e.target.style.borderColor = 'var(--color-focus)'; e.target.style.boxShadow = '0 0 0 3px oklch(55% 0.2 240 / 15%)'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
+                <div>
+                  <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-1)' }}>
+                    State <span style={{ color: 'var(--color-danger)' }}>*</span>
+                  </label>
+                  <input
+                    value={deliveryForm.state}
+                    onChange={e => setDeliveryForm(f => ({ ...f, state: e.target.value }))}
+                    placeholder="State"
+                    style={{
+                      width: '100%', padding: '12px 14px',
+                      border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                      fontSize: 14, outline: 'none',
+                      color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                      transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                    }}
+                    onFocus={e => { e.target.style.borderColor = 'var(--color-focus)'; e.target.style.boxShadow = '0 0 0 3px oklch(55% 0.2 240 / 15%)'; }}
+                    onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-1)' }}>
+                  Pincode <span style={{ color: 'var(--color-danger)' }}>*</span>
+                </label>
+                <input
+                  value={deliveryForm.pincode}
+                  onChange={e => setDeliveryForm(f => ({ ...f, pincode: e.target.value.replace(/\D/g, '').slice(0, 6) }))}
+                  placeholder="6-digit pincode"
+                  style={{
+                    width: '100%', padding: '12px 14px',
+                    border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+                    fontSize: 14, outline: 'none',
+                    color: 'var(--color-text)', background: 'var(--color-paper-2)',
+                    transition: 'border-color 150ms ease, box-shadow 150ms ease',
+                  }}
+                  onFocus={e => { e.target.style.borderColor = 'var(--color-focus)'; e.target.style.boxShadow = '0 0 0 3px oklch(55% 0.2 240 / 15%)'; }}
+                  onBlur={e => { e.target.style.borderColor = 'var(--color-border)'; e.target.style.boxShadow = 'none'; }}
+                />
+              </div>
+
+              {deliveryError && (
+                <div style={{ padding: 'var(--space-3) var(--space-4)', background: 'var(--color-danger-muted)', color: 'var(--color-danger)', borderRadius: 'var(--radius-md)', fontSize: 13 }}>
+                  {deliveryError}
+                </div>
+              )}
+
+              <div style={{ display: 'flex', gap: 'var(--space-3)', marginTop: 'var(--space-1)' }}>
+                <button type="button" onClick={() => setShowDeliveryForm(false)} className="btn btn-outline" style={{ flex: 1, justifyContent: 'center', padding: '12px 24px', fontSize: 14 }}>
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sendingDelivery || !deliveryForm.recipient_name.trim() || deliveryForm.phone.length < 10 || !deliveryForm.address.trim() || !deliveryForm.city.trim() || !deliveryForm.state.trim() || deliveryForm.pincode.length !== 6}
+                  className="btn btn-primary"
+                  style={{ flex: 1, justifyContent: 'center', padding: '12px 24px', fontSize: 14, opacity: (sendingDelivery || !deliveryForm.recipient_name.trim() || deliveryForm.phone.length < 10 || !deliveryForm.address.trim() || !deliveryForm.city.trim() || !deliveryForm.state.trim() || deliveryForm.pincode.length !== 6) ? 0.6 : 1 }}
+                >
+                  {sendingDelivery ? 'Submitting...' : 'Submit Request'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+

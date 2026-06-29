@@ -169,3 +169,10 @@ export const broadcastNotification = (title: string, body: string) =>
 export const getDeliveryRequests = () => request<any[]>('/delivery-requests');
 export const updateDeliveryRequest = (id: number, status: string) =>
   request<any>(`/delivery-requests/${id}`, { method: 'PUT', body: JSON.stringify({ status }) });
+export const sendUserNotification = (userId: number, title: string, body: string) =>
+  request<{ message: string }>(`/notifications/user/${userId}`, {
+    method: 'POST',
+    body: JSON.stringify({ title, body }),
+  });
+export const deleteDeliveryRequest = (id: number) =>
+  request<{ message: string }>(`/delivery-requests/${id}`, { method: 'DELETE' });

@@ -37,8 +37,10 @@ router.post('/users/:id/purchases', c.grantPdfAccess);
 router.delete('/users/:id/purchases/:pdfId', c.revokePdfAccess);
 
 router.post('/notifications/broadcast', c.broadcastNotification);
+router.post('/notifications/user/:userId', c.sendUserNotification);
 
 router.get('/delivery-requests', c.getDeliveryRequests);
 router.put('/delivery-requests/:id', c.updateDeliveryRequest);
+router.delete('/delivery-requests/:id', c.deleteDeliveryRequest);
 
 module.exports = router;
