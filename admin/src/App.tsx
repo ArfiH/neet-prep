@@ -13,6 +13,7 @@ import UserList from './pages/UserList';
 import UserPurchases from './pages/UserPurchases';
 import BroadcastNotification from './pages/BroadcastNotification';
 import DeliveryRequestList from './pages/DeliveryRequestList';
+import Settings from './pages/Settings';
 import { getStoredToken, getDashboard, getUrlToken } from './lib/api';
 
 function AuthGuard({ children }: { children: React.ReactNode }) {
@@ -76,6 +77,7 @@ export default function App() {
         <Route path="users/:id/purchases" element={<UserPurchases />} />
         <Route path="delivery-requests" element={<DeliveryRequestList />} />
         <Route path="notifications/broadcast" element={<BroadcastNotification />} />
+        <Route path="settings" element={<Settings />} />
       </Route>
     </Routes>
   );

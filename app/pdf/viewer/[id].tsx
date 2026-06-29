@@ -25,6 +25,7 @@ export default function PdfViewerScreen() {
   const [showAdOverlay, setShowAdOverlay] = useState(false);
   const [adLoading, setAdLoading] = useState(false);
   const [pdfReady, setPdfReady] = useState(false);
+  const [adSettings, setAdSettings] = useState<{ ad_on_free_read: string; ad_on_free_download: string } | null>(null);
   const [isLocal, setIsLocal] = useState(false);
   const [localTempPath, setLocalTempPath] = useState<string | null>(null);
   const tempPathRef = useRef<string | null>(null);
@@ -46,16 +47,25 @@ export default function PdfViewerScreen() {
   }, [id]);
 
   useEffect(() => {
+    api.getAdSettings().then(s => setAdSettings(s)).catch(() => {});
+  }, []);
+
+  useEffect(() => {
     if (isLocal) {
       setPdfReady(true);
       return;
     }
-    if (viewData && viewData.is_free && !hasWatchedAd(id)) {
-      setShowAdOverlay(true);
+    if (viewData && viewData.is_free) {
+      if (!adSettings) return;
+      if (adSettings.ad_on_free_read === '1' && !hasWatchedAd(id)) {
+        setShowAdOverlay(true);
+      } else {
+        setPdfReady(true);
+      }
     } else if (viewData) {
       setPdfReady(true);
     }
-  }, [viewData, id, isLocal]);
+  }, [viewData, id, isLocal, adSettings]);
 
   async function fetchViewUrl() {
     try {

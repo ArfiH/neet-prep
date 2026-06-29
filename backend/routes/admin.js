@@ -43,4 +43,7 @@ router.get('/delivery-requests', c.getDeliveryRequests);
 router.put('/delivery-requests/:id', c.updateDeliveryRequest);
 router.delete('/delivery-requests/:id', c.deleteDeliveryRequest);
 
+router.get('/settings', c.getSettings);
+router.put('/settings', c.updateSettings);
+
 module.exports = router;

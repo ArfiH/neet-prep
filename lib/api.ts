@@ -317,6 +317,19 @@ class ApiClient {
     const base = API_BASE_URL.replace('/api', '');
     return `${base}/admin${path}?token=${token}`;
   }
+
+  private adSettingsCache: { ad_on_free_read: string; ad_on_free_download: string } | null = null;
+
+  async getAdSettings(): Promise<{ ad_on_free_read: string; ad_on_free_download: string }> {
+    if (this.adSettingsCache) return this.adSettingsCache;
+    try {
+      const res = await fetch(`${API_BASE_URL}/settings`);
+      if (res.ok) {
+        this.adSettingsCache = await res.json();
+      }
+    } catch {}
+    return this.adSettingsCache || { ad_on_free_read: '1', ad_on_free_download: '1' };
+  }
 }
 
 export const api = new ApiClient();

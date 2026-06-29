@@ -176,3 +176,8 @@ export const sendUserNotification = (userId: number, title: string, body: string
   });
 export const deleteDeliveryRequest = (id: number) =>
   request<{ message: string }>(`/delivery-requests/${id}`, { method: 'DELETE' });
+
+// Settings
+export const getSettings = () => request<Record<string, string>>('/settings');
+export const updateSettings = (data: Record<string, string>) =>
+  request<Record<string, string>>('/settings', { method: 'PUT', body: JSON.stringify(data) });

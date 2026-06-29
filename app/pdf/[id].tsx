@@ -193,7 +193,8 @@ export default function PDFDetailScreen() {
     }
 
     setStartingDownload(true);
-    if (pdf.is_free && !hasWatchedAd('download_' + pdf.id)) {
+    const ads = await api.getAdSettings();
+    if (pdf.is_free && !hasWatchedAd('download_' + pdf.id) && ads.ad_on_free_download === '1') {
       setStartingDownload(false);
       setShowDownloadAdOverlay(true);
       return;

@@ -638,6 +638,45 @@ const updateDeliveryRequest = async (req, res) => {
   }
 };
 
+const getSettings = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT `key`, `value` FROM settings');
+    const settings = {};
+    for (const row of rows) {
+      settings[row.key] = row.value;
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Admin getSettings error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const updateSettings = async (req, res) => {
+  try {
+    const allowedKeys = ['ad_on_free_read', 'ad_on_free_download'];
+    const entries = Object.entries(req.body).filter(([key]) => allowedKeys.includes(key));
+    if (!entries.length) return res.status(400).json({ error: 'No valid settings provided' });
+
+    for (const [key, value] of entries) {
+      await pool.query(
+        'INSERT INTO settings (`key`, `value`) VALUES (?, ?) ON DUPLICATE KEY UPDATE `value` = VALUES(`value`)',
+        [key, String(value)]
+      );
+    }
+
+    const [rows] = await pool.query('SELECT `key`, `value` FROM settings');
+    const settings = {};
+    for (const row of rows) {
+      settings[row.key] = row.value;
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Admin updateSettings error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
@@ -648,4 +687,5 @@ module.exports = {
   getUserPurchases, grantPdfAccess, revokePdfAccess,
   broadcastNotification, sendUserNotification,
   getDeliveryRequests, updateDeliveryRequest, deleteDeliveryRequest,
+  getSettings, updateSettings,
 };

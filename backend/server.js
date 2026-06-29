@@ -54,6 +54,21 @@ app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+app.get('/api/settings', async (req, res) => {
+  try {
+    const { pool } = require('./config/db');
+    const [rows] = await pool.query('SELECT `key`, `value` FROM settings WHERE `key` IN (?, ?)', ['ad_on_free_read', 'ad_on_free_download']);
+    const settings = { ad_on_free_read: '1', ad_on_free_download: '1' };
+    for (const row of rows) {
+      settings[row.key] = row.value;
+    }
+    res.json(settings);
+  } catch (error) {
+    console.error('Public settings error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // ---------------------------------------------------------------------------
 // Admin React SPA  (served at /admin)
 // ---------------------------------------------------------------------------
