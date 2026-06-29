@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
   pdfs: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
   tile: { width: '48%', borderRadius: 18, backgroundColor: '#fff', overflow: 'hidden' },
   tileImgArea: { minHeight: 90, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  tileGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  tileGlyph: { position: 'absolute', top: 8, left: 8, width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   tileGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
   tileInfoPanel: { paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: '#fff' },
   tileSubjectTag: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 2 },

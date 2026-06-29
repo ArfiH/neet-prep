@@ -133,7 +133,7 @@ const styles = StyleSheet.create({
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingTop: 14, gap: 12 },
   tile: { width: '46.5%', borderRadius: 18, backgroundColor: '#fff', overflow: 'hidden' },
   tileImgArea: { minHeight: 100, alignItems: 'center', justifyContent: 'center', position: 'relative' },
-  tileGlyph: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  tileGlyph: { position: 'absolute', top: 8, left: 8, width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   tileGlyphText: { fontSize: 14, fontWeight: '800', color: '#fff' },
   tileInfoPanel: { paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: '#fff' },
   tileSubjectTag: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 2 },

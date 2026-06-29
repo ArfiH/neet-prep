@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/icon.png",
+      "icon": "./assets/images/splash-icon.png",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -24,6 +24,11 @@
       "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "icon": "./assets/images/icon.png",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/icon.png",
+        "monochromeImage": "./assets/images/icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
       "intentFilters": [
         {
           "action": "VIEW",
@@ -42,16 +47,17 @@
     },
     "web": {
       "bundler": "metro",
-      "output": "single"
+      "output": "single",
+      "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
       [
         "expo-splash-screen",
         {
           "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/splash-icon.png",
+          "image": "./assets/images/icon.png",
           "dark": {
-            "image": "./assets/images/splash-icon.png",
+            "image": "./assets/images/icon.png",
             "backgroundColor": "#000000"
           },
           "imageWidth": 120,
