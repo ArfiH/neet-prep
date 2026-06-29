@@ -80,18 +80,18 @@ export default function CollegeDetailScreen() {
     return (
       <SafeAreaView style={styles.loadingScreen} edges={['top']}>
         <Text style={{ color: COLORS.fg }}>College not found.</Text>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={{ color: COLORS.primary, marginTop: 12 }}>Go back</Text>
-        </TouchableOpacity>
-      </SafeAreaView>
-    );
-  }
+            <TouchableOpacity onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
+              <Text style={{ color: COLORS.primary, marginTop: 12 }}>Go back</Text>
+            </TouchableOpacity>
+          </SafeAreaView>
+        );
+      }
 
-  const latestCutoff = cutoffs[0];
+      const latestCutoff = cutoffs[0];
 
-  return (
-    <SafeAreaView style={styles.safeArea} edges={['top']}>
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+      return (
+        <SafeAreaView style={styles.safeArea} edges={['top']}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
         <ArrowLeft size={22} color={COLORS.fg} strokeWidth={2.5} />
       </TouchableOpacity>
 

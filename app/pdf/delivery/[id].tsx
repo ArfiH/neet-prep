@@ -45,7 +45,11 @@ export default function DeliveryFormScreen() {
         pincode: form.pincode.trim(),
       });
       Toast.show({ type: 'success', text1: 'Request submitted', text2: 'We will deliver the book to your address.' });
-      router.back();
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/(tabs)');
+      }
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Failed', text2: e?.message || 'Could not submit delivery request.' });
     }
@@ -57,7 +61,7 @@ export default function DeliveryFormScreen() {
       <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
         {/* Top Bar */}
         <View style={styles.topbar}>
-          <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backCircle} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
             <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
           </TouchableOpacity>
           <Text style={styles.topbarText}>BOOK DELIVERY</Text>

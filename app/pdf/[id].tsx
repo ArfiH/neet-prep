@@ -278,7 +278,7 @@ export default function PDFDetailScreen() {
         ) : (
           <Text style={{ color: COLORS.fg, fontSize: 16, fontWeight: '600' }}>PDF not found.</Text>
         )}
-        <TouchableOpacity onPress={() => router.back()}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
           <Text style={{ color: COLORS.primary, marginTop: 16, fontSize: 14, fontWeight: '600' }}>Go back</Text>
         </TouchableOpacity>
       </SafeAreaView>
@@ -300,7 +300,7 @@ export default function PDFDetailScreen() {
       <ScrollView showsVerticalScrollIndicator={false}>
         {/* Top Bar */}
         <View style={styles.topbar}>
-          <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backCircle} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
             <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
           </TouchableOpacity>
           <Text style={styles.topbarText}>PDF DETAIL · {subjectLabel}</Text>

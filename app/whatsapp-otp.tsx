@@ -122,7 +122,7 @@ export default function WhatsAppOtpScreen() {
         style={styles.keyboardView}
       >
         <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
             <ArrowLeft size={20} color={COLORS.muted} strokeWidth={2} />
           </TouchableOpacity>
 

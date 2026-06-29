@@ -20,7 +20,7 @@ export default function AboutScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.topbar}>
-        <TouchableOpacity style={styles.backCircle} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backCircle} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
           <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
         </TouchableOpacity>
         <Text style={styles.topbarText}>ABOUT</Text>

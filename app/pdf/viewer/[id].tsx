@@ -161,7 +161,7 @@ export default function PdfViewerScreen() {
       <SafeAreaProvider>
         <SafeAreaView style={styles.centeredContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }} style={styles.backButton}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </SafeAreaView>
@@ -173,7 +173,7 @@ export default function PdfViewerScreen() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
             <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
           </TouchableOpacity>
           <Text style={styles.topBarTitle} numberOfLines={1}>{viewData?.title}</Text>
@@ -194,7 +194,7 @@ export default function PdfViewerScreen() {
                   <Text style={styles.watchAdButtonText}>Watch Ad</Text>
                 )}
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
+              <TouchableOpacity style={styles.cancelButton} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>
