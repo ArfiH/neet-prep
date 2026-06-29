@@ -1,10 +1,16 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
+const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+
+declare global {
+  interface Window { google?: any; }
+}
+
 export default function Register() {
-  const { register } = useAuth();
+  const { register, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
 
@@ -14,6 +20,44 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [registered, setRegistered] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
+
+  const googleBtnRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!GOOGLE_CLIENT_ID) return;
+    const timer = setInterval(() => {
+      if (window.google?.accounts?.id) {
+        clearInterval(timer);
+        window.google.accounts.id.initialize({
+          client_id: GOOGLE_CLIENT_ID,
+          callback: async (response: any) => {
+            setGoogleLoading(true);
+            setError('');
+            try {
+              await loginWithGoogle(response.credential);
+              navigate('/');
+            } catch (err: any) {
+              setError(err.message || 'Google sign-in failed');
+            } finally {
+              setGoogleLoading(false);
+            }
+          },
+        });
+        if (googleBtnRef.current) {
+          window.google.accounts.id.renderButton(googleBtnRef.current, {
+            type: 'standard',
+            shape: 'rectangular',
+            theme: 'outline',
+            text: 'signup_with',
+            size: 'large',
+            width: googleBtnRef.current.offsetWidth || 340,
+          });
+        }
+      }
+    }, 300);
+    return () => clearInterval(timer);
+  }, [navigate, loginWithGoogle]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -121,6 +165,23 @@ export default function Register() {
               {loading ? 'Creating account...' : 'Create Account'}
             </button>
           </form>
+
+          {GOOGLE_CLIENT_ID && (
+            <>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-3)', margin: 'var(--space-5) 0' }}>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+                <span style={{ fontSize: 13, color: 'var(--color-text-3)', whiteSpace: 'nowrap' }}>or sign up with</span>
+                <div style={{ flex: 1, height: 1, background: 'var(--color-border)' }} />
+              </div>
+              {googleLoading ? (
+                <div style={{ display: 'flex', justifyContent: 'center', padding: '10px 0' }}>
+                  <div className="spinner" style={{ width: 20, height: 20 }} />
+                </div>
+              ) : (
+                <div ref={googleBtnRef} style={{ display: 'flex', justifyContent: 'center', minHeight: 44 }} />
+              )}
+            </>
+          )}
         </div>
 
         <p style={{ textAlign: 'center', marginTop: 'var(--space-4)', fontSize: 14, color: 'var(--color-text-2)' }}>

@@ -232,6 +232,10 @@ export async function getNotifications(): Promise<any[]> {
   return request('/notifications');
 }
 
+export async function markNotificationRead(id: number): Promise<any> {
+  return request(`/notifications/${id}/read`, { method: 'POST' });
+}
+
 export async function markAllNotificationsRead(): Promise<any> {
   return request('/notifications/read-all', { method: 'POST' });
 }

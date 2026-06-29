@@ -13,6 +13,11 @@ import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
 import Profile from './pages/Profile';
 import Purchased from './pages/Purchased';
+import Notifications from './pages/Notifications';
+import VerifyEmail from './pages/VerifyEmail';
+import About from './pages/About';
+import Help from './pages/Help';
+import Privacy from './pages/Privacy';
 
 export default function App() {
   return (
@@ -51,6 +56,18 @@ export default function App() {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/notifications"
+          element={
+            <ProtectedRoute>
+              <Notifications />
+            </ProtectedRoute>
+          }
+        />
+        <Route path="/verify-email" element={<VerifyEmail />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/help" element={<Help />} />
+        <Route path="/privacy" element={<Privacy />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </Layout>

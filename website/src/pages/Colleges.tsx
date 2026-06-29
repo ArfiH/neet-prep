@@ -35,6 +35,8 @@ function probLabel(p: number): string {
   return 'Low';
 }
 
+type SortKey = 'probability' | 'cutoff_rank' | 'name';
+
 export default function Colleges() {
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [rank, setRank] = useState('');
@@ -46,8 +48,21 @@ export default function Colleges() {
   const [predicted, setPredicted] = useState(false);
   const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [stateSearch, setStateSearch] = useState('');
+  const [sortBy, setSortBy] = useState<SortKey>('probability');
 
   const filteredStates = STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
+
+  const sortedResults = [...results].sort((a, b) => {
+    if (sortBy === 'probability') return b.probability - a.probability;
+    if (sortBy === 'cutoff_rank') return a.cutoff_rank - b.cutoff_rank;
+    return a.name.localeCompare(b.name);
+  });
+
+  const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+    { key: 'probability', label: 'Chance' },
+    { key: 'cutoff_rank', label: 'Cutoff' },
+    { key: 'name', label: 'Name' },
+  ];
 
   const handlePredict = async () => {
     const rankNum = parseInt(rank);
@@ -201,18 +216,39 @@ export default function Colleges() {
         {/* Results */}
         {predicted && (
           <div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)', marginBottom: 'var(--space-4)' }}>
-              {results.length} College{results.length !== 1 ? 's' : ''} Found
-            </h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)', flexWrap: 'wrap', gap: 'var(--space-2)' }}>
+              <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--color-text)' }}>
+                {sortedResults.length} College{sortedResults.length !== 1 ? 's' : ''} Found
+              </h2>
+              {sortedResults.length > 0 && (
+                <div style={{ display: 'flex', gap: 4, alignItems: 'center', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: 12, color: 'var(--color-text-3)', fontWeight: 500 }}>Sort:</span>
+                  {SORT_OPTIONS.map(opt => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setSortBy(opt.key)}
+                      style={{
+                        padding: '4px 12px', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+                        border: '1px solid var(--color-border)', borderRadius: 999,
+                        background: sortBy === opt.key ? 'var(--color-accent)' : 'var(--color-paper-2)',
+                        color: sortBy === opt.key ? '#fff' : 'var(--color-text-2)',
+                      }}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
 
-            {results.length === 0 ? (
+            {sortedResults.length === 0 ? (
               <div className="card" style={{ textAlign: 'center', padding: 'var(--space-8)' }}>
                 <p style={{ fontSize: 16, fontWeight: 600, color: 'var(--color-text)', marginBottom: 4 }}>No colleges found</p>
                 <p style={{ fontSize: 14, color: 'var(--color-text-3)' }}>Try selecting "All India" or a different category.</p>
               </div>
             ) : (
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)' }}>
-                {results.map((college) => (
+                {sortedResults.map((college) => (
                   <Link
                     key={college.id}
                     to={`/colleges/${college.id}`}

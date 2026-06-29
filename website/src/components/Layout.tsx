@@ -1,7 +1,9 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Bell } from 'lucide-react';
 import { useAuth } from '../lib/auth';
 import { useMediaQuery } from '../lib/useMediaQuery';
+import * as api from '../lib/api';
 
 const NAV_LINKS = [
   { to: '/', label: 'Home' },
@@ -15,6 +17,14 @@ export default function Layout({ children }: { children: ReactNode }) {
   const location = useLocation();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+
+  useEffect(() => {
+    if (!isLoggedIn) { setUnreadCount(0); return; }
+    api.getNotifications()
+      .then(notifs => setUnreadCount(notifs.filter((n: any) => !n.is_read).length))
+      .catch(() => {});
+  }, [isLoggedIn, location.pathname]);
 
   const handleLogout = async () => {
     await logout();
@@ -75,6 +85,24 @@ export default function Layout({ children }: { children: ReactNode }) {
                 <span style={{ fontSize: 14, color: 'var(--color-text-2)' }}>
                   {user?.name || user?.email}
                 </span>
+                <Link
+                  to="/notifications"
+                  style={{ position: 'relative', padding: 8, textDecoration: 'none', display: 'flex', alignItems: 'center' }}
+                  aria-label="Notifications"
+                >
+                  <Bell size={18} />
+                  {unreadCount > 0 && (
+                    <span style={{
+                      position: 'absolute', top: 2, right: 2,
+                      width: 16, height: 16, borderRadius: 8,
+                      background: 'var(--color-danger)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: 9, fontWeight: 700, color: '#fff',
+                    }}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
+                </Link>
                 <Link to="/profile" className="btn btn-outline" style={{ padding: '6px 14px', fontSize: 13 }}>
                   Profile
                 </Link>
@@ -122,6 +150,9 @@ export default function Layout({ children }: { children: ReactNode }) {
               <div style={{ padding: '10px 12px', fontSize: 13, color: 'var(--color-text-3)' }}>
                 {user?.name || user?.email}
               </div>
+              <Link to="/notifications" onClick={() => setMobileOpen(false)}>
+                Notifications{unreadCount > 0 ? ` (${unreadCount})` : ''}
+              </Link>
               <Link to="/profile" onClick={() => setMobileOpen(false)}>Profile</Link>
               <button onClick={() => { setMobileOpen(false); handleLogout(); }}>Sign Out</button>
             </>
@@ -155,10 +186,12 @@ export default function Layout({ children }: { children: ReactNode }) {
               Your NEET UG preparation companion.
             </p>
           </div>
-          <div style={{ display: 'flex', gap: 'var(--space-6)' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-5)' }}>
+            <Link to="/about" style={{ fontSize: 13, color: 'var(--color-text-2)', textDecoration: 'none' }}>About</Link>
+            <Link to="/help" style={{ fontSize: 13, color: 'var(--color-text-2)', textDecoration: 'none' }}>Help</Link>
+            <Link to="/privacy" style={{ fontSize: 13, color: 'var(--color-text-2)', textDecoration: 'none' }}>Privacy</Link>
             <Link to="/pdfs" style={{ fontSize: 13, color: 'var(--color-text-2)', textDecoration: 'none' }}>PDFs</Link>
             <Link to="/colleges" style={{ fontSize: 13, color: 'var(--color-text-2)', textDecoration: 'none' }}>Colleges</Link>
-            <a href="https://neetzymee.com" style={{ fontSize: 13, color: 'var(--color-text-2)', textDecoration: 'none' }}>Back to App</a>
           </div>
         </div>
         <div className="container" style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
