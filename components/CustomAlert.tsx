@@ -67,7 +67,7 @@ export default function CustomAlert({
   type = 'default',
   onDismiss,
 }: CustomAlertProps) {
-  const scaleAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     if (visible) {
@@ -78,7 +78,7 @@ export default function CustomAlert({
         stiffness: 260,
       }).start();
     } else {
-      scaleAnim.setValue(0);
+      scaleAnim.setValue(1);
     }
   }, [visible, scaleAnim]);
 
