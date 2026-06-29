@@ -214,28 +214,33 @@ export default function PDFsScreen() {
             {filtered.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={[styles.tile, { backgroundColor: getTileBg(item.subject) }]}
+                style={styles.tile}
                 onPress={() => router.push(`/pdf/${item.id}` as any)}
                 activeOpacity={0.88}
               >
-                {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 18 }} />}
-                <View style={[styles.glyph, { backgroundColor: getGlyphColor(item.subject) }]}>
-                  <Text style={styles.glyphText}>{getGlyphLetter(item.subject)}</Text>
-                </View>
-                <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.tileMeta} numberOfLines={1}>{getMetaLine(item)}</Text>
-                {downloadedIds.has(String(item.id)) && (
-                  <View style={styles.downloadBadge}>
-                    <Download size={9} color="#fff" strokeWidth={3} />
+                <View style={[styles.tileImgArea, { backgroundColor: getTileBg(item.subject) }]}>
+                  {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderTopLeftRadius: 18, borderTopRightRadius: 18 }} />}
+                  <View style={[styles.tileGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                    <Text style={styles.tileGlyphText}>{getGlyphLetter(item.subject)}</Text>
                   </View>
-                )}
-                {item.is_free ? (
-                  <Text style={styles.freeTag}>FREE</Text>
-                ) : purchasedIds.has(String(item.id)) ? (
-                  <Text style={styles.ownedTag}>OWNED</Text>
-                ) : (
-                  <Text style={styles.paidTag}>₹{formatPrice(item.price)}</Text>
-                )}
+                  {downloadedIds.has(String(item.id)) && (
+                    <View style={styles.tileDownloadBadge}>
+                      <Download size={9} color="#fff" strokeWidth={3} />
+                    </View>
+                  )}
+                  {item.is_free ? (
+                    <Text style={styles.tileFreeTag}>FREE</Text>
+                  ) : purchasedIds.has(String(item.id)) ? (
+                    <Text style={styles.tileOwnedTag}>OWNED</Text>
+                  ) : (
+                    <Text style={styles.tilePaidTag}>₹{formatPrice(item.price)}</Text>
+                  )}
+                </View>
+                <View style={styles.tileInfoPanel}>
+                  <Text style={styles.tileSubjectTag}>{item.subject}{item.class ? ` · ${item.class}` : ''}</Text>
+                  <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.tileMeta} numberOfLines={1}>{getMetaLine(item)}</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -276,15 +281,18 @@ const styles = StyleSheet.create({
   availTextActive: { color: '#fff' },
 
   pdfs: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
-  tile: { width: '48%', borderRadius: 18, padding: 12, minHeight: 116, position: 'relative', flexDirection: 'column', gap: 4, overflow: 'hidden' },
-  glyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
-  glyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  tile: { width: '48%', borderRadius: 18, backgroundColor: '#fff', overflow: 'hidden' },
+  tileImgArea: { minHeight: 90, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  tileGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  tileGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  tileInfoPanel: { paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: '#fff' },
+  tileSubjectTag: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 2 },
   tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17 },
   tileMeta: { fontSize: 10.5, color: COLORS.muted, opacity: 0.7 },
-  freeTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primary, color: '#fff', letterSpacing: 0.06 },
-  paidTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.fg, color: '#fff', letterSpacing: 0.06 },
-  ownedTag: { position: 'absolute', top: 10, right: 10, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06 },
-  downloadBadge: { position: 'absolute', top: 10, left: 10, width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
+  tileFreeTag: { position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primary, color: '#fff', letterSpacing: 0.06 },
+  tilePaidTag: { position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.fg, color: '#fff', letterSpacing: 0.06 },
+  tileOwnedTag: { position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06 },
+  tileDownloadBadge: { position: 'absolute', top: 8, left: 8, width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
 
   loadingContainer: { paddingVertical: 60, alignItems: 'center' },
   emptyContainer: { paddingVertical: 60, alignItems: 'center', gap: 8 },

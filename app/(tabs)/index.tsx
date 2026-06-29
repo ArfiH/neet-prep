@@ -145,11 +145,8 @@ export default function HomeScreen() {
               contentContainerStyle={styles.recentScrollInner}
             >
               {recentPdfs.map((item) => (
-                <TouchableOpacity key={item.id} style={[styles.recentCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
-                  {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 16 }} />}
-                  <View style={[styles.recentGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
-                    <Text style={styles.recentGlyphText}>{getGlyphLetter(item.subject)}</Text>
-                  </View>
+                <TouchableOpacity key={item.id} style={styles.recentCard} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
+                  <Text style={styles.recentSubject} numberOfLines={1}>{item.subject}</Text>
                   <Text style={styles.recentTitle} numberOfLines={1}>{item.title}</Text>
                   <Text style={styles.recentMeta} numberOfLines={1}>{item.description?.slice(0, 30) || 'Ch 1–4'}</Text>
                 </TouchableOpacity>
@@ -172,15 +169,20 @@ export default function HomeScreen() {
         </View>
         <View style={styles.featuredGrid}>
           {featured.map((item) => (
-            <TouchableOpacity key={item.id} style={[styles.featuredCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
-              {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 16 }} />}
-              <View style={[styles.featuredGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
-                <Text style={styles.featuredGlyphText}>{getGlyphLetter(item.subject)}</Text>
+            <TouchableOpacity key={item.id} style={styles.featuredCard} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
+              <View style={[styles.cardImgArea, { backgroundColor: getTileBg(item.subject) }]}>
+                {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderTopLeftRadius: 16, borderTopRightRadius: 16 }} />}
+                <View style={[styles.cardImgGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                  <Text style={styles.cardImgGlyphText}>{getGlyphLetter(item.subject)}</Text>
+                </View>
+                <View style={[styles.featuredBadge, item.is_free ? styles.badgeFree : purchasedIds.has(String(item.id)) ? styles.badgeOwned : styles.badgePaid]}>
+                  <Text style={styles.badgeText}>{item.is_free ? 'FREE' : purchasedIds.has(String(item.id)) ? 'OWNED' : `₹${formatPrice(item.price)}`}</Text>
+                </View>
               </View>
-              <Text style={styles.featuredTitle} numberOfLines={1}>{item.title}</Text>
-              <Text style={styles.featuredMeta} numberOfLines={1}>{item.downloads.toLocaleString()} views</Text>
-              <View style={[styles.featuredBadge, item.is_free ? styles.badgeFree : purchasedIds.has(String(item.id)) ? styles.badgeOwned : styles.badgePaid]}>
-                <Text style={styles.badgeText}>{item.is_free ? 'FREE' : purchasedIds.has(String(item.id)) ? 'OWNED' : `₹${formatPrice(item.price)}`}</Text>
+              <View style={styles.infoPanel}>
+                <Text style={styles.subjectTag}>{item.subject}{item.class ? ` · ${item.class}` : ''}</Text>
+                <Text style={styles.featuredTitle} numberOfLines={2}>{item.title}</Text>
+                <Text style={styles.featuredMeta}>{item.downloads.toLocaleString()} views</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -211,19 +213,21 @@ const styles = StyleSheet.create({
   recentScrollInner: { paddingHorizontal: 22, gap: 10 },
   scrollTrack: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.border, marginHorizontal: 22, marginBottom: 12, overflow: 'hidden' },
   scrollIndicator: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.primary },
-  recentCard: { minWidth: 140, padding: 12, borderRadius: 16, position: 'relative', overflow: 'hidden' },
-  recentGlyph: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  recentGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  recentCard: { minWidth: 120, padding: 10, borderRadius: 12, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
+  recentSubject: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 3 },
   recentTitle: { fontSize: 12, fontWeight: '600', color: COLORS.fg },
-  recentMeta: { fontSize: 10, fontFamily: monoFont, color: COLORS.muted, opacity: 0.6, marginTop: 3 },
+  recentMeta: { fontSize: 10, fontFamily: monoFont, color: COLORS.muted, marginTop: 2 },
 
   featuredGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 22, gap: 10 },
-  featuredCard: { width: '48%', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 12, position: 'relative', minHeight: 130, flexDirection: 'column', overflow: 'hidden' },
-  featuredGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
-  featuredGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
-  featuredTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg },
-  featuredMeta: { fontSize: 10, color: COLORS.muted, opacity: 0.7, marginTop: 3 },
-  featuredBadge: { position: 'absolute', top: 10, right: 10, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999 },
+  featuredCard: { width: '48%', borderRadius: 16, backgroundColor: '#fff', overflow: 'hidden' },
+  cardImgArea: { minHeight: 90, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  cardImgGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  cardImgGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  infoPanel: { paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: '#fff' },
+  subjectTag: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 2 },
+  featuredTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17 },
+  featuredMeta: { fontSize: 10.5, color: COLORS.muted, marginTop: 2 },
+  featuredBadge: { position: 'absolute', top: 8, right: 8, paddingHorizontal: 6, paddingVertical: 3, borderRadius: 999 },
   badgeFree: { backgroundColor: COLORS.primary },
   badgePaid: { backgroundColor: COLORS.fg },
   badgeOwned: { backgroundColor: COLORS.primaryDark },

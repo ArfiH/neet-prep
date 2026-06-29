@@ -85,22 +85,27 @@ export default function PurchasedScreen() {
             {pdfs.map((item) => (
               <TouchableOpacity
                 key={item.id}
-                style={[styles.tile, { backgroundColor: getTileBg(item.subject) }]}
+                style={styles.tile}
                 onPress={() => router.push(`/pdf/${item.id}` as any)}
                 activeOpacity={0.88}
               >
-                {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 18 }} />}
-                {downloadedIds.has(String(item.id)) && (
-                  <View style={styles.downloadBadge}>
-                    <Download size={9} color="#fff" strokeWidth={3} />
+                <View style={[styles.tileImgArea, { backgroundColor: getTileBg(item.subject) }]}>
+                  {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderTopLeftRadius: 18, borderTopRightRadius: 18 }} />}
+                  <View style={[styles.tileGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                    <Text style={styles.tileGlyphText}>{getGlyphLetter(item.subject)}</Text>
                   </View>
-                )}
-                <View style={[styles.glyph, { backgroundColor: getGlyphColor(item.subject) }]}>
-                  <Text style={styles.glyphText}>{getGlyphLetter(item.subject)}</Text>
+                  {downloadedIds.has(String(item.id)) && (
+                    <View style={styles.tileDownloadBadge}>
+                      <Download size={9} color="#fff" strokeWidth={3} />
+                    </View>
+                  )}
+                  <Text style={styles.tileOwnedTag}>OWNED</Text>
                 </View>
-                <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
-                <Text style={styles.tileMeta} numberOfLines={1}>{item.pages_count} pages</Text>
-                <Text style={styles.ownedTag}>OWNED</Text>
+                <View style={styles.tileInfoPanel}>
+                  <Text style={styles.tileSubjectTag}>{item.subject}{item.class ? ` · ${item.class}` : ''}</Text>
+                  <Text style={styles.tileTitle} numberOfLines={2}>{item.title}</Text>
+                  <Text style={styles.tileMeta} numberOfLines={1}>{item.pages_count} pages</Text>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -126,11 +131,14 @@ const styles = StyleSheet.create({
   browseBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingTop: 14, gap: 12 },
-  tile: { width: '46.5%', borderRadius: 18, padding: 16, minHeight: 150, position: 'relative', overflow: 'hidden' },
-  glyph: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
-  glyphText: { fontSize: 14, fontWeight: '800', color: '#fff' },
-  tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17, flex: 1 },
-  tileMeta: { fontSize: 10.5, color: COLORS.muted, fontFamily: monoFont, marginTop: 6 },
-  ownedTag: { alignSelf: 'flex-start', marginTop: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06, overflow: 'hidden' },
-  downloadBadge: { position: 'absolute', top: 10, left: 10, width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center', zIndex: 10 },
+  tile: { width: '46.5%', borderRadius: 18, backgroundColor: '#fff', overflow: 'hidden' },
+  tileImgArea: { minHeight: 100, alignItems: 'center', justifyContent: 'center', position: 'relative' },
+  tileGlyph: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  tileGlyphText: { fontSize: 14, fontWeight: '800', color: '#fff' },
+  tileInfoPanel: { paddingHorizontal: 10, paddingVertical: 8, borderTopWidth: 1, borderTopColor: COLORS.border, backgroundColor: '#fff' },
+  tileSubjectTag: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 2 },
+  tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17 },
+  tileMeta: { fontSize: 10.5, color: COLORS.muted, fontFamily: monoFont },
+  tileOwnedTag: { position: 'absolute', top: 8, right: 8, fontSize: 9, fontWeight: '700', fontFamily: monoFont, paddingVertical: 3, paddingHorizontal: 6, borderRadius: 999, backgroundColor: COLORS.primaryDark, color: '#fff', letterSpacing: 0.06 },
+  tileDownloadBadge: { position: 'absolute', top: 8, left: 8, width: 18, height: 18, borderRadius: 9, backgroundColor: COLORS.primary, alignItems: 'center', justifyContent: 'center' },
 });
