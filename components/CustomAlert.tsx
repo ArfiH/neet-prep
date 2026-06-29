@@ -18,6 +18,7 @@ interface AlertButton {
   text: string;
   style?: 'default' | 'cancel' | 'destructive';
   onPress?: () => void;
+  disabled?: boolean;
 }
 
 interface CustomAlertProps {
@@ -129,13 +130,14 @@ export default function CustomAlert({
                 {buttons.map((btn, i) => (
                   <TouchableOpacity
                     key={i}
-                    style={[styles.btn, getButtonStyle(btn.style)]}
+                    style={[styles.btn, getButtonStyle(btn.style), btn.disabled && styles.disabledBtn]}
                     onPress={() => {
+                      if (btn.disabled) return;
                       btn.onPress?.();
                       onDismiss();
                     }}
                   >
-                    <Text style={getButtonTextStyle(btn.style)}>
+                    <Text style={[getButtonTextStyle(btn.style), btn.disabled && styles.disabledBtnText]}>
                       {btn.text}
                     </Text>
                   </TouchableOpacity>
@@ -232,5 +234,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '700',
     color: '#fff',
+  },
+  disabledBtn: {
+    opacity: 0.5,
+  },
+  disabledBtnText: {
+    opacity: 0.8,
   },
 });

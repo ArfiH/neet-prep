@@ -23,6 +23,7 @@ export default function PdfViewerScreen() {
   const [numPages, setNumPages] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
   const [pdfReady, setPdfReady] = useState(false);
   const [isLocal, setIsLocal] = useState(false);
   const [localTempPath, setLocalTempPath] = useState<string | null>(null);
@@ -113,11 +114,13 @@ export default function PdfViewerScreen() {
   }
 
   async function handleWatchAd() {
+    setAdLoading(true);
     const result = await showInterstitialAd(id);
     if (result.canViewPdf) {
       setShowAdOverlay(false);
       setPdfReady(true);
     }
+    setAdLoading(false);
   }
 
   const pdfSource = useMemo(() => {
@@ -174,8 +177,12 @@ export default function PdfViewerScreen() {
             <View style={styles.adOverlayContent}>
               <Text style={styles.adOverlayTitle}>Watch Ad to View PDF</Text>
               <Text style={styles.adOverlayText}>This free PDF requires watching an ad first.</Text>
-              <TouchableOpacity style={styles.watchAdButton} onPress={handleWatchAd}>
-                <Text style={styles.watchAdButtonText}>Watch Ad</Text>
+              <TouchableOpacity style={[styles.watchAdButton, adLoading && { opacity: 0.6 }]} onPress={handleWatchAd} disabled={adLoading}>
+                {adLoading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <Text style={styles.watchAdButtonText}>Watch Ad</Text>
+                )}
               </TouchableOpacity>
               <TouchableOpacity style={styles.cancelButton} onPress={() => router.back()}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>

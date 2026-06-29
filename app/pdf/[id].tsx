@@ -56,6 +56,8 @@ export default function PDFDetailScreen() {
   const [downloading, setDownloading] = useState(false);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showDownloadAdOverlay, setShowDownloadAdOverlay] = useState(false);
+  const [adLoading, setAdLoading] = useState(false);
+  const [startingDownload, setStartingDownload] = useState(false);
   const [alreadyDownloaded, setAlreadyDownloaded] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
 
@@ -190,7 +192,9 @@ export default function PDFDetailScreen() {
       return;
     }
 
+    setStartingDownload(true);
     if (pdf.is_free && !hasWatchedAd('download_' + pdf.id)) {
+      setStartingDownload(false);
       setShowDownloadAdOverlay(true);
       return;
     }
@@ -223,14 +227,17 @@ export default function PDFDetailScreen() {
       Toast.show({ type: 'error', text1: 'Download failed', text2: e?.message || 'Could not download PDF.' });
     }
     setDownloading(false);
+    setStartingDownload(false);
   }
 
   async function handleWatchAdForDownload() {
+    setAdLoading(true);
     const result = await showInterstitialAd('download_' + pdf!.id);
     if (result.canViewPdf) {
       setShowDownloadAdOverlay(false);
       doDownload();
     }
+    setAdLoading(false);
   }
 
   function handleReadOrBuy() {
@@ -411,11 +418,16 @@ export default function PDFDetailScreen() {
           </TouchableOpacity>
         ) : (
           <TouchableOpacity
-            style={styles.downloadBtn}
+            style={[styles.downloadBtn, (startingDownload || downloading) && { opacity: 0.5 }]}
             onPress={handleStartDownload}
+            disabled={startingDownload || downloading}
           >
-            <Download size={14} color={COLORS.primary} strokeWidth={2} />
-            <Text style={styles.downloadBtnText}>Download Offline</Text>
+            {startingDownload ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <Download size={14} color={COLORS.primary} strokeWidth={2} />
+            )}
+            <Text style={styles.downloadBtnText}>{startingDownload ? 'Preparing…' : 'Download Offline'}</Text>
           </TouchableOpacity>
         )}
 
@@ -428,8 +440,12 @@ export default function PDFDetailScreen() {
           <View style={styles.adOverlayContent}>
             <Text style={styles.adOverlayTitle}>Watch Ad to Download</Text>
             <Text style={styles.adOverlayText}>This free PDF requires watching an ad before downloading.</Text>
-            <TouchableOpacity style={styles.watchAdButton} onPress={handleWatchAdForDownload}>
-              <Text style={styles.watchAdButtonText}>Watch Ad</Text>
+            <TouchableOpacity style={[styles.watchAdButton, adLoading && { opacity: 0.6 }]} onPress={handleWatchAdForDownload} disabled={adLoading}>
+              {adLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.watchAdButtonText}>Watch Ad</Text>
+              )}
             </TouchableOpacity>
             <TouchableOpacity style={styles.cancelAdButton} onPress={() => setShowDownloadAdOverlay(false)}>
               <Text style={styles.cancelAdButtonText}>Cancel</Text>

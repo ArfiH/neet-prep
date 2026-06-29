@@ -30,6 +30,8 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
+  const [markingAll, setMarkingAll] = useState(false);
+  const [markingIds, setMarkingIds] = useState<Set<number>>(new Set());
 
   useEffect(() => {
     fetchNotifications();
@@ -47,21 +49,25 @@ export default function NotificationsScreen() {
   }
 
   async function handleMarkAllRead() {
+    setMarkingAll(true);
     try {
       await api.markAllNotificationsRead();
       setNotifications((prev) => prev.map((n) => ({ ...n, is_read: 1 })));
     } catch (e) {
       // ignore
     }
+    setMarkingAll(false);
   }
 
   async function handleMarkRead(id: number) {
+    setMarkingIds((prev) => new Set(prev).add(id));
     try {
       await api.markNotificationRead(id);
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, is_read: 1 } : n)));
     } catch (e) {
       // ignore
     }
+    setMarkingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
   }
 
   const unreadCount = notifications.filter((n) => !n.is_read).length;
@@ -74,8 +80,12 @@ export default function NotificationsScreen() {
         </TouchableOpacity>
         <Text style={styles.topbarText}>NOTIFICATIONS</Text>
         {unreadCount > 0 && (
-          <TouchableOpacity style={styles.markAllBtn} onPress={handleMarkAllRead}>
-            <CheckCheck size={14} color={COLORS.primary} strokeWidth={2} />
+          <TouchableOpacity style={[styles.markAllBtn, markingAll && { opacity: 0.5 }]} onPress={handleMarkAllRead} disabled={markingAll}>
+            {markingAll ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : (
+              <CheckCheck size={14} color={COLORS.primary} strokeWidth={2} />
+            )}
             <Text style={styles.markAllText}>Mark all read</Text>
           </TouchableOpacity>
         )}
@@ -102,8 +112,12 @@ export default function NotificationsScreen() {
                 <Text style={styles.itemTime}>{timeAgo(n.created_at)}</Text>
               </View>
               {!n.is_read && (
-                <TouchableOpacity style={styles.markBtn} onPress={() => handleMarkRead(n.id)} hitSlop={8}>
-                  <Check size={14} color="#fff" strokeWidth={2.5} />
+                <TouchableOpacity style={[styles.markBtn, markingIds.has(n.id) && { opacity: 0.5 }]} onPress={() => handleMarkRead(n.id)} hitSlop={8} disabled={markingIds.has(n.id)}>
+                  {markingIds.has(n.id) ? (
+                    <ActivityIndicator size="small" color="#fff" />
+                  ) : (
+                    <Check size={14} color="#fff" strokeWidth={2.5} />
+                  )}
                 </TouchableOpacity>
               )}
             </View>

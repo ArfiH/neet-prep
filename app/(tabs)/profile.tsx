@@ -36,6 +36,8 @@ export default function ProfileScreen() {
   const [loading, setLoading] = useState(true);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showLogoutAlert, setShowLogoutAlert] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const [loadingAdmin, setLoadingAdmin] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -73,12 +75,14 @@ export default function ProfileScreen() {
   }
 
   async function confirmLogout() {
+    setSigningOut(true);
     try {
       await logout();
       router.replace('/login');
     } catch (e) {
       console.log('Logout error:', e);
     }
+    setSigningOut(false);
   }
 
   const userName = profile?.name || user?.name || 'Guest User';
@@ -235,10 +239,17 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>ADMIN</Text>
             <View style={styles.menuCard}>
-              <TouchableOpacity style={styles.menuItem} activeOpacity={0.75}
+              <TouchableOpacity style={[styles.menuItem, loadingAdmin && { opacity: 0.6 }]} activeOpacity={0.75}
                 onPress={async () => {
-                  const url = await api.getAdminUrl();
-                  if (url) WebBrowser.openAuthSessionAsync(url);
+                  if (loadingAdmin) return;
+                  setLoadingAdmin(true);
+                  try {
+                    const url = await api.getAdminUrl();
+                    if (url) WebBrowser.openAuthSessionAsync(url);
+                  } catch (e) {
+                    console.log('Admin URL error:', e);
+                  }
+                  setLoadingAdmin(false);
                 }}>
                 <View style={styles.menuIcon}>
                   <Shield size={18} color={COLORS.primaryDark} strokeWidth={2} />
@@ -247,7 +258,11 @@ export default function ProfileScreen() {
                   <Text style={styles.menuLabel}>Admin Panel</Text>
                   <Text style={styles.menuSublabel}>Manage PDFs, colleges & users</Text>
                 </View>
-                <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+                {loadingAdmin ? (
+                  <ActivityIndicator size="small" color={COLORS.muted} />
+                ) : (
+                  <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -280,7 +295,7 @@ export default function ProfileScreen() {
         type="destructive"
         buttons={[
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Sign Out', style: 'destructive', onPress: confirmLogout },
+          { text: signingOut ? 'Signing Out…' : 'Sign Out', style: 'destructive', onPress: confirmLogout, disabled: signingOut },
         ]}
         onDismiss={() => setShowLogoutAlert(false)}
       />
