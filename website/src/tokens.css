@@ -234,3 +234,67 @@ pre, code {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* Hero video section */
+.hero-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 420px;
+  display: flex;
+  align-items: center;
+  overflow: hidden;
+  background: linear-gradient(135deg, var(--color-paper) 0%, var(--color-accent-muted) 100%);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.hero-video {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .hero-video {
+    display: block;
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+    z-index: 0;
+  }
+}
+
+.hero-overlay {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .hero-overlay {
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: rgba(255, 255, 255, 0.72);
+    z-index: 1;
+  }
+}
+
+.hero-content {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  padding: var(--space-10) var(--space-6);
+  max-width: var(--max-width);
+  margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .hero-content {
+    padding: var(--space-16) var(--space-6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-video {
+    display: none !important;
+  }
+}

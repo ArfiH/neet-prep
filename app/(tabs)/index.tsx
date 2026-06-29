@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Platform, Animated, ImageBackground } from 'react-native';
 import { useEffect, useRef, useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { COLORS } from '@/constants/colors';
@@ -18,6 +18,7 @@ type PDF = {
   pages_count: number;
   downloads: number;
   class: string | null;
+  cover_image_url?: string;
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -145,6 +146,7 @@ export default function HomeScreen() {
             >
               {recentPdfs.map((item) => (
                 <TouchableOpacity key={item.id} style={[styles.recentCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
+                  {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 16 }} />}
                   <View style={[styles.recentGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
                     <Text style={styles.recentGlyphText}>{getGlyphLetter(item.subject)}</Text>
                   </View>
@@ -171,6 +173,7 @@ export default function HomeScreen() {
         <View style={styles.featuredGrid}>
           {featured.map((item) => (
             <TouchableOpacity key={item.id} style={[styles.featuredCard, { backgroundColor: getTileBg(item.subject) }]} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
+              {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 16 }} />}
               <View style={[styles.featuredGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
                 <Text style={styles.featuredGlyphText}>{getGlyphLetter(item.subject)}</Text>
               </View>
@@ -208,14 +211,14 @@ const styles = StyleSheet.create({
   recentScrollInner: { paddingHorizontal: 22, gap: 10 },
   scrollTrack: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.border, marginHorizontal: 22, marginBottom: 12, overflow: 'hidden' },
   scrollIndicator: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.primary },
-  recentCard: { minWidth: 140, padding: 12, borderRadius: 16, position: 'relative' },
+  recentCard: { minWidth: 140, padding: 12, borderRadius: 16, position: 'relative', overflow: 'hidden' },
   recentGlyph: { width: 26, height: 26, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   recentGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
   recentTitle: { fontSize: 12, fontWeight: '600', color: COLORS.fg },
   recentMeta: { fontSize: 10, fontFamily: monoFont, color: COLORS.muted, opacity: 0.6, marginTop: 3 },
 
   featuredGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 22, gap: 10 },
-  featuredCard: { width: '48%', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 12, position: 'relative', minHeight: 130, flexDirection: 'column' },
+  featuredCard: { width: '48%', borderRadius: 16, paddingVertical: 14, paddingHorizontal: 12, position: 'relative', minHeight: 130, flexDirection: 'column', overflow: 'hidden' },
   featuredGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center', marginBottom: 8 },
   featuredGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
   featuredTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg },

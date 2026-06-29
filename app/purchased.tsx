@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, ImageBackground } from 'react-native';
 import { useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { ArrowLeft, BookOpen, Download } from 'lucide-react-native';
@@ -17,6 +17,7 @@ type PDF = {
   is_free: boolean;
   pages_count: number;
   class: string | null;
+  cover_image_url?: string;
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -88,6 +89,7 @@ export default function PurchasedScreen() {
                 onPress={() => router.push(`/pdf/${item.id}` as any)}
                 activeOpacity={0.88}
               >
+                {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 18 }} />}
                 {downloadedIds.has(String(item.id)) && (
                   <View style={styles.downloadBadge}>
                     <Download size={9} color="#fff" strokeWidth={3} />
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
   browseBtnText: { fontSize: 14, fontWeight: '700', color: '#fff' },
 
   grid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingTop: 14, gap: 12 },
-  tile: { width: '46.5%', borderRadius: 18, padding: 16, minHeight: 150, position: 'relative' },
+  tile: { width: '46.5%', borderRadius: 18, padding: 16, minHeight: 150, position: 'relative', overflow: 'hidden' },
   glyph: { width: 36, height: 36, borderRadius: 10, alignItems: 'center', justifyContent: 'center', marginBottom: 12 },
   glyphText: { fontSize: 14, fontWeight: '800', color: '#fff' },
   tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17, flex: 1 },

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, ImageBackground } from 'react-native';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
@@ -30,6 +30,7 @@ type PDF = {
   details: string[];
   category: string | null;
   class: string | null;
+  cover_image_url?: string;
 };
 
 const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 'monospace' });
@@ -320,12 +321,14 @@ export default function PDFDetailScreen() {
         )}
 
         {/* Hero Card */}
-        <LinearGradient
-          colors={[tileBg, gradientEnd + '66']}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.pdfHero}
-        >
+        <View style={styles.pdfHero}>
+          {pdf.cover_image_url && <ImageBackground source={{ uri: pdf.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 24 }} />}
+          <LinearGradient
+            colors={pdf.cover_image_url ? ['rgba(0,0,0,0.1)', 'rgba(0,0,0,0.5)'] : [tileBg, gradientEnd + '66']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={StyleSheet.absoluteFill}
+          />
           <View style={styles.badge}>
             <Text style={styles.badgeText}>— {subjectLabel}{pdf['class'] ? ` · ${pdf['class']}` : ''}{pdf.category ? ` · ${pdf.category}` : ''} · {availLabel}</Text>
           </View>
@@ -334,7 +337,7 @@ export default function PDFDetailScreen() {
             {titleAccent ? <Text style={styles.heroAccent}> — {titleAccent}</Text> : null}
           </Text>
           <Text style={styles.heroDesc} numberOfLines={3}>{pdf.description || 'No description available.'}</Text>
-        </LinearGradient>
+        </View>
 
         {/* Summary */}
         <View style={styles.summary}>

@@ -5,6 +5,7 @@ import { useAuth } from '../lib/auth';
 import { useMediaQuery } from '../lib/useMediaQuery';
 import { getRecentlyViewedIds } from '../lib/recentlyViewed';
 import PDFCard from '../components/PDFCard';
+import HeroVideo from '../components/HeroVideo';
 
 type PDF = {
   id: string;
@@ -47,33 +48,27 @@ export default function Home() {
 
   return (
     <div>
-      {/* Hero Section */}
-      <section style={{
-        background: 'linear-gradient(135deg, var(--color-paper) 0%, var(--color-accent-muted) 100%)',
-        padding: isMobile ? 'var(--space-10) 0' : 'var(--space-16) 0',
-        borderBottom: '1px solid var(--color-border)',
-      }}>
-        <div className="container">
-          <div style={{ maxWidth: isMobile ? '100%' : 640 }}>
-            <h1 style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, lineHeight: 1.15, color: 'var(--color-text)', marginBottom: 'var(--space-4)', letterSpacing: '-0.02em' }}>
-              Ace your NEET UG with{' '}
-              <span style={{ color: 'var(--color-accent)' }}>expert-crafted PDFs</span>
-            </h1>
-            <p style={{ fontSize: isMobile ? 15 : 17, color: 'var(--color-text-2)', lineHeight: 1.6, marginBottom: 'var(--space-5)' }}>
-              High-quality study materials, college predictor, and more — all in one place.
-              Start your preparation today.
-            </p>
-            <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
-              <Link to="/pdfs" className="btn btn-primary btn-lg" style={{ width: isMobile ? '100%' : 'auto' }}>Browse PDFs</Link>
-              <Link to="/colleges" className="btn btn-outline btn-lg" style={{ width: isMobile ? '100%' : 'auto' }}>Predict Colleges</Link>
-            </div>
-            <div style={{ display: 'flex', gap: 'var(--space-5)', marginTop: 'var(--space-5)', alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Over 50+ PDFs available</span>
-              <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>NEET 2026 aligned</span>
-            </div>
+      {/* Hero Section with video background on desktop */}
+      <HeroVideo src="/assets/hero-loop.mp4" poster="/assets/hero-poster.jpg">
+        <div style={{ maxWidth: 640 }}>
+          <h1 style={{ fontSize: isMobile ? 28 : 40, fontWeight: 800, lineHeight: 1.15, color: 'var(--color-text)', marginBottom: 'var(--space-4)', letterSpacing: '-0.02em' }}>
+            Ace your NEET UG with{' '}
+            <span style={{ color: 'var(--color-accent)' }}>expert-crafted PDFs</span>
+          </h1>
+          <p style={{ fontSize: isMobile ? 15 : 17, color: 'var(--color-text-2)', lineHeight: 1.6, marginBottom: 'var(--space-5)' }}>
+            High-quality study materials, college predictor, and more — all in one place.
+            Start your preparation today.
+          </p>
+          <div style={{ display: 'flex', gap: 'var(--space-3)', flexWrap: 'wrap', flexDirection: isMobile ? 'column' : 'row' }}>
+            <Link to="/pdfs" className="btn btn-primary btn-lg" style={{ width: isMobile ? '100%' : 'auto' }}>Browse PDFs</Link>
+            <Link to="/colleges" className="btn btn-outline btn-lg" style={{ width: isMobile ? '100%' : 'auto' }}>Predict Colleges</Link>
+          </div>
+          <div style={{ display: 'flex', gap: 'var(--space-5)', marginTop: 'var(--space-5)', alignItems: 'center', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Over 50+ PDFs available</span>
+            <span style={{ fontSize: 13, color: 'var(--color-text-3)' }}>NEET 2026 aligned</span>
           </div>
         </div>
-      </section>
+      </HeroVideo>
 
       {/* Recently Viewed */}
       {recentPdfs.length > 0 && (

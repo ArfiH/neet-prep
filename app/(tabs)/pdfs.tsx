@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Platform, ImageBackground } from 'react-native';
 import { useEffect, useState, useCallback } from 'react';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { BookOpen, Download } from 'lucide-react-native';
@@ -18,6 +18,7 @@ type PDF = {
   pages_count: number;
   category: string | null;
   class: string | null;
+  cover_image_url?: string;
 };
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry'];
@@ -217,6 +218,7 @@ export default function PDFsScreen() {
                 onPress={() => router.push(`/pdf/${item.id}` as any)}
                 activeOpacity={0.88}
               >
+                {item.cover_image_url && <ImageBackground source={{ uri: item.cover_image_url }} style={StyleSheet.absoluteFill} imageStyle={{ borderRadius: 18 }} />}
                 <View style={[styles.glyph, { backgroundColor: getGlyphColor(item.subject) }]}>
                   <Text style={styles.glyphText}>{getGlyphLetter(item.subject)}</Text>
                 </View>
@@ -274,7 +276,7 @@ const styles = StyleSheet.create({
   availTextActive: { color: '#fff' },
 
   pdfs: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 14, paddingVertical: 12, gap: 10 },
-  tile: { width: '48%', borderRadius: 18, padding: 12, minHeight: 116, position: 'relative', flexDirection: 'column', gap: 4 },
+  tile: { width: '48%', borderRadius: 18, padding: 12, minHeight: 116, position: 'relative', flexDirection: 'column', gap: 4, overflow: 'hidden' },
   glyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
   glyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
   tileTitle: { fontSize: 13, fontWeight: '700', color: COLORS.fg, lineHeight: 17 },
