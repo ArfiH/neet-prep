@@ -106,7 +106,7 @@ export default function PdfForm() {
         <FormField label="Description">
           <textarea value={form.description} onChange={e => update('description', e.target.value)} style={{ ...inputStyle, minHeight: 80, resize: 'vertical' }} placeholder="Description" />
         </FormField>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="Subject" required>
             <select value={form.subject} onChange={e => update('subject', e.target.value)} style={inputStyle}>
               {SUBJECTS.map(s => <option key={s} value={s}>{s}</option>)}
@@ -120,7 +120,7 @@ export default function PdfForm() {
             </select>
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="Price (₹)">
             <input type="number" min="0" value={form.price} onChange={e => update('price', e.target.value)} disabled={form.is_free} style={{ ...inputStyle, opacity: form.is_free ? 0.5 : 1 }} />
           </FormField>

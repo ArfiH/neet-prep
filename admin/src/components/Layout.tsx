@@ -1,4 +1,6 @@
+import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
+import { Menu, X } from 'lucide-react';
 import { logout } from '../lib/api';
 
 const navItems = [
@@ -14,15 +16,43 @@ const navItems = [
 
 export default function Layout() {
   const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768);
+    check();
+    window.addEventListener('resize', check);
+    return () => window.removeEventListener('resize', check);
+  }, []);
 
   const handleLogout = () => {
     logout();
     navigate('/login');
   };
 
+  const closeSidebar = () => {
+    if (isMobile) setSidebarOpen(false);
+  };
+
   return (
     <div style={styles.wrapper}>
-      <aside style={styles.sidebar}>
+      {isMobile && sidebarOpen && (
+        <div style={styles.overlay} onClick={() => setSidebarOpen(false)} />
+      )}
+      <aside style={{
+        ...styles.sidebar,
+        ...(isMobile ? {
+          position: 'fixed' as const,
+          top: 0,
+          left: 0,
+          height: '100vh',
+          zIndex: 110,
+          transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+          transition: 'transform 0.25s ease',
+          boxShadow: sidebarOpen ? '0 0 30px rgba(0,0,0,0.15)' : 'none',
+        } : {}),
+      }}>
         <div style={styles.brand}>
           <span style={styles.brandText}>NEET Zymee</span>
           <span style={styles.brandBadge}>admin</span>
@@ -33,6 +63,7 @@ export default function Layout() {
               key={item.to}
               to={item.to}
               end={item.to === '/'}
+              onClick={closeSidebar}
               style={({ isActive }) => ({
                 ...styles.navLink,
                 ...(isActive ? styles.navLinkActive : {}),
@@ -45,11 +76,30 @@ export default function Layout() {
         <div style={styles.spacer} />
         <button onClick={handleLogout} style={styles.logoutBtn}>Sign Out</button>
       </aside>
-      <main style={styles.main}>
+      <main style={{
+        ...styles.main,
+        ...(isMobile ? { marginLeft: 0 } : {}),
+      }}>
         <header style={styles.header}>
-          <h1 style={styles.pageTitle}>Admin Panel</h1>
+          <div style={styles.headerInner}>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(o => !o)}
+                style={styles.hamburger}
+                aria-label="Toggle menu"
+              >
+                {sidebarOpen ? <X size={20} /> : <Menu size={20} />}
+              </button>
+            )}
+            <h1 style={styles.pageTitle}>Admin Panel</h1>
+          </div>
         </header>
-        <div style={styles.content}><Outlet /></div>
+        <div style={{
+          ...styles.content,
+          ...(isMobile ? { padding: 'var(--space-3)' } : {}),
+        }}>
+          <Outlet />
+        </div>
       </main>
     </div>
   );
@@ -57,6 +107,12 @@ export default function Layout() {
 
 const styles: Record<string, React.CSSProperties> = {
   wrapper: { display: 'flex', height: '100vh', overflow: 'hidden' },
+  overlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.4)',
+    zIndex: 105,
+  },
   sidebar: {
     width: 220,
     background: 'var(--color-paper)',
@@ -122,6 +178,24 @@ const styles: Record<string, React.CSSProperties> = {
     background: 'var(--color-paper)',
     borderBottom: '1px solid var(--color-border)',
   },
+  headerInner: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 'var(--space-3)',
+  },
   pageTitle: { fontSize: 18, fontWeight: 600, color: 'var(--color-text)' },
   content: { flex: 1, overflow: 'auto', padding: 'var(--space-6)' },
+  hamburger: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: 36,
+    height: 36,
+    background: 'none',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-sm)',
+    cursor: 'pointer',
+    color: 'var(--color-text-2)',
+    flexShrink: 0,
+  },
 };

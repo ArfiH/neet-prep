@@ -54,7 +54,7 @@ export default function CutoffList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+      <div className="flex-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
         <h2 style={{ fontSize: 16, fontWeight: 600 }}>Cutoffs</h2>
         <button onClick={() => navigate('/cutoffs/new')} style={addBtnStyle}>+ New Cutoff</button>
       </div>

@@ -45,7 +45,7 @@ export default function CollegeList() {
 
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
+      <div className="flex-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
         <h2 style={{ fontSize: 16, fontWeight: 600 }}>Colleges</h2>
         <button onClick={() => navigate('/colleges/new')} style={addBtnStyle}>+ New College</button>
       </div>

@@ -87,7 +87,7 @@ export default function CollegeForm() {
         <FormField label="Name" required>
           <input value={form.name} onChange={e => update('name', e.target.value)} style={inputStyle} />
         </FormField>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="State" required>
             <select value={form.state} onChange={e => update('state', e.target.value)} style={inputStyle}>
               {INDIAN_STATES.map(s => <option key={s} value={s}>{s}</option>)}
@@ -97,7 +97,7 @@ export default function CollegeForm() {
             <input value={form.city} onChange={e => update('city', e.target.value)} style={inputStyle} />
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="Type">
             <select value={form.type} onChange={e => update('type', e.target.value)} style={inputStyle}>
               {COLLEGE_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
@@ -107,7 +107,7 @@ export default function CollegeForm() {
             <input type="number" min="0" value={form.total_seats} onChange={e => update('total_seats', e.target.value)} style={inputStyle} />
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-3" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="Tuition Fee (₹)">
             <input type="number" min="0" value={form.tuition_fee_annual} onChange={e => update('tuition_fee_annual', e.target.value)} style={inputStyle} />
           </FormField>
@@ -118,7 +118,7 @@ export default function CollegeForm() {
             <input type="number" min="0" value={form.other_charges} onChange={e => update('other_charges', e.target.value)} style={inputStyle} />
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="Website">
             <input value={form.official_website} onChange={e => update('official_website', e.target.value)} style={inputStyle} />
           </FormField>
@@ -126,7 +126,7 @@ export default function CollegeForm() {
             <input value={form.contact_phone} onChange={e => update('contact_phone', e.target.value)} style={inputStyle} />
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="Est. Year">
             <input type="number" min="1800" max="2100" value={form.established_year} onChange={e => update('established_year', e.target.value)} style={inputStyle} />
           </FormField>

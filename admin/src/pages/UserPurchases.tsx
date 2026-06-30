@@ -173,7 +173,7 @@ export default function UserPurchases() {
         </div>
       )}
 
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
+      <div className="flex-header" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 'var(--space-4)' }}>
         <h3 style={{ fontSize: 15, fontWeight: 600 }}>PDF Access ({purchases.length})</h3>
         <button
           onClick={() => setShowGrant(true)}

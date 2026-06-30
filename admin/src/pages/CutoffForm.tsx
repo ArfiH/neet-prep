@@ -85,7 +85,7 @@ export default function CutoffForm() {
             {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </FormField>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="General Rank">
             <input type="number" min="0" value={form.general_rank} onChange={e => update('general_rank', e.target.value)} style={inputStyle} />
           </FormField>
@@ -93,7 +93,7 @@ export default function CutoffForm() {
             <input type="number" min="0" value={form.obc_rank} onChange={e => update('obc_rank', e.target.value)} style={inputStyle} />
           </FormField>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="SC Rank">
             <input type="number" min="0" value={form.sc_rank} onChange={e => update('sc_rank', e.target.value)} style={inputStyle} />
           </FormField>
