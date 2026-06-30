@@ -2,10 +2,11 @@ import { Platform } from 'react-native';
 import { MobileAds, InterstitialAd, AdEventType } from 'react-native-google-mobile-ads';
 
 
+// Production IDs — use after Play Store + AdMob review
 // const ANDROID_AD_UNIT_ID = 'ca-app-pub-1317710744152870/6183406216';
 // const IOS_AD_UNIT_ID = 'ca-app-pub-1317710744152870/6183406216';
 
-// Test ID
+// Test IDs — always fill (shows "Test Ad" watermark)
 const ANDROID_AD_UNIT_ID = 'ca-app-pub-3940256099942544/1033173712';
 const IOS_AD_UNIT_ID = 'ca-app-pub-3940256099942544/4411468910';
 

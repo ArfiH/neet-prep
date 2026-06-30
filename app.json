@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "neet-zyme",
+    "name": "Neet Zymee",
     "slug": "neet-zyme",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,7 +8,7 @@
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "icon": "./assets/images/splash-icon.png",
+      "icon": "./assets/images/icon.png",
       "infoPlist": {
         "CFBundleURLTypes": [
           {
@@ -54,13 +54,13 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/icon.png",
+          "backgroundColor": "#000C2D",
+          "image": "./assets/images/splash-icon.png",
           "dark": {
-            "image": "./assets/images/icon.png",
-            "backgroundColor": "#000000"
+            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#000C2D"
           },
-          "imageWidth": 120,
+          "imageWidth": 240,
           "resizeMode": "contain"
         }
       ],

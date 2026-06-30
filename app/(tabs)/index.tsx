@@ -146,9 +146,16 @@ export default function HomeScreen() {
             >
               {recentPdfs.map((item) => (
                 <TouchableOpacity key={item.id} style={styles.recentCard} onPress={() => router.push(`/pdf/${item.id}` as any)} activeOpacity={0.88}>
-                  <Text style={styles.recentSubject} numberOfLines={1}>{item.subject}</Text>
-                  <Text style={styles.recentTitle} numberOfLines={1}>{item.title}</Text>
-                  <Text style={styles.recentMeta} numberOfLines={1}>{item.description?.slice(0, 30) || 'Ch 1–4'}</Text>
+                  <View style={[styles.recentThumb, { backgroundColor: getTileBg(item.subject) }]}>
+                    <View style={[styles.recentGlyph, { backgroundColor: getGlyphColor(item.subject) }]}>
+                      <Text style={styles.recentGlyphText}>{getGlyphLetter(item.subject)}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.recentContent}>
+                    <Text style={styles.recentSubject} numberOfLines={1}>{item.subject}</Text>
+                    <Text style={styles.recentTitle} numberOfLines={1}>{item.title}</Text>
+                    <Text style={styles.recentMeta} numberOfLines={1}>{item.pages_count} pages</Text>
+                  </View>
                 </TouchableOpacity>
               ))}
             </Animated.ScrollView>
@@ -213,10 +220,14 @@ const styles = StyleSheet.create({
   recentScrollInner: { paddingHorizontal: 22, gap: 10 },
   scrollTrack: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.border, marginHorizontal: 22, marginBottom: 12, overflow: 'hidden' },
   scrollIndicator: { height: 3, borderRadius: 1.5, backgroundColor: COLORS.primary },
-  recentCard: { minWidth: 120, padding: 10, borderRadius: 12, backgroundColor: COLORS.surface, borderWidth: 1, borderColor: COLORS.border },
-  recentSubject: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase', marginBottom: 3 },
-  recentTitle: { fontSize: 12, fontWeight: '600', color: COLORS.fg },
-  recentMeta: { fontSize: 10, fontFamily: monoFont, color: COLORS.muted, marginTop: 2 },
+  recentCard: { width: 190, borderRadius: 14, backgroundColor: '#fff', flexDirection: 'row', overflow: 'hidden', elevation: 2, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 4 },
+  recentThumb: { width: 56, alignItems: 'center', justifyContent: 'center' },
+  recentGlyph: { width: 28, height: 28, borderRadius: 8, alignItems: 'center', justifyContent: 'center' },
+  recentGlyphText: { fontSize: 11, fontWeight: '700', fontFamily: monoFont, color: '#fff' },
+  recentContent: { flex: 1, paddingVertical: 10, paddingRight: 12, paddingLeft: 10, gap: 2, justifyContent: 'center' },
+  recentSubject: { fontSize: 9, fontWeight: '700', fontFamily: monoFont, color: COLORS.primary, letterSpacing: 0.06, textTransform: 'uppercase' },
+  recentTitle: { fontSize: 13, fontWeight: '600', color: COLORS.fg },
+  recentMeta: { fontSize: 10.5, color: COLORS.muted },
 
   featuredGrid: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 22, gap: 10 },
   featuredCard: { width: '48%', borderRadius: 16, backgroundColor: '#fff', overflow: 'hidden' },
