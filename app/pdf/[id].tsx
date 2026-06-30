@@ -14,7 +14,7 @@ import CustomAlert from '@/components/CustomAlert';
 import AlertBanner from '@/components/AlertBanner';
 import { resetPaymentHandled, markPaymentHandled, paymentHandled } from '@/lib/paymentSession';
 import { downloadPDF, isPDFDownloaded, hasLocalPDF, deleteLocalPDF } from '@/lib/downloadManager';
-import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
+import { loadInterstitialAd, showInterstitialAd, hasWatchedAd } from '@/lib/adService';
 import Toast from 'react-native-toast-message';
 
 type PDF = {
@@ -87,6 +87,11 @@ export default function PDFDetailScreen() {
       hasLocalPDF(id).then(setAlreadyDownloaded).catch(() => {});
     }, [id])
   );
+
+  useEffect(() => {
+    if (!id) return;
+    loadInterstitialAd(id).catch(() => {});
+  }, [id]);
 
   async function fetchPdf() {
     try {

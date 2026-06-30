@@ -222,16 +222,6 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => shareLogs()}>
-              <View style={styles.menuIcon}>
-                <FileText size={18} color={COLORS.primaryDark} strokeWidth={2} />
-              </View>
-              <View style={styles.menuText}>
-                <Text style={styles.menuLabel}>Share Debug Logs</Text>
-                <Text style={styles.menuSublabel}>Send logs for troubleshooting</Text>
-              </View>
-              <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
-            </TouchableOpacity>
             <TouchableOpacity style={styles.menuItem} activeOpacity={0.75} onPress={() => router.push('/about' as any)}>
               <View style={styles.menuIcon}>
                 <User size={18} color={COLORS.primaryDark} strokeWidth={2} />
@@ -250,6 +240,16 @@ export default function ProfileScreen() {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>ADMIN</Text>
             <View style={styles.menuCard}>
+              <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => shareLogs()}>
+                <View style={styles.menuIcon}>
+                  <FileText size={18} color={COLORS.primaryDark} strokeWidth={2} />
+                </View>
+                <View style={styles.menuText}>
+                  <Text style={styles.menuLabel}>Share Debug Logs</Text>
+                  <Text style={styles.menuSublabel}>Send logs for troubleshooting</Text>
+                </View>
+                <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+              </TouchableOpacity>
               <TouchableOpacity style={[styles.menuItem, loadingAdmin && { opacity: 0.6 }]} activeOpacity={0.75}
                 onPress={async () => {
                   if (loadingAdmin) return;

@@ -4,6 +4,7 @@ import { Upload, Check } from 'lucide-react';
 import { getPdf, createPdf, updatePdf, uploadPdfWithProgress } from '../lib/api';
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Practice'];
+const CATEGORIES = ['', 'Notes', 'Short notes', 'Formulae', 'Questions', 'PYQs'];
 
 export default function PdfForm() {
   const { id } = useParams();
@@ -13,7 +14,7 @@ export default function PdfForm() {
   const [form, setForm] = useState({
     title: '', description: '', subject: 'Biology', author: '',
     price: '0', is_free: true, is_deliverable: false, cover_image_url: '', file_url: '',
-    pages_count: '0', tags: '', details: '', class: '',
+    pages_count: '0', tags: '', details: '', class: '', category: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -39,6 +40,7 @@ export default function PdfForm() {
           tags: Array.isArray(pdf.tags) ? pdf.tags.join(', ') : '',
           details: Array.isArray(pdf.details) ? pdf.details.join('\n') : '',
           class: pdf.class || '',
+          category: pdf.category || '',
         });
       }).catch(e => setError(e.message));
     }
@@ -55,6 +57,7 @@ export default function PdfForm() {
         pages_count: parseInt(form.pages_count) || 0,
         tags: form.tags.split(',').map(t => t.trim()).filter(Boolean),
         details: form.details.split('\n').map(t => t.trim()).filter(Boolean),
+        category: form.category,
       };
       if (isEdit && id) {
         await updatePdf(Number(id), data);
@@ -117,6 +120,11 @@ export default function PdfForm() {
               <option value="">None</option>
               <option value="11">11th</option>
               <option value="12">12th</option>
+            </select>
+          </FormField>
+          <FormField label="Category">
+            <select value={form.category} onChange={e => update('category', e.target.value)} style={inputStyle}>
+              {CATEGORIES.map(c => <option key={c} value={c}>{c || 'None'}</option>)}
             </select>
           </FormField>
         </div>
@@ -204,7 +212,7 @@ export default function PdfForm() {
           </div>
         </FormField>
         <FormField label="File URL">
-          <input value={form.file_url} onChange={e => update('file_url', e.target.value)} style={inputStyle} placeholder="https://..." />
+          <input value={form.file_url} readOnly style={{ ...inputStyle, opacity: 0.6, cursor: 'not-allowed', background: 'var(--color-paper-3)' }} placeholder="Auto-filled on upload" />
         </FormField>
         <FormField label="Cover Image URL">
           <input value={form.cover_image_url} onChange={e => update('cover_image_url', e.target.value)} style={inputStyle} placeholder="https://..." />

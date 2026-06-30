@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from 'react';
+import { useEffect, useState, useMemo, useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, ActivityIndicator, Dimensions, TouchableOpacity, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import Pdf from 'react-native-pdf';
@@ -8,7 +8,7 @@ import { usePreventScreenCapture } from 'expo-screen-capture';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { COLORS } from '@/constants/colors';
-import { showInterstitialAd, hasWatchedAd } from '@/lib/adService';
+import { loadInterstitialAd, showInterstitialAd, hasWatchedAd } from '@/lib/adService';
 import { hasLocalPDF, getDecryptedTempPath } from '@/lib/downloadManager';
 import ReactNativeBlobUtil from 'react-native-blob-util';
 
@@ -30,6 +30,7 @@ export default function PdfViewerScreen() {
   const [isLocal, setIsLocal] = useState(false);
   const [localTempPath, setLocalTempPath] = useState<string | null>(null);
   const tempPathRef = useRef<string | null>(null);
+  const navigatingRef = useRef(false);
 
   usePreventScreenCapture();
   const { user } = useAuth();
@@ -50,6 +51,10 @@ export default function PdfViewerScreen() {
   useEffect(() => {
     api.getAdSettings().then(s => setAdSettings(s)).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    loadInterstitialAd(id).catch(() => {});
+  }, [id]);
 
   useEffect(() => {
     if (isLocal) {
@@ -137,6 +142,17 @@ export default function PdfViewerScreen() {
     setAdLoading(false);
   }
 
+  const goBack = useCallback(() => {
+    if (navigatingRef.current) return;
+    navigatingRef.current = true;
+    setPdfReady(false);
+    setViewData(null);
+    requestAnimationFrame(() => {
+      if (router.canGoBack()) router.back();
+      else router.replace('/(tabs)');
+    });
+  }, [router]);
+
   const pdfSource = useMemo(() => {
     if (localTempPath) {
       return { uri: `file://${localTempPath}`, cache: false };
@@ -165,7 +181,7 @@ export default function PdfViewerScreen() {
       <SafeAreaProvider>
         <SafeAreaView style={styles.centeredContainer}>
           <Text style={styles.errorText}>{error}</Text>
-          <TouchableOpacity onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }} style={styles.backButton}>
+          <TouchableOpacity onPress={goBack} style={styles.backButton}>
             <Text style={styles.backButtonText}>Go Back</Text>
           </TouchableOpacity>
         </SafeAreaView>
@@ -177,7 +193,7 @@ export default function PdfViewerScreen() {
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
+          <TouchableOpacity style={styles.backBtn} onPress={goBack}>
             <ArrowLeft size={14} color={COLORS.muted} strokeWidth={1.6} />
           </TouchableOpacity>
           <Text style={styles.topBarTitle} numberOfLines={1}>{viewData?.title}</Text>
@@ -201,7 +217,7 @@ export default function PdfViewerScreen() {
                   <Text style={styles.watchAdButtonText}>Watch Ad</Text>
                 )}
               </TouchableOpacity>
-              <TouchableOpacity style={styles.cancelButton} onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/(tabs)'); }}>
+              <TouchableOpacity style={styles.cancelButton} onPress={goBack}>
                 <Text style={styles.cancelButtonText}>Cancel</Text>
               </TouchableOpacity>
             </View>

@@ -12,6 +12,8 @@ const IOS_AD_UNIT_ID = 'ca-app-pub-3940256099942544/4411468910';
 
 let interstitial: InterstitialAd | null = null;
 let interstitialLoaded = false;
+let currentPdfId: string | null = null;
+let loadPromise: Promise<void> | null = null;
 
 const watchedPdfIds = new Set<string>();
 let lastAdError: string | null = null;
@@ -37,37 +39,56 @@ function getAdUnitId(): string {
   return ANDROID_AD_UNIT_ID;
 }
 
-export function loadInterstitialAd(pdfId: string): void {
+export function loadInterstitialAd(pdfId: string): Promise<void> {
   if (watchedPdfIds.has(pdfId)) {
-    return;
+    return Promise.resolve();
   }
+
+  if (currentPdfId === pdfId && loadPromise) {
+    return loadPromise;
+  }
+
+  lastAdError = null;
+  currentPdfId = pdfId;
 
   const AdUnitId = getAdUnitId();
   interstitial = InterstitialAd.createForAdRequest(AdUnitId, {
     requestNonPersonalizedAdsOnly: true,
   });
 
-  interstitial.addAdEventListener(AdEventType.LOADED, () => {
-    interstitialLoaded = true;
-    console.log('Interstitial ad loaded');
-  });
+  loadPromise = new Promise<void>((resolve, reject) => {
+    interstitial!.addAdEventListener(AdEventType.LOADED, () => {
+      if (currentPdfId !== pdfId) return;
+      interstitialLoaded = true;
+      console.log('Interstitial ad loaded');
+      resolve();
+    });
 
-  interstitial.addAdEventListener(AdEventType.ERROR, (error: any) => {
-    const msg = error?.message || JSON.stringify(error) || 'Unknown ad error';
-    lastAdError = msg;
-    console.error('Ad load failed:', msg);
+    interstitial!.addAdEventListener(AdEventType.ERROR, (error: any) => {
+      if (currentPdfId !== pdfId) return;
+      const msg = error?.message || JSON.stringify(error) || 'Unknown ad error';
+      lastAdError = msg;
+      console.error('Ad load failed:', msg);
+      interstitialLoaded = false;
+      currentPdfId = null;
+      loadPromise = null;
+      reject(new Error(msg));
+    });
+
+    interstitial!.addAdEventListener(AdEventType.CLOSED, () => {
+      console.log('Interstitial ad closed');
+      watchedPdfIds.add(pdfId);
+      interstitialLoaded = false;
+      interstitial = null;
+      currentPdfId = null;
+      loadPromise = null;
+    });
+
+    interstitial!.load();
     interstitialLoaded = false;
   });
 
-  interstitial.addAdEventListener(AdEventType.CLOSED, () => {
-    console.log('Interstitial ad closed');
-    watchedPdfIds.add(pdfId);
-    interstitialLoaded = false;
-    interstitial = null;
-  });
-
-  interstitial.load();
-  interstitialLoaded = false;
+  return loadPromise;
 }
 
 export async function showInterstitialAd(
@@ -77,26 +98,18 @@ export async function showInterstitialAd(
     return { success: true, canViewPdf: true };
   }
 
-  if (!interstitial) {
-    loadInterstitialAd(pdfId);
-    
-    for (let i = 0; i < 10; i++) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-      if (interstitialLoaded) break;
-    }
-  }
-
   try {
+    await loadInterstitialAd(pdfId);
+
     if (interstitial && interstitialLoaded) {
       await interstitial.show();
       return { success: true, canViewPdf: true };
     } else {
-      const err = lastAdError || 'Ad could not be loaded. Check your internet connection.';
+      const err = lastAdError || 'Ad could not be loaded. Please restart app.';
       return { success: false, canViewPdf: false, error: err };
     }
   } catch (e: any) {
-    const msg = e?.message || 'Failed to show ad.';
-    console.error('Show interstitial error:', msg);
+    const msg = e?.message || lastAdError || 'Ad could not be loaded.';
     return { success: false, canViewPdf: false, error: msg };
   }
 }

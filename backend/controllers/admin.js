@@ -45,12 +45,12 @@ const getPdf = async (req, res) => {
 
 const createPdf = async (req, res) => {
   try {
-    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass, is_deliverable } = req.body;
+    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass, is_deliverable, category } = req.body;
     if (!title || !subject) return res.status(400).json({ error: 'Title and subject are required' });
 
     const [result] = await pool.query(
-      `INSERT INTO pdfs (title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, \`class\`, is_deliverable)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO pdfs (title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, \`class\`, is_deliverable, category)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         title, description || '', subject, author || '', price || 0,
         is_free ? 1 : 0, cover_image_url || '', file_url || '',
@@ -59,6 +59,7 @@ const createPdf = async (req, res) => {
         details ? JSON.stringify(details) : '[]',
         pdfClass || null,
         is_deliverable ? 1 : 0,
+        category || null,
       ]
     );
     res.status(201).json({ id: result.insertId, message: 'PDF created' });
@@ -71,7 +72,7 @@ const createPdf = async (req, res) => {
 const updatePdf = async (req, res) => {
   try {
     const { id } = req.params;
-    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass, is_deliverable } = req.body;
+    const { title, description, subject, author, price, is_free, cover_image_url, file_url, pages_count, tags, details, class: pdfClass, is_deliverable, category } = req.body;
 
     const [existing] = await pool.query('SELECT id FROM pdfs WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'PDF not found' });
@@ -79,7 +80,7 @@ const updatePdf = async (req, res) => {
     await pool.query(
       `UPDATE pdfs SET title = ?, description = ?, subject = ?, author = ?, price = ?,
        is_free = ?, cover_image_url = ?, file_url = ?, pages_count = ?, tags = ?, details = ?,
-       \`class\` = ?, is_deliverable = ?
+       \`class\` = ?, is_deliverable = ?, category = ?
        WHERE id = ?`,
       [
         title, description || '', subject, author || '', price || 0,
@@ -89,6 +90,7 @@ const updatePdf = async (req, res) => {
         details ? JSON.stringify(details) : '[]',
         pdfClass || null,
         is_deliverable ? 1 : 0,
+        category || null,
         id,
       ]
     );
