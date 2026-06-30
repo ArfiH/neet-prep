@@ -84,12 +84,11 @@ export async function showInterstitialAd(
       await interstitial.show();
       return { success: true, canViewPdf: true };
     } else {
-      watchedPdfIds.add(pdfId);
-      return { success: false, canViewPdf: true };
+      return { success: false, canViewPdf: false };
     }
   } catch (e) {
     console.log('Show interstitial error:', e);
-    return { success: false, canViewPdf: true };
+    return { success: false, canViewPdf: false };
   }
 }
 

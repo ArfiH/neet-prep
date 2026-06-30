@@ -224,6 +224,7 @@ export default function PDFDetailScreen() {
         setDownloadProgress(pct);
       });
       setDownloadProgress(100);
+      setAlreadyDownloaded(true);
       Toast.show({ type: 'success', text1: 'Download complete', text2: '"' + pdf.title + '" is now available offline.' });
     } catch (e: any) {
       Toast.show({ type: 'error', text1: 'Download failed', text2: e?.message || 'Could not download PDF.' });
