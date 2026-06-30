@@ -9,6 +9,7 @@ import { View, ActivityIndicator, StyleSheet } from 'react-native';
 import { COLORS } from '@/constants/colors';
 import * as Linking from 'expo-linking';
 import { initAdMob } from '@/lib/adService';
+import { initLogger } from '@/lib/logger';
 import { setupNotificationHandler } from '@/lib/pushNotifications';
 import * as Notifications from 'expo-notifications';
 import Toast, { BaseToast, ErrorToast } from 'react-native-toast-message';
@@ -150,6 +151,7 @@ export default function RootLayout() {
   useFrameworkReady();
 
   useEffect(() => {
+    initLogger();
     initAdMob();
     setupNotificationHandler();
 

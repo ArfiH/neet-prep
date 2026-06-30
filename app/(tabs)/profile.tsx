@@ -12,7 +12,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import CustomAlert from '@/components/CustomAlert';
-import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Download } from 'lucide-react-native';
+import { User, BookOpen, GraduationCap, Bell, Shield, HelpCircle, ChevronRight, LogOut, LogIn, TrendingUp, Download, FileText } from 'lucide-react-native';
+import { shareLogs } from '@/lib/logger';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useState, useCallback } from 'react';
@@ -218,6 +219,16 @@ export default function ProfileScreen() {
               <View style={styles.menuText}>
                 <Text style={styles.menuLabel}>Help & FAQ</Text>
                 <Text style={styles.menuSublabel}>Common questions</Text>
+              </View>
+              <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.menuItem, styles.menuItemBorder]} activeOpacity={0.75} onPress={() => shareLogs()}>
+              <View style={styles.menuIcon}>
+                <FileText size={18} color={COLORS.primaryDark} strokeWidth={2} />
+              </View>
+              <View style={styles.menuText}>
+                <Text style={styles.menuLabel}>Share Debug Logs</Text>
+                <Text style={styles.menuSublabel}>Send logs for troubleshooting</Text>
               </View>
               <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />
             </TouchableOpacity>

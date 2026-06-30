@@ -58,6 +58,7 @@ export default function PDFDetailScreen() {
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [showDownloadAdOverlay, setShowDownloadAdOverlay] = useState(false);
   const [adLoading, setAdLoading] = useState(false);
+  const [adError, setAdError] = useState<string | null>(null);
   const [startingDownload, setStartingDownload] = useState(false);
   const [alreadyDownloaded, setAlreadyDownloaded] = useState(false);
   const [isOffline, setIsOffline] = useState(false);
@@ -235,10 +236,13 @@ export default function PDFDetailScreen() {
 
   async function handleWatchAdForDownload() {
     setAdLoading(true);
+    setAdError(null);
     const result = await showInterstitialAd('download_' + pdf!.id);
     if (result.canViewPdf) {
       setShowDownloadAdOverlay(false);
       doDownload();
+    } else if (result.error) {
+      setAdError(result.error);
     }
     setAdLoading(false);
   }
@@ -443,6 +447,9 @@ export default function PDFDetailScreen() {
           <View style={styles.adOverlayContent}>
             <Text style={styles.adOverlayTitle}>Watch Ad to Download</Text>
             <Text style={styles.adOverlayText}>This free PDF requires watching an ad before downloading.</Text>
+            {adError && (
+              <Text style={styles.adErrorText}>{adError}</Text>
+            )}
             <TouchableOpacity style={[styles.watchAdButton, adLoading && { opacity: 0.6 }]} onPress={handleWatchAdForDownload} disabled={adLoading}>
               {adLoading ? (
                 <ActivityIndicator size="small" color="#fff" />
@@ -524,6 +531,7 @@ const styles = StyleSheet.create({
   adOverlayText: { fontSize: 14, color: COLORS.muted, textAlign: 'center', marginBottom: 24 },
   watchAdButton: { backgroundColor: COLORS.primary, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 999 },
   watchAdButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  adErrorText: { fontSize: 12, color: COLORS.error, textAlign: 'center', marginBottom: 16, lineHeight: 18 },
   cancelAdButton: { marginTop: 16, paddingVertical: 10 },
   cancelAdButtonText: { color: COLORS.muted, fontSize: 14 },
 });

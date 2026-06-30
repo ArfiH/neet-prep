@@ -24,6 +24,7 @@ export default function PdfViewerScreen() {
   const [currentPage, setCurrentPage] = useState(1);
   const [showAdOverlay, setShowAdOverlay] = useState(false);
   const [adLoading, setAdLoading] = useState(false);
+  const [adError, setAdError] = useState<string | null>(null);
   const [pdfReady, setPdfReady] = useState(false);
   const [adSettings, setAdSettings] = useState<{ ad_on_free_read: string; ad_on_free_download: string } | null>(null);
   const [isLocal, setIsLocal] = useState(false);
@@ -125,10 +126,13 @@ export default function PdfViewerScreen() {
 
   async function handleWatchAd() {
     setAdLoading(true);
+    setAdError(null);
     const result = await showInterstitialAd(id);
     if (result.canViewPdf) {
       setShowAdOverlay(false);
       setPdfReady(true);
+    } else if (result.error) {
+      setAdError(result.error);
     }
     setAdLoading(false);
   }
@@ -187,6 +191,9 @@ export default function PdfViewerScreen() {
             <View style={styles.adOverlayContent}>
               <Text style={styles.adOverlayTitle}>Watch Ad to View PDF</Text>
               <Text style={styles.adOverlayText}>This free PDF requires watching an ad first.</Text>
+              {adError && (
+                <Text style={styles.adErrorText}>{adError}</Text>
+              )}
               <TouchableOpacity style={[styles.watchAdButton, adLoading && { opacity: 0.6 }]} onPress={handleWatchAd} disabled={adLoading}>
                 {adLoading ? (
                   <ActivityIndicator size="small" color="#fff" />
@@ -250,7 +257,7 @@ const styles = StyleSheet.create({
   pdf: { flex: 1, width, height: height - 100 },
 
   watermarkCentered: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  watermarkText: { fontSize: 28, fontWeight: '600', color: 'rgba(0, 0, 0, 0.08)', transform: [{ rotate: '-45deg' }] },
+  watermarkText: { fontSize: 28, fontWeight: '600', color: 'rgba(0, 0, 0, 0.23)', transform: [{ rotate: '-45deg' }] },
 
   adOverlay: { position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.9)', justifyContent: 'center', alignItems: 'center', zIndex: 100 },
   adOverlayContent: { backgroundColor: '#fff', padding: 30, borderRadius: 16, alignItems: 'center', marginHorizontal: 20 },
@@ -258,6 +265,7 @@ const styles = StyleSheet.create({
   adOverlayText: { fontSize: 14, color: COLORS.muted, textAlign: 'center', marginBottom: 24 },
   watchAdButton: { backgroundColor: COLORS.primary, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 999 },
   watchAdButtonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  adErrorText: { fontSize: 12, color: COLORS.error, textAlign: 'center', marginBottom: 16, lineHeight: 18 },
   cancelButton: { marginTop: 16, paddingVertical: 10 },
   cancelButtonText: { color: COLORS.muted, fontSize: 14 },
 });
