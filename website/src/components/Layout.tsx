@@ -196,7 +196,7 @@ export default function Layout({ children }: { children: ReactNode }) {
         </div>
         <div className="container" style={{ marginTop: 'var(--space-4)', paddingTop: 'var(--space-4)', borderTop: '1px solid var(--color-border)' }}>
           <p style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
-            &copy; {new Date().getFullYear()} NEET Zyme. All rights reserved.
+            &copy; {new Date().getFullYear()} NEET Zymee. All rights reserved.
           </p>
         </div>
       </footer>

@@ -50,7 +50,7 @@ export default function AboutScreen() {
           NEET Zymee helps NEET aspirants access high-quality study material, predict college admissions based on rank, and track their preparation journey.
         </Text>
 
-        <Text style={styles.copy}>© 2026 NEET ZymeSe. All rights reserved.</Text>
+        <Text style={styles.copy}>© 2026 NEET Zymee. All rights reserved.</Text>
 
         <View style={{ height: 32 }} />
       </ScrollView>

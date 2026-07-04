@@ -18,6 +18,7 @@ type College = {
   accreditation: string;
   facilities: string[];
   image_url: string;
+  extra_fees: { label: string; value: number }[];
   cutoffs: Array<{
     id: number;
     year: number;
@@ -62,7 +63,8 @@ export default function CollegeDetail() {
     );
   }
 
-  const fees = Number(college.tuition_fee_annual || 0) + Number(college.hostel_fee_annual || 0) + Number(college.other_charges || 0);
+  const extraFeesTotal = (college.extra_fees || []).reduce((sum, f) => sum + Number(f.value || 0), 0);
+  const fees = Number(college.tuition_fee_annual || 0) + Number(college.hostel_fee_annual || 0) + Number(college.other_charges || 0) + extraFeesTotal;
 
   return (
     <div style={{ padding: 'var(--space-8) 0' }}>
@@ -113,14 +115,10 @@ export default function CollegeDetail() {
               <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>{fees > 0 ? `₹${api.formatPrice(fees)}` : '—'}</div>
               <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Annual Fees</div>
             </div>
-            <div className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>{college.cutoffs?.length || 0}</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Cutoff Years</div>
-            </div>
           </div>
 
           {/* Fee Breakdown */}
-          {college.tuition_fee_annual > 0 && (
+          {fees > 0 && (
             <div className="card">
               <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 'var(--space-3)' }}>Fee Breakdown</h3>
               <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)', fontSize: 14 }}>
@@ -140,6 +138,12 @@ export default function CollegeDetail() {
                     <span style={{ fontWeight: 600 }}>₹{api.formatPrice(college.other_charges)}</span>
                   </div>
                 )}
+                {(college.extra_fees || []).map(f => (
+                  <div key={f.label} style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span style={{ color: 'var(--color-text-2)' }}>{f.label}</span>
+                    <span style={{ fontWeight: 600 }}>₹{api.formatPrice(Number(f.value))}</span>
+                  </div>
+                ))}
                 <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 'var(--space-1)', paddingTop: 'var(--space-2)', display: 'flex', justifyContent: 'space-between' }}>
                   <span style={{ fontWeight: 600 }}>Total</span>
                   <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{api.formatPrice(fees)}</span>

@@ -138,6 +138,7 @@ const getCollege = async (req, res) => {
     if (!colleges.length) return res.status(404).json({ error: 'College not found' });
     const college = colleges[0];
     college.facilities = college.facilities ? JSON.parse(college.facilities) : [];
+    college.extra_fees = college.extra_fees ? JSON.parse(college.extra_fees) : [];
     res.json(college);
   } catch (error) {
     console.error('Admin get college error:', error);
@@ -147,17 +148,18 @@ const getCollege = async (req, res) => {
 
 const createCollege = async (req, res) => {
   try {
-    const { name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url } = req.body;
+    const { name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url, extra_fees } = req.body;
     if (!name || !state) return res.status(400).json({ error: 'Name and state are required' });
 
     const [result] = await pool.query(
-      `INSERT INTO colleges (name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO colleges (name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url, extra_fees)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [name, state, city || '', type || 'Government', total_seats || 0,
         tuition_fee_annual || 0, hostel_fee_annual || 0, other_charges || 0,
         official_website || '', contact_phone || '', established_year || null,
         accreditation || '', facilities ? JSON.stringify(facilities) : '[]',
-        image_url || '']
+        image_url || '',
+        extra_fees && Array.isArray(extra_fees) ? JSON.stringify(extra_fees) : '[]']
     );
     res.status(201).json({ id: result.insertId, message: 'College created' });
   } catch (error) {
@@ -172,18 +174,20 @@ const updateCollege = async (req, res) => {
     const [existing] = await pool.query('SELECT id FROM colleges WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'College not found' });
 
-    const { name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url } = req.body;
+    const { name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url, extra_fees } = req.body;
 
     await pool.query(
       `UPDATE colleges SET name = ?, state = ?, city = ?, type = ?, total_seats = ?,
        tuition_fee_annual = ?, hostel_fee_annual = ?, other_charges = ?,
        official_website = ?, contact_phone = ?, established_year = ?,
-       accreditation = ?, facilities = ?, image_url = ? WHERE id = ?`,
+       accreditation = ?, facilities = ?, image_url = ?, extra_fees = ? WHERE id = ?`,
       [name, state, city || '', type || 'Government', total_seats || 0,
         tuition_fee_annual || 0, hostel_fee_annual || 0, other_charges || 0,
         official_website || '', contact_phone || '', established_year || null,
         accreditation || '', facilities ? JSON.stringify(facilities) : '[]',
-        image_url || '', id]
+        image_url || '',
+        extra_fees && Array.isArray(extra_fees) ? JSON.stringify(extra_fees) : '[]',
+        id]
     );
     res.json({ message: 'College updated' });
   } catch (error) {

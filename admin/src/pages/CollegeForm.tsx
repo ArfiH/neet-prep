@@ -1,5 +1,6 @@
-import { useEffect, useState, FormEvent } from 'react';
+import { useEffect, useState, FormEvent, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { X, Plus } from 'lucide-react';
 import { getCollege, createCollege, updateCollege } from '../lib/api';
 
 const INDIAN_STATES = [
@@ -24,6 +25,7 @@ export default function CollegeForm() {
     other_charges: '0', official_website: '', contact_phone: '',
     established_year: '', accreditation: '', facilities: '', image_url: '',
   });
+  const [extraFees, setExtraFees] = useState<{ label: string; value: string }[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -42,6 +44,7 @@ export default function CollegeForm() {
           facilities: Array.isArray(c.facilities) ? c.facilities.join(', ') : '',
           image_url: c.image_url || '',
         });
+        setExtraFees(Array.isArray(c.extra_fees) ? c.extra_fees : []);
       }).catch(e => setError(e.message));
     }
   }, [id, isEdit]);
@@ -59,6 +62,7 @@ export default function CollegeForm() {
         other_charges: parseFloat(form.other_charges) || 0,
         established_year: form.established_year ? parseInt(form.established_year) : null,
         facilities: form.facilities.split(',').map(t => t.trim()).filter(Boolean),
+        extra_fees: extraFees.filter(f => f.label.trim() && f.value.trim()),
       };
       if (isEdit && id) {
         await updateCollege(Number(id), data);
@@ -136,6 +140,58 @@ export default function CollegeForm() {
         </div>
         <FormField label="Facilities (comma-separated)">
           <input value={form.facilities} onChange={e => update('facilities', e.target.value)} style={inputStyle} placeholder="Library, Hostel, Sports" />
+        </FormField>
+        <FormField label="Extra Fees">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-2)' }}>
+            {extraFees.map((fee, idx) => (
+              <div key={idx} style={{ display: 'flex', gap: 'var(--space-2)', alignItems: 'center' }}>
+                <input
+                  value={fee.label}
+                  onChange={e => {
+                    const updated = [...extraFees];
+                    updated[idx] = { ...updated[idx], label: e.target.value };
+                    setExtraFees(updated);
+                  }}
+                  style={{ ...inputStyle, flex: 1 }}
+                  placeholder="Fee name (e.g. Exam fees)"
+                />
+                <input
+                  value={fee.value}
+                  onChange={e => {
+                    const updated = [...extraFees];
+                    updated[idx] = { ...updated[idx], value: e.target.value };
+                    setExtraFees(updated);
+                  }}
+                  style={{ ...inputStyle, width: 120 }}
+                  placeholder="Amount"
+                />
+                <button
+                  type="button"
+                  onClick={() => setExtraFees(extraFees.filter((_, i) => i !== idx))}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'var(--color-danger)', padding: 4, display: 'flex',
+                  }}
+                  title="Remove"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setExtraFees([...extraFees, { label: '', value: '' }])}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 'var(--space-1)',
+                padding: 'var(--space-1) var(--space-3)', fontSize: 13,
+                border: '1px dashed var(--color-border)', borderRadius: 'var(--radius-sm)',
+                background: 'transparent', color: 'var(--color-text-2)', cursor: 'pointer',
+                width: 'fit-content',
+              }}
+            >
+              <Plus size={14} /> Add fee
+            </button>
+          </div>
         </FormField>
         <FormField label="Image URL">
           <input value={form.image_url} onChange={e => update('image_url', e.target.value)} style={inputStyle} />

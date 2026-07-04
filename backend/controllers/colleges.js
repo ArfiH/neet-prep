@@ -3,6 +3,7 @@ const { pool } = require('../config/db');
 const parseCollege = (college) => ({
   ...college,
   facilities: college.facilities ? JSON.parse(college.facilities) : [],
+  extra_fees: college.extra_fees ? JSON.parse(college.extra_fees) : [],
 });
 
 const getAllColleges = async (req, res) => {

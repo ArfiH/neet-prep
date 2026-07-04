@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ArrowLeft, MapPin, Phone, Globe, Users, IndianRupee, Award, ExternalLink, Building } from 'lucide-react-native';
+import { ArrowLeft, MapPin, Phone, Globe, Users, IndianRupee, Award, ExternalLink } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -31,6 +31,7 @@ type College = {
   accreditation: string;
   facilities: string[];
   image_url: string;
+  extra_fees: { label: string; value: number }[];
 };
 
 type Cutoff = {
@@ -138,17 +139,19 @@ export default function CollegeDetailScreen() {
             <View style={styles.statBox}>
               <Users size={20} color={COLORS.primary} strokeWidth={2} />
               <Text style={styles.statValue}>{college.total_seats || 'N/A'}</Text>
-              <Text style={styles.statLabel}>MBBS Seats</Text>
+              <Text style={styles.statLabel}>Total Seats</Text>
             </View>
             <View style={styles.statBox}>
               <IndianRupee size={20} color='#D97706' strokeWidth={2} />
-              <Text style={styles.statValue}>{formatFee(college.tuition_fee_annual)}</Text>
-              <Text style={styles.statLabel}>Tuition Fee</Text>
-            </View>
-            <View style={styles.statBox}>
-              <Building size={20} color='#7C3AED' strokeWidth={2} />
-              <Text style={styles.statValue}>{formatFee(college.hostel_fee_annual)}</Text>
-              <Text style={styles.statLabel}>Hostel Fee</Text>
+              <Text style={styles.statValue}>
+                  {formatFee(
+                    Math.round(Number(college.tuition_fee_annual || 0) +
+                    Number(college.hostel_fee_annual || 0) +
+                    Number(college.other_charges || 0) +
+                    (college.extra_fees || []).reduce((sum, f) => sum + Number(f.value || 0), 0))
+                  )}
+              </Text>
+              <Text style={styles.statLabel}>Annual Fees</Text>
             </View>
           </View>
 
@@ -177,37 +180,47 @@ export default function CollegeDetailScreen() {
             </View>
           )}
 
-          {/* Fees Breakdown */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Fee Structure</Text>
-            <View style={styles.feeCard}>
-              {[
-                { label: 'Tuition Fee', value: college.tuition_fee_annual, color: '#D97706' },
-                { label: 'Hostel Fee', value: college.hostel_fee_annual, color: '#7C3AED' },
-                { label: 'Other Charges', value: college.other_charges, color: '#0EA5E9' },
-              ].map((fee) => (
-                <View key={fee.label} style={styles.feeRow}>
-                  <View style={[styles.feeDot, { backgroundColor: fee.color }]} />
-                  <Text style={styles.feeLabel}>{fee.label}</Text>
-                  <Text style={styles.feeValue}>
-                    {fee.value ? `₹${fee.value.toLocaleString()}/yr` : 'N/A'}
-                  </Text>
+          {/* Fee Breakdown */}
+          {college.tuition_fee_annual > 0 && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Fee Breakdown</Text>
+              <View style={styles.feeCard}>
+                <View style={styles.feeRow}>
+                  <Text style={styles.feeLabel}>Tuition Fee</Text>
+                  <Text style={styles.feeValue}>₹{Math.round(college.tuition_fee_annual).toLocaleString()}/yr</Text>
                 </View>
-              ))}
-              {college.tuition_fee_annual && college.hostel_fee_annual ? (
+                {college.hostel_fee_annual > 0 && (
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Hostel Fee</Text>
+                    <Text style={styles.feeValue}>₹{Math.round(college.hostel_fee_annual).toLocaleString()}/yr</Text>
+                  </View>
+                )}
+                {college.other_charges > 0 && (
+                  <View style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>Other Charges</Text>
+                    <Text style={styles.feeValue}>₹{Math.round(college.other_charges).toLocaleString()}/yr</Text>
+                  </View>
+                )}
+                {(college.extra_fees || []).map(f => (
+                  <View key={f.label} style={styles.feeRow}>
+                    <Text style={styles.feeLabel}>{f.label}</Text>
+                    <Text style={styles.feeValue}>₹{Math.round(Number(f.value)).toLocaleString()}/yr</Text>
+                  </View>
+                ))}
                 <View style={[styles.feeRow, styles.feeTotalRow]}>
                   <Text style={styles.feeTotalLabel}>Total Annual Cost</Text>
                   <Text style={styles.feeTotalValue}>
-                    ₹{(
+                    ₹{Math.round(
                       Number(college.tuition_fee_annual || 0) +
                       Number(college.hostel_fee_annual || 0) +
-                      Number(college.other_charges || 0)
-                    ).toFixed(2)}
+                      Number(college.other_charges || 0) +
+                      (college.extra_fees || []).reduce((sum, f) => sum + Number(f.value || 0), 0)
+                    ).toLocaleString()}/yr
                   </Text>
                 </View>
-              ) : null}
+              </View>
             </View>
-          </View>
+          )}
 
           {/* Contact */}
           <View style={styles.section}>
@@ -346,15 +359,14 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: COLORS.border,
   },
-  feeRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  feeDot: { width: 10, height: 10, borderRadius: 5 },
+  feeRow: { flexDirection: 'row', alignItems: 'center' },
   feeLabel: { flex: 1, fontSize: 13, color: COLORS.muted },
   feeValue: { fontSize: 13, fontWeight: '700', color: COLORS.fg },
   feeTotalRow: {
     borderTopWidth: 1,
     borderTopColor: COLORS.border,
     paddingTop: 12,
-    marginTop: 0,
+    marginTop: 4,
   },
   feeTotalLabel: { flex: 1, fontSize: 14, fontWeight: '700', color: COLORS.fg },
   feeTotalValue: { fontSize: 14, fontWeight: '700', color: COLORS.primary },
