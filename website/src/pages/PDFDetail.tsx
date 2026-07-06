@@ -93,6 +93,7 @@ export default function PDFDetail() {
       if (!loaded) { setPayError('Payment system failed to load. Please refresh and try again.'); return; }
 
       const order = await api.createRazorpayOrder(pdf.id);
+      const currentOrderId = order.order_id;
       const options = {
         key: order.key_id,
         amount: Math.round(pdf.price * 100),
@@ -130,6 +131,10 @@ export default function PDFDetail() {
       const rzp = new (window as any).Razorpay(options);
       rzp.on('payment.failed', (response: any) => {
         api.logError('PDFDetail.payment.failed', response.error);
+        api.recordFailedPayment({
+          razorpay_order_id: currentOrderId,
+          razorpay_payment_id: response.error?.metadata?.payment_id,
+        });
         setPayError(response.error?.description || 'Payment failed. Please try again.');
         setPaying(false);
       });

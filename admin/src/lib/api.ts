@@ -182,3 +182,32 @@ export const deleteDeliveryRequest = (id: number) =>
 export const getSettings = () => request<Record<string, string>>('/settings');
 export const updateSettings = (data: Record<string, string>) =>
   request<Record<string, string>>('/settings', { method: 'PUT', body: JSON.stringify(data) });
+
+// Payments
+export type PaymentStatus = 'completed' | 'failed' | 'pending';
+export interface Payment {
+  id: number;
+  user_id: number;
+  pdf_id: number;
+  razorpay_order_id: string | null;
+  razorpay_payment_id: string | null;
+  amount: number | string;
+  status: PaymentStatus;
+  purchased_at: string;
+  user_email: string;
+  user_name: string | null;
+  pdf_title: string;
+  pdf_subject: string | null;
+}
+export interface PaymentsResponse {
+  payments: Payment[];
+  total: number;
+  page: number;
+  perPage: number;
+  totalPages: number;
+}
+export const getPayments = (page = 1, perPage = 20, status?: string) => {
+  const params = new URLSearchParams({ page: String(page), per_page: String(perPage) });
+  if (status) params.set('status', status);
+  return request<PaymentsResponse>(`/payments?${params.toString()}`);
+};

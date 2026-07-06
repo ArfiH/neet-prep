@@ -207,6 +207,13 @@ export async function verifyPayment(data: {
   });
 }
 
+export async function recordFailedPayment(data: { razorpay_order_id: string; razorpay_payment_id?: string }) {
+  return request('/pdfs/record-failed-payment', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  }).catch(() => { /* non-blocking */ });
+}
+
 // ---------------------------------------------------------------------------
 // Colleges
 // ---------------------------------------------------------------------------

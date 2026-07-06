@@ -689,6 +689,51 @@ const updateSettings = async (req, res) => {
   }
 };
 
+const getPayments = async (req, res) => {
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const perPage = Math.min(100, Math.max(1, parseInt(req.query.per_page) || 20));
+    const status = req.query.status;
+    const offset = (page - 1) * perPage;
+
+    let where = '';
+    const params = [];
+    if (status && ['completed', 'failed', 'pending'].includes(status)) {
+      where = 'WHERE p.status = ?';
+      params.push(status);
+    }
+
+    const [[{ total }]] = await pool.query(
+      `SELECT COUNT(*) as total FROM purchases p ${where}`, params
+    );
+
+    const [payments] = await pool.query(
+      `SELECT p.id, p.user_id, p.pdf_id, p.razorpay_order_id, p.razorpay_payment_id,
+              p.amount, p.status, p.purchased_at,
+              u.email AS user_email, u.name AS user_name,
+              pdf.title AS pdf_title, pdf.subject AS pdf_subject
+       FROM purchases p
+       JOIN users u ON p.user_id = u.id
+       JOIN pdfs pdf ON p.pdf_id = pdf.id
+       ${where}
+       ORDER BY p.purchased_at DESC
+       LIMIT ? OFFSET ?`,
+      [...params, perPage, offset]
+    );
+
+    res.json({
+      payments,
+      total,
+      page,
+      perPage,
+      totalPages: Math.ceil(total / perPage),
+    });
+  } catch (error) {
+    console.error('Get payments error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
@@ -700,4 +745,5 @@ module.exports = {
   broadcastNotification, sendUserNotification,
   getDeliveryRequests, updateDeliveryRequest, deleteDeliveryRequest,
   getSettings, updateSettings,
+  getPayments,
 };

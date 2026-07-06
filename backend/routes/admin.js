@@ -46,4 +46,6 @@ router.delete('/delivery-requests/:id', c.deleteDeliveryRequest);
 router.get('/settings', c.getSettings);
 router.put('/settings', c.updateSettings);
 
+router.get('/payments', c.getPayments);
+
 module.exports = router;

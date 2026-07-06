@@ -218,6 +218,13 @@ class ApiClient {
     });
   }
 
+  async recordFailedPayment(data: { razorpay_order_id: string; razorpay_payment_id?: string }) {
+    return this.request('/pdfs/record-failed-payment', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
   // College methods
   async getColleges(state?: string, type?: string) {
     const params = new URLSearchParams();

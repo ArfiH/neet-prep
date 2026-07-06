@@ -141,12 +141,34 @@ const createOrder = async (req, res) => {
   }
 };
 
+const markPaymentFailed = async (razorpay_order_id, razorpay_payment_id) => {
+  if (!razorpay_order_id) return;
+  try {
+    await pool.query(
+      "UPDATE purchases SET razorpay_payment_id = ? WHERE razorpay_order_id = ? AND status = 'pending'",
+      [razorpay_payment_id || null, razorpay_order_id]
+    );
+  } catch (_) { /* non-blocking */ }
+};
+
+const recordFailedPayment = async (req, res) => {
+  try {
+    const { razorpay_order_id, razorpay_payment_id } = req.body;
+    await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Record failed payment error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 const verifyPayment = async (req, res) => {
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
     const userId = req.userId;
 
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+      await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
       return res.status(400).json({ error: 'Missing payment details' });
     }
 
@@ -157,12 +179,13 @@ const verifyPayment = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
+      await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
       return res.status(400).json({ error: 'Invalid payment signature' });
     }
 
     await pool.query(
-      'UPDATE purchases SET status = "completed" WHERE razorpay_order_id = ? AND user_id = ?',
-      [razorpay_order_id, userId]
+      'UPDATE purchases SET status = "completed", razorpay_payment_id = ? WHERE razorpay_order_id = ? AND user_id = ?',
+      [razorpay_payment_id, razorpay_order_id, userId]
     );
 
     const [purchases] = await pool.query(
@@ -198,12 +221,16 @@ const paymentCallback = async (req, res) => {
     const razorpay_error = req.body?.error;
 
     if (razorpay_error) {
+      await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
+      const oid = razorpay_order_id || '';
+      const pid = razorpay_payment_id || '';
       const desc = encodeURIComponent(razorpay_error.description || 'Payment failed');
-      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=${desc}`);
+      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=${desc}&razorpay_order_id=${oid}&razorpay_payment_id=${pid}`);
     }
 
     if (!razorpay_payment_id || !razorpay_order_id || !razorpay_signature) {
-      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=missing_params`);
+      await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
+      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=missing_params&razorpay_order_id=${razorpay_order_id || ''}&razorpay_payment_id=${razorpay_payment_id || ''}`);
     }
 
     const body = razorpay_order_id + '|' + razorpay_payment_id;
@@ -213,12 +240,13 @@ const paymentCallback = async (req, res) => {
       .digest('hex');
 
     if (expectedSignature !== razorpay_signature) {
-      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=signature_mismatch`);
+      await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
+      return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=signature_mismatch&razorpay_order_id=${razorpay_order_id || ''}&razorpay_payment_id=${razorpay_payment_id || ''}`);
     }
 
     await pool.query(
-      "UPDATE purchases SET status = 'completed' WHERE razorpay_order_id = ? AND status = 'pending'",
-      [razorpay_order_id]
+      "UPDATE purchases SET status = 'completed', razorpay_payment_id = ? WHERE razorpay_order_id = ? AND status = 'pending'",
+      [razorpay_payment_id, razorpay_order_id]
     );
 
     // Get user_id and pdf title to create notification
@@ -385,6 +413,8 @@ const razorpayWebhook = async (req, res) => {
     }
 
     const orderId = req.body?.payload?.payment?.entity?.order_id;
+    const paymentId = req.body?.payload?.payment?.entity?.id;
+
     if (!orderId) {
       return res.status(400).json({ error: 'Missing order_id in payload' });
     }
@@ -405,8 +435,8 @@ const razorpayWebhook = async (req, res) => {
     }
 
     await pool.query(
-      "UPDATE purchases SET status = 'completed' WHERE razorpay_order_id = ? AND status = 'pending'",
-      [orderId]
+      "UPDATE purchases SET status = 'completed', razorpay_payment_id = ? WHERE razorpay_order_id = ? AND status = 'pending'",
+      [paymentId || null, orderId]
     );
 
     const { user_id, pdf_id } = purchase;
@@ -420,7 +450,6 @@ const razorpayWebhook = async (req, res) => {
     const [users] = await pool.query('SELECT email FROM users WHERE id = ?', [user_id]);
     if (users.length > 0) {
       const { sendInvoiceEmail } = require('../services/email');
-      const paymentId = req.body?.payload?.payment?.entity?.id || '';
       sendInvoiceEmail(
         users[0].email,
         pdfTitle,
@@ -474,4 +503,4 @@ const requestDelivery = async (req, res) => {
   }
 };
 
-module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf, requestDelivery };
+module.exports = { getAllPdfs, getPdfById, getPurchasedPdfs, checkPurchase, createOrder, verifyPayment, paymentCallback, razorpayWebhook, getPdfViewUrl, serveRawPdf, requestDelivery, recordFailedPayment };

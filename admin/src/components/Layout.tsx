@@ -12,6 +12,7 @@ const navItems = [
   { to: '/delivery-requests', label: 'Deliveries' },
   { to: '/notifications/broadcast', label: 'Broadcast' },
   { to: '/settings', label: 'Settings' },
+  { to: '/payments', label: 'Payments' },
 ];
 
 export default function Layout() {

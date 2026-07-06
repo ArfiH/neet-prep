@@ -153,10 +153,15 @@ export default function PDFDetailScreen() {
           Toast.show({ type: 'success', text1: 'Purchase successful', text2: 'You can now read this PDF.' });
           router.replace(`/pdf/viewer/${pdf.id}`);
         } else {
+          api.recordFailedPayment({
+            razorpay_order_id: params.razorpay_order_id || order_id,
+            razorpay_payment_id: params.razorpay_payment_id,
+          });
           setPaying(false);
           Toast.show({ type: 'error', text1: 'Payment failed', text2: params.error || 'The payment was not completed.' });
         }
       } else {
+        api.recordFailedPayment({ razorpay_order_id: order_id });
         setPaying(false);
       }
     } catch (e: any) {
