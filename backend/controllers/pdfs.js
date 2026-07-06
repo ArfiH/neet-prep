@@ -148,7 +148,9 @@ const markPaymentFailed = async (razorpay_order_id, razorpay_payment_id) => {
       "UPDATE purchases SET razorpay_payment_id = ? WHERE razorpay_order_id = ? AND status = 'pending'",
       [razorpay_payment_id || null, razorpay_order_id]
     );
-  } catch (_) { /* non-blocking */ }
+  } catch (err) {
+    console.error('markPaymentFailed error:', err);
+  }
 };
 
 const recordFailedPayment = async (req, res) => {
@@ -215,12 +217,15 @@ const verifyPayment = async (req, res) => {
 const paymentCallback = async (req, res) => {
   try {
     const pdfId = req.params.pdfId;
-    const razorpay_payment_id = req.body?.razorpay_payment_id || req.query?.razorpay_payment_id;
-    const razorpay_order_id = req.body?.razorpay_order_id || req.query?.razorpay_order_id;
+    const razorpay_payment_id = req.body?.razorpay_payment_id || req.query?.razorpay_payment_id || req.body?.error?.metadata?.payment_id;
+    const razorpay_order_id = req.body?.razorpay_order_id || req.query?.razorpay_order_id || req.body?.error?.metadata?.order_id;
     const razorpay_signature = req.body?.razorpay_signature || req.query?.razorpay_signature;
-    const razorpay_error = req.body?.error;
+    const razorpay_error = req.body?.error || req.query?.error;
 
     if (razorpay_error) {
+      if (razorpay_error === 'cancelled') {
+        return res.redirect(`myapp://razorpay-callback?success=false&pdfId=${pdfId}&error=cancelled`);
+      }
       await markPaymentFailed(razorpay_order_id, razorpay_payment_id);
       const oid = razorpay_order_id || '';
       const pid = razorpay_payment_id || '';
@@ -408,6 +413,12 @@ const razorpayWebhook = async (req, res) => {
     }
 
     const event = req.body.event;
+    if (event === 'payment.failed') {
+      const orderId = req.body?.payload?.payment?.entity?.order_id;
+      const paymentId = req.body?.payload?.payment?.entity?.id;
+      await markPaymentFailed(orderId, paymentId);
+      return res.status(200).json({ status: 'ok' });
+    }
     if (event !== 'payment.captured') {
       return res.status(200).json({ status: 'ignored' });
     }

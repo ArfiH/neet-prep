@@ -12,6 +12,7 @@ const passwordResetRoutes = require('./routes/passwordReset');
 const redirectRoutes = require('./routes/redirect');
 const notificationRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
+const checkoutRoutes = require('./routes/checkout');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -45,10 +46,11 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/pdfs', pdfRoutes);
 app.use('/api/colleges', collegeRoutes);
-app.use('/api/auth', passwordResetRoutes);
-app.use('/api/notifications', notificationRoutes);
+app.use('/api', passwordResetRoutes);
+app.use('/api', notificationRoutes);
 app.use('/api', redirectRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/checkout', checkoutRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
