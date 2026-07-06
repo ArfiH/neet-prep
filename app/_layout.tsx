@@ -1,12 +1,13 @@
-import { useEffect } from 'react';
-import { Stack, useRouter } from 'expo-router';
+import { useEffect, useState } from 'react';
+import { Stack, useRouter, useNavigation, usePathname } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/lib/authContext';
 import { NetworkProvider } from '@/lib/networkContext';
-import { View, ActivityIndicator, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, StyleSheet, BackHandler } from 'react-native';
 import { COLORS } from '@/constants/colors';
+import CustomAlert from '@/components/CustomAlert';
 import * as Linking from 'expo-linking';
 import { initAdMob } from '@/lib/adService';
 import { initLogger } from '@/lib/logger';
@@ -38,6 +39,20 @@ const toastConfig = {
 function AuthRouter() {
   const { loading, initialized, isLoggedIn } = useAuth();
   const router = useRouter();
+  const navigation = useNavigation();
+  const pathname = usePathname();
+  const [exitDialogVisible, setExitDialogVisible] = useState(false);
+
+  useEffect(() => {
+    const onBackPress = () => {
+      if (pathname !== '/') return false;
+      if (navigation.canGoBack()) return false;
+      setExitDialogVisible(true);
+      return true;
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [navigation, pathname]);
 
   useEffect(() => {
     if (!initialized || loading) return;
@@ -110,39 +125,50 @@ function AuthRouter() {
     );
   }
 
-  if (!isLoggedIn) {
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="login" />
-        <Stack.Screen name="register" />
-        <Stack.Screen name="verify-email" />
-        <Stack.Screen name="forgot-password" />
-        <Stack.Screen name="reset-password" />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-    );
-  }
-
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" />
-      <Stack.Screen name="register" />
-      <Stack.Screen name="verify-email" />
-      <Stack.Screen name="forgot-password" />
-      <Stack.Screen name="reset-password" />
-      <Stack.Screen name="purchased" />
+    <>
+      {!isLoggedIn ? (
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="login" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="verify-email" />
+          <Stack.Screen name="forgot-password" />
+          <Stack.Screen name="reset-password" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      ) : (
+        <Stack screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="register" />
+          <Stack.Screen name="verify-email" />
+          <Stack.Screen name="forgot-password" />
+          <Stack.Screen name="reset-password" />
+          <Stack.Screen name="purchased" />
 
-      <Stack.Screen name="pdf/[id]" />
-      <Stack.Screen name="pdf/delivery/[id]" />
-      <Stack.Screen name="pdf/viewer/[id]" />
-      <Stack.Screen name="college/[id]" />
-      <Stack.Screen name="razorpay-callback" />
-      <Stack.Screen name="notifications" />
-      <Stack.Screen name="privacy" />
-      <Stack.Screen name="help" />
-      <Stack.Screen name="about" />
-      <Stack.Screen name="+not-found" />
-    </Stack>
+          <Stack.Screen name="pdf/[id]" />
+          <Stack.Screen name="pdf/delivery/[id]" />
+          <Stack.Screen name="pdf/viewer/[id]" />
+          <Stack.Screen name="college/[id]" />
+          <Stack.Screen name="razorpay-callback" />
+          <Stack.Screen name="notifications" />
+          <Stack.Screen name="privacy" />
+          <Stack.Screen name="help" />
+          <Stack.Screen name="about" />
+          <Stack.Screen name="+not-found" />
+        </Stack>
+      )}
+      <CustomAlert
+        visible={exitDialogVisible}
+        type="default"
+        title="Exit App?"
+        message="Are you sure you want to exit?"
+        buttons={[
+          { text: 'Cancel', style: 'cancel', onPress: () => setExitDialogVisible(false) },
+          { text: 'Exit', style: 'destructive', onPress: () => BackHandler.exitApp() },
+        ]}
+        onDismiss={() => setExitDialogVisible(false)}
+      />
+    </>
   );
 }
 

@@ -9,8 +9,7 @@ import { api } from '@/lib/api';
 import { useAuth } from '@/lib/authContext';
 import { COLORS } from '@/constants/colors';
 import { loadInterstitialAd, showInterstitialAd, hasWatchedAd } from '@/lib/adService';
-import { hasLocalPDF, getDecryptedTempPath } from '@/lib/downloadManager';
-import ReactNativeBlobUtil from 'react-native-blob-util';
+import { hasLocalPDF, getDecryptedTempPath, getCachedTempPath } from '@/lib/downloadManager';
 
 const { width, height } = Dimensions.get('window');
 
@@ -29,7 +28,6 @@ export default function PdfViewerScreen() {
   const [adSettings, setAdSettings] = useState<{ ad_on_free_read: string; ad_on_free_download: string } | null>(null);
   const [isLocal, setIsLocal] = useState(false);
   const [localTempPath, setLocalTempPath] = useState<string | null>(null);
-  const tempPathRef = useRef<string | null>(null);
   const navigatingRef = useRef(false);
 
   usePreventScreenCapture();
@@ -41,11 +39,6 @@ export default function PdfViewerScreen() {
 
   useEffect(() => {
     fetchViewUrl();
-    return () => {
-      if (tempPathRef.current) {
-        ReactNativeBlobUtil.fs.unlink(tempPathRef.current).catch(() => {});
-      }
-    };
   }, [id]);
 
   useEffect(() => {
@@ -75,11 +68,22 @@ export default function PdfViewerScreen() {
 
   async function fetchViewUrl() {
     try {
+      const cached = await getCachedTempPath(id);
+      if (cached) {
+        setLocalTempPath(cached);
+        setIsLocal(true);
+        setLoading(false);
+        return;
+      }
+    } catch {
+      // ignore cache check failure
+    }
+
+    try {
       const local = await hasLocalPDF(id);
       if (local) {
         const tempPath = await getDecryptedTempPath(id);
         setLocalTempPath(tempPath);
-        tempPathRef.current = tempPath;
         setIsLocal(true);
         setLoading(false);
         return;

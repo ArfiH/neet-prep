@@ -152,7 +152,52 @@ export async function deleteLocalPDF(pdfId: string): Promise<boolean> {
   }
 }
 
+const CACHE_DIR = ReactNativeBlobUtil.fs.dirs.CacheDir;
+const TEMP_FILE_PREFIX = 'pdf_';
+const MAX_CACHED_FILES = 20;
+const MAX_CACHE_AGE_MS = 7 * 24 * 60 * 60 * 1000;
+
+async function getTempPath(pdfId: string): Promise<string> {
+  return `${CACHE_DIR}/${TEMP_FILE_PREFIX}${pdfId}.pdf`;
+}
+
+export async function getCachedTempPath(pdfId: string): Promise<string | null> {
+  const path = await getTempPath(pdfId);
+  const exists = await ReactNativeBlobUtil.fs.exists(path);
+  if (!exists) return null;
+  return path;
+}
+
+export async function cleanupTempCache(): Promise<void> {
+  try {
+    const files = await ReactNativeBlobUtil.fs.ls(CACHE_DIR);
+    const pdfFiles = files.filter(f => f.startsWith(TEMP_FILE_PREFIX) && f.endsWith('.pdf'));
+    if (pdfFiles.length <= MAX_CACHED_FILES) return;
+
+    const withStats: { name: string; mtime: number }[] = [];
+    for (const f of pdfFiles) {
+      try {
+        const stat = await ReactNativeBlobUtil.fs.stat(`${CACHE_DIR}/${f}`);
+        withStats.push({ name: f, mtime: new Date(stat.lastModified).getTime() });
+      } catch {
+        withStats.push({ name: f, mtime: 0 });
+      }
+    }
+
+    withStats.sort((a, b) => b.mtime - a.mtime);
+    const toDelete = withStats.slice(MAX_CACHED_FILES);
+    for (const f of toDelete) {
+      ReactNativeBlobUtil.fs.unlink(`${CACHE_DIR}/${f.name}`).catch(() => {});
+    }
+  } catch {
+    // cleanup is best-effort
+  }
+}
+
 export async function getDecryptedTempPath(pdfId: string): Promise<string> {
+  const cached = await getCachedTempPath(pdfId);
+  if (cached) return cached;
+
   const encPath = getLocalPDFPath(pdfId);
   const combinedB64 = await ReactNativeBlobUtil.fs.readFile(encPath, 'base64');
   const combined = base64ToBytes(combinedB64);
@@ -165,8 +210,11 @@ export async function getDecryptedTempPath(pdfId: string): Promise<string> {
   const plainBytes = cipher.decrypt(ciphertext);
 
   const plainB64 = bytesToBase64(plainBytes);
-  const tempPath = `${ReactNativeBlobUtil.fs.dirs.CacheDir}/${pdfId}.pdf`;
+  const tempPath = await getTempPath(pdfId);
 
   await ReactNativeBlobUtil.fs.writeFile(tempPath, plainB64, 'base64');
+
+  cleanupTempCache();
+
   return tempPath;
 }
