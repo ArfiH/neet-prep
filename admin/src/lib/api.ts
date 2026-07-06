@@ -74,7 +74,8 @@ export function logout() {
 
 // Dashboard
 export const getDashboard = () => request<{
-  pdfCount: number; collegeCount: number; userCount: number; purchaseCount: number;
+  pdfCount: number; collegeCount: number; userCount: number; purchaseCount: number; monthlyPurchases: number;
+  monthlyPurchaseData: { month: string; count: number }[];
 }>('/dashboard');
 
 // PDFs

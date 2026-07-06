@@ -8,20 +8,25 @@ const parseCollege = (college) => ({
 
 const getAllColleges = async (req, res) => {
   try {
-    const { state, type } = req.query;
+    const { state, type, q } = req.query;
     let query = 'SELECT * FROM colleges';
     const params = [];
+    const conditions = [];
 
-    if (state || type) {
-      const conditions = [];
-      if (state && state !== 'All India') {
-        conditions.push('state = ?');
-        params.push(state);
-      }
-      if (type) {
-        conditions.push('type = ?');
-        params.push(type);
-      }
+    if (state && state !== 'All India') {
+      conditions.push('state = ?');
+      params.push(state);
+    }
+    if (type) {
+      conditions.push('type = ?');
+      params.push(type);
+    }
+    if (q) {
+      conditions.push('name LIKE ?');
+      params.push(`%${q}%`);
+    }
+
+    if (conditions.length > 0) {
       query += ' WHERE ' + conditions.join(' AND ');
     }
 

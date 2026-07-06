@@ -231,6 +231,10 @@ class ApiClient {
     return this.request<any>(`/colleges/${id}`, { method: 'GET' });
   }
 
+  async searchColleges(q: string) {
+    return this.request<any[]>(`/colleges?q=${encodeURIComponent(q)}`, { method: 'GET' });
+  }
+
   async predictColleges(rank: number, category: string, state: string) {
     const params = new URLSearchParams({
       rank: rank.toString(),

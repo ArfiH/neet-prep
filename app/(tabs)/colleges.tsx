@@ -8,10 +8,11 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  Pressable,
 } from 'react-native';
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'expo-router';
-import { GraduationCap, ChevronRight, TrendingUp, Award } from 'lucide-react-native';
+import { Search, ChevronRight, TrendingUp, Award, X } from 'lucide-react-native';
 import { COLORS, SHADOWS } from '@/constants/colors';
 import { api } from '@/lib/api';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -51,6 +52,34 @@ export default function CollegesScreen() {
   const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [stateSearch, setStateSearch] = useState('');
 
+  // College search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const data = await api.searchColleges(searchQuery);
+        setSearchResults(data || []);
+        setShowSearchDropdown(true);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   async function doPredict() {
     if (!rank || isNaN(Number(rank))) return;
     setLoading(true);
@@ -88,6 +117,58 @@ export default function CollegesScreen() {
         <View style={styles.header}>
           <Text style={styles.headerTitle}>College Predictor</Text>
           <Text style={styles.headerSubtitle}>Find colleges based on your NEET rank</Text>
+        </View>
+
+        {/* College Search */}
+        <View style={styles.searchContainer}>
+          <View style={styles.searchInputRow}>
+            <Search size={18} color={COLORS.muted} strokeWidth={2} />
+            <TextInput
+              ref={searchInputRef}
+              style={styles.searchInput}
+              placeholder="Search for a college by name..."
+              placeholderTextColor={COLORS.placeholder}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              returnKeyType="search"
+            />
+            {searchLoading ? (
+              <ActivityIndicator size="small" color={COLORS.primary} />
+            ) : searchQuery ? (
+              <TouchableOpacity onPress={() => { setSearchQuery(''); setSearchResults([]); setShowSearchDropdown(false); }}>
+                <X size={18} color={COLORS.muted} strokeWidth={2} />
+              </TouchableOpacity>
+            ) : null}
+          </View>
+          {showSearchDropdown && (
+            <View style={styles.searchDropdown}>
+              <ScrollView style={{ maxHeight: 240 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
+                {searchResults.length === 0 ? (
+                  <Text style={styles.searchNoResult}>No colleges found</Text>
+                ) : (
+                  searchResults.map((college) => (
+                    <TouchableOpacity
+                      key={college.id}
+                      style={styles.searchResultItem}
+                      onPress={() => {
+                        router.push(`/college/${college.id}` as any);
+                        setSearchQuery('');
+                        setSearchResults([]);
+                        setShowSearchDropdown(false);
+                        searchInputRef.current?.blur();
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Text style={styles.searchResultName} numberOfLines={1}>{college.name}</Text>
+                      {college.city && (
+                        <Text style={styles.searchResultLoc} numberOfLines={1}>{college.city}, {college.state}</Text>
+                      )}
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
+            </View>
+          )}
         </View>
 
         {/* Prediction Form */}
@@ -258,4 +339,13 @@ const styles = StyleSheet.create({
   probBadge: { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 6 },
   probText: { fontSize: 11, fontWeight: '700' },
   rankDiff: { fontSize: 10, color: COLORS.muted },
+
+  searchContainer: { marginHorizontal: 16, marginBottom: 4, zIndex: 100 },
+  searchInputRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: COLORS.stage, borderRadius: 12, paddingHorizontal: 14, paddingVertical: Platform.OS === 'ios' ? 14 : 10, borderWidth: 1, borderColor: COLORS.border },
+  searchInput: { flex: 1, fontSize: 14, color: COLORS.fg, padding: 0 },
+  searchDropdown: { marginTop: 4, backgroundColor: COLORS.surface, borderRadius: 12, borderWidth: 1, borderColor: COLORS.border, overflow: 'hidden', maxHeight: 260 },
+  searchNoResult: { padding: 16, textAlign: 'center', fontSize: 14, color: COLORS.muted },
+  searchResultItem: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: COLORS.border },
+  searchResultName: { fontSize: 14, fontWeight: '600', color: COLORS.fg },
+  searchResultLoc: { fontSize: 12, color: COLORS.muted, marginTop: 2 },
 });

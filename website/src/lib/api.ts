@@ -215,6 +215,10 @@ export async function getColleges(state?: string): Promise<any[]> {
   return request(`/colleges${qs}`);
 }
 
+export async function searchColleges(q: string): Promise<any[]> {
+  return request(`/colleges?q=${encodeURIComponent(q)}`);
+}
+
 export async function getCollegeById(id: string): Promise<any> {
   return request(`/colleges/${id}`);
 }

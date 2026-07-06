@@ -15,7 +15,13 @@ const getDashboard = async (req, res) => {
     const [[{ c: collegeCount }]] = await pool.query('SELECT COUNT(*) as c FROM colleges');
     const [[{ c: userCount }]] = await pool.query('SELECT COUNT(*) as c FROM users');
     const [[{ c: purchaseCount }]] = await pool.query("SELECT COUNT(*) as c FROM purchases WHERE status = 'completed'");
-    res.json({ pdfCount, collegeCount, userCount, purchaseCount });
+    const [[{ c: monthlyPurchases }]] = await pool.query("SELECT COUNT(*) as c FROM purchases WHERE status = 'completed' AND purchased_at >= DATE_FORMAT(NOW(), '%Y-%m-01')");
+    const [monthlyData] = await pool.query(
+      `SELECT DATE_FORMAT(purchased_at, '%Y-%m') as month, COUNT(*) as count
+       FROM purchases WHERE status = 'completed' AND purchased_at >= DATE_FORMAT(DATE_SUB(NOW(), INTERVAL 11 MONTH), '%Y-%m-01')
+       GROUP BY DATE_FORMAT(purchased_at, '%Y-%m') ORDER BY month ASC`
+    );
+    res.json({ pdfCount, collegeCount, userCount, purchaseCount, monthlyPurchases, monthlyPurchaseData: monthlyData });
   } catch (error) {
     console.error('Admin dashboard error:', error);
     res.status(500).json({ error: 'Server error' });

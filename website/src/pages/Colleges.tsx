@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useEffect, useRef } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { Search } from 'lucide-react';
 import * as api from '../lib/api';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
@@ -38,6 +39,7 @@ function probLabel(p: number): string {
 type SortKey = 'probability' | 'cutoff_rank' | 'name';
 
 export default function Colleges() {
+  const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('General');
@@ -49,6 +51,44 @@ export default function Colleges() {
   const [showStateDropdown, setShowStateDropdown] = useState(false);
   const [stateSearch, setStateSearch] = useState('');
   const [sortBy, setSortBy] = useState<SortKey>('probability');
+
+  // College search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [showSearchDropdown, setShowSearchDropdown] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const searchRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (searchQuery.length < 2) {
+      setSearchResults([]);
+      setShowSearchDropdown(false);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const data = await api.searchColleges(searchQuery);
+        setSearchResults(data || []);
+        setShowSearchDropdown(true);
+      } catch {
+        setSearchResults([]);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(e.target as Node)) {
+        setShowSearchDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
 
   const filteredStates = STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
 
@@ -91,6 +131,75 @@ export default function Colleges() {
         <p style={{ fontSize: 15, color: 'var(--color-text-2)', marginBottom: 'var(--space-6)' }}>
           Find colleges based on your NEET rank and category.
         </p>
+
+        {/* College Search */}
+        <div ref={searchRef} style={{ position: 'relative', marginBottom: 'var(--space-5)' }}>
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: 'var(--space-3)',
+            padding: '10px 16px',
+            border: '1.5px solid var(--color-border)', borderRadius: 'var(--radius-md)',
+            background: 'var(--color-paper-2)',
+          }}>
+            <Search size={18} style={{ color: 'var(--color-text-3)', flexShrink: 0 }} />
+            <input
+              type="text"
+              placeholder="Search for a college by name..."
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              onFocus={() => { if (searchResults.length > 0) setShowSearchDropdown(true); }}
+              style={{
+                flex: 1, border: 'none', outline: 'none', fontSize: 15,
+                background: 'transparent', color: 'var(--color-text)',
+              }}
+            />
+            {searchLoading && <div className="spinner" style={{ width: 16, height: 16, borderWidth: 2 }} />}
+            {searchQuery && !searchLoading && (
+              <button
+                onClick={() => { setSearchQuery(''); setSearchResults([]); setShowSearchDropdown(false); }}
+                style={{ border: 'none', background: 'none', cursor: 'pointer', color: 'var(--color-text-3)', fontSize: 16, lineHeight: 1, padding: 0 }}
+              >
+                &#10005;
+              </button>
+            )}
+          </div>
+          {showSearchDropdown && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+              background: 'var(--color-paper)', border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)', marginTop: 4, boxShadow: 'var(--shadow-lg)',
+              maxHeight: 320, overflow: 'auto',
+            }}>
+              {searchResults.length === 0 ? (
+                <div style={{ padding: 'var(--space-5)', textAlign: 'center', fontSize: 14, color: 'var(--color-text-3)' }}>
+                  No colleges found
+                </div>
+              ) : (
+                searchResults.map(college => (
+                  <button
+                    key={college.id}
+                    onClick={() => { navigate(`/colleges/${college.id}`); setSearchQuery(''); setSearchResults([]); setShowSearchDropdown(false); }}
+                    style={{
+                      display: 'block', width: '100%', padding: '12px 16px',
+                      background: 'transparent', border: 'none', textAlign: 'left', cursor: 'pointer',
+                      borderBottom: '1px solid var(--color-border)',
+                      fontSize: 14, color: 'var(--color-text)',
+                    }}
+                    onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-accent-muted)')}
+                    onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                  >
+                    <span style={{ fontWeight: 600 }}>{college.name}</span>
+                    {college.city && (
+                      <>
+                        <span style={{ color: 'var(--color-text-3)', margin: '0 4px' }}>&middot;</span>
+                        <span style={{ color: 'var(--color-text-2)', fontSize: 13 }}>{college.city}, {college.state}</span>
+                      </>
+                    )}
+                  </button>
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Form Card */}
         <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
