@@ -149,12 +149,10 @@ export default function PdfViewerScreen() {
   const goBack = useCallback(() => {
     if (navigatingRef.current) return;
     navigatingRef.current = true;
-    setPdfReady(false);
-    setViewData(null);
-    requestAnimationFrame(() => {
+    setTimeout(() => {
       if (router.canGoBack()) router.back();
       else router.replace('/(tabs)');
-    });
+    }, 50);
   }, [router]);
 
   const pdfSource = useMemo(() => {

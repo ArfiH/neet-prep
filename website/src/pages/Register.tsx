@@ -1,6 +1,7 @@
 import { useState, FormEvent, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { loadGoogleGSI } from '../lib/loadGoogleGSI';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
 const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
@@ -26,9 +27,12 @@ export default function Register() {
 
   useEffect(() => {
     if (!GOOGLE_CLIENT_ID) return;
-    const timer = setInterval(() => {
+    let cancelled = false;
+
+    async function init() {
+      if (cancelled) return;
+      await loadGoogleGSI();
       if (window.google?.accounts?.id) {
-        clearInterval(timer);
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
           callback: async (response: any) => {
@@ -54,9 +58,13 @@ export default function Register() {
             width: googleBtnRef.current.offsetWidth || 340,
           });
         }
+      } else {
+        setTimeout(init, 300);
       }
-    }, 300);
-    return () => clearInterval(timer);
+    }
+
+    init();
+    return () => { cancelled = true; };
   }, [navigate, loginWithGoogle]);
 
   const handleSubmit = async (e: FormEvent) => {

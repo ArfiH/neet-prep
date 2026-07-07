@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, FormEvent } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../lib/auth';
+import { loadGoogleGSI } from '../lib/loadGoogleGSI';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
 declare global {
@@ -31,8 +32,9 @@ export default function Login() {
     let cancelled = false;
     let attempts = 0;
 
-    function tryInit() {
+    async function tryInit() {
       if (cancelled) return;
+      await loadGoogleGSI();
       if (window.google?.accounts?.id) {
         window.google.accounts.id.initialize({
           client_id: GOOGLE_CLIENT_ID,
