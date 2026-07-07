@@ -47,7 +47,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/pdfs', pdfRoutes);
 app.use('/api/colleges', collegeRoutes);
 app.use('/api', passwordResetRoutes);
-app.use('/api', notificationRoutes);
+app.use('/api/notifications', notificationRoutes);
 app.use('/api', redirectRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/checkout', checkoutRoutes);

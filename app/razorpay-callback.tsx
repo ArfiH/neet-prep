@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { View } from 'react-native';
+import { View, ActivityIndicator, Text } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { COLORS } from '@/constants/colors';
@@ -42,5 +42,10 @@ export default function RazorpayCallback() {
     }
   }, []);
 
-  return <View style={{ flex: 1, backgroundColor: COLORS.background }} />;
+  return (
+    <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: COLORS.background }}>
+      <ActivityIndicator size="large" color={COLORS.primary} />
+      <Text style={{ marginTop: 12, fontSize: 14, color: COLORS.muted }}>Processing payment...</Text>
+    </View>
+  );
 }
