@@ -80,7 +80,18 @@
       "@config-plugins/react-native-pdf",
       "@react-native-google-signin/google-signin",
       "expo-secure-store",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "usesLegacyPackaging": true,
+            "enableMinifyInReleaseBuilds": true,
+            "enableShrinkResourcesInReleaseBuilds": true,
+            "buildArchs": ["arm64-v8a"]
+          }
+        }
+      ],
     ],
     "experiments": {
       "typedRoutes": true
