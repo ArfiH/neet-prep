@@ -247,7 +247,7 @@ const createCutoff = async (req, res) => {
 
     const [result] = await pool.query(
       'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank) VALUES (?, ?, ?, ?, ?, ?)',
-      [college_id, year, general_rank || 999999, obc_rank || 999999, sc_rank || 999999, st_rank || 999999]
+      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999]
     );
     res.status(201).json({ id: result.insertId, message: 'Cutoff created' });
   } catch (error) {
@@ -265,7 +265,7 @@ const updateCutoff = async (req, res) => {
     const { college_id, year, general_rank, obc_rank, sc_rank, st_rank } = req.body;
     await pool.query(
       'UPDATE cutoffs SET college_id = ?, year = ?, general_rank = ?, obc_rank = ?, sc_rank = ?, st_rank = ? WHERE id = ?',
-      [college_id, year, general_rank || 999999, obc_rank || 999999, sc_rank || 999999, st_rank || 999999, id]
+      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999, id]
     );
     res.json({ message: 'Cutoff updated' });
   } catch (error) {

@@ -24,10 +24,10 @@ export default function CutoffForm() {
           setForm({
             college_id: String(cutoff.college_id),
             year: String(cutoff.year),
-            general_rank: String(cutoff.general_rank || 999999),
-            obc_rank: String(cutoff.obc_rank || 999999),
-            sc_rank: String(cutoff.sc_rank || 999999),
-            st_rank: String(cutoff.st_rank || 999999),
+            general_rank: cutoff.general_rank != null ? String(cutoff.general_rank) : '999999',
+            obc_rank: cutoff.obc_rank != null ? String(cutoff.obc_rank) : '999999',
+            sc_rank: cutoff.sc_rank != null ? String(cutoff.sc_rank) : '999999',
+            st_rank: cutoff.st_rank != null ? String(cutoff.st_rank) : '999999',
           });
         }
       }).catch(e => setError(e.message));
@@ -42,10 +42,10 @@ export default function CutoffForm() {
       const data = {
         college_id: parseInt(form.college_id),
         year: parseInt(form.year),
-        general_rank: parseInt(form.general_rank) || 999999,
-        obc_rank: parseInt(form.obc_rank) || 999999,
-        sc_rank: parseInt(form.sc_rank) || 999999,
-        st_rank: parseInt(form.st_rank) || 999999,
+        general_rank: form.general_rank ? parseInt(form.general_rank) : 999999,
+        obc_rank: form.obc_rank ? parseInt(form.obc_rank) : 999999,
+        sc_rank: form.sc_rank ? parseInt(form.sc_rank) : 999999,
+        st_rank: form.st_rank ? parseInt(form.st_rank) : 999999,
       };
       if (isEdit && id) {
         await updateCutoff(Number(id), data);
