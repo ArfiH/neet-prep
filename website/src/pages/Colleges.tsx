@@ -379,14 +379,18 @@ export default function Colleges() {
                           }}>
                             {probLabel(college.probability)} Chance
                           </span>
-                          <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
-                            Cutoff: {college.cutoff_rank.toLocaleString()}
-                          </span>
-                          <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
-                            {college.rank_diff >= 0
-                              ? `+${college.rank_diff.toLocaleString()} margin`
-                              : `${Math.abs(college.rank_diff).toLocaleString()} above cutoff`}
-                          </span>
+                          {college.cutoff_rank && college.cutoff_rank !== 999999 ? (
+                            <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
+                              Cutoff: {college.cutoff_rank.toLocaleString()}
+                            </span>
+                          ) : null}
+                          {college.cutoff_rank && college.cutoff_rank !== 999999 ? (
+                            <span style={{ fontSize: 12, color: 'var(--color-text-3)' }}>
+                              {college.rank_diff >= 0
+                                ? `+${college.rank_diff.toLocaleString()} margin`
+                                : `${Math.abs(college.rank_diff).toLocaleString()} above cutoff`}
+                            </span>
+                          ) : null}
                         </div>
                       </div>
                       <span style={{ color: 'var(--color-text-3)', fontSize: 18 }}>&rarr;</span>

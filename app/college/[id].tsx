@@ -170,10 +170,10 @@ export default function CollegeDetailScreen() {
                 {cutoffs.map((cutoff) => (
                   <View key={cutoff.id} style={styles.cutoffRow}>
                     <Text style={styles.cutoffYear}>{cutoff.year}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.general_rank.toLocaleString()}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.obc_rank.toLocaleString()}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.sc_rank.toLocaleString()}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.st_rank.toLocaleString()}</Text>
+                    <Text style={styles.cutoffRank}>{cutoff.general_rank && cutoff.general_rank !== 999999 ? cutoff.general_rank.toLocaleString() : ''}</Text>
+                    <Text style={styles.cutoffRank}>{cutoff.obc_rank && cutoff.obc_rank !== 999999 ? cutoff.obc_rank.toLocaleString() : ''}</Text>
+                    <Text style={styles.cutoffRank}>{cutoff.sc_rank && cutoff.sc_rank !== 999999 ? cutoff.sc_rank.toLocaleString() : ''}</Text>
+                    <Text style={styles.cutoffRank}>{cutoff.st_rank && cutoff.st_rank !== 999999 ? cutoff.st_rank.toLocaleString() : ''}</Text>
                   </View>
                 ))}
               </View>

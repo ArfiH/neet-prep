@@ -260,13 +260,13 @@ export default function CollegesScreen() {
                       <View style={[styles.typeBadge, item.type === 'Government' ? styles.govtBadge : styles.privateBadge]}>
                         <Text style={[styles.typeBadgeText, { color: item.type === 'Government' ? COLORS.tagGovt : COLORS.tagPrivate }]}>{item.type}</Text>
                       </View>
-                      <Text style={styles.cutoffText}>Cutoff: {item.cutoff_rank.toLocaleString()}</Text>
+                      {item.cutoff_rank && item.cutoff_rank !== 999999 ? <Text style={styles.cutoffText}>Cutoff: {item.cutoff_rank.toLocaleString()}</Text> : null}
                     </View>
                     <View style={styles.probabilityRow}>
                       <View style={[styles.probBadge, { backgroundColor: probabilityColor(item.probability) + '20' }]}>
                         <Text style={[styles.probText, { color: probabilityColor(item.probability) }]}>{probabilityLabel(item.probability)} Chance</Text>
                       </View>
-                      <Text style={styles.rankDiff}>{item.rank_diff >= 0 ? `+${item.rank_diff.toLocaleString()} margin` : `${Math.abs(item.rank_diff).toLocaleString()} above cutoff`}</Text>
+                      {item.cutoff_rank && item.cutoff_rank !== 999999 ? <Text style={styles.rankDiff}>{item.rank_diff >= 0 ? `+${item.rank_diff.toLocaleString()} margin` : `${Math.abs(item.rank_diff).toLocaleString()} above cutoff`}</Text> : null}
                     </View>
                   </View>
                   <ChevronRight size={16} color={COLORS.muted} strokeWidth={2} />

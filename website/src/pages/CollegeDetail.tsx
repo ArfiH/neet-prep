@@ -197,10 +197,10 @@ export default function CollegeDetail() {
                     {college.cutoffs.map(c => (
                       <tr key={c.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                         <td style={{ padding: '10px var(--space-4)', fontWeight: 600 }}>{c.year}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.general_rank === 999999 ? '—' : c.general_rank.toLocaleString()}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.obc_rank === 999999 ? '—' : c.obc_rank.toLocaleString()}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.sc_rank === 999999 ? '—' : c.sc_rank.toLocaleString()}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.st_rank === 999999 ? '—' : c.st_rank.toLocaleString()}</td>
+                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.general_rank && c.general_rank !== 999999 ? c.general_rank.toLocaleString() : ''}</td>
+                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.obc_rank && c.obc_rank !== 999999 ? c.obc_rank.toLocaleString() : ''}</td>
+                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.sc_rank && c.sc_rank !== 999999 ? c.sc_rank.toLocaleString() : ''}</td>
+                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.st_rank && c.st_rank !== 999999 ? c.st_rank.toLocaleString() : ''}</td>
                       </tr>
                     ))}
                   </tbody>
