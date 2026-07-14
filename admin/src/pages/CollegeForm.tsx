@@ -54,6 +54,9 @@ export default function CollegeForm() {
     setLoading(true);
     setError('');
     try {
+      if (form.image_url && form.image_url.startsWith('data:')) {
+        throw new Error('Image URL must be a web URL (http/https), not a base64 data URL');
+      }
       const data = {
         ...form,
         total_seats: parseInt(form.total_seats) || 0,

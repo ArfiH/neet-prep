@@ -156,6 +156,7 @@ const createCollege = async (req, res) => {
   try {
     const { name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url, extra_fees } = req.body;
     if (!name || !state) return res.status(400).json({ error: 'Name and state are required' });
+    const sanitizedImage = image_url && !image_url.startsWith('data:') ? image_url : '';
 
     const [result] = await pool.query(
       `INSERT INTO colleges (name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url, extra_fees)
@@ -164,7 +165,7 @@ const createCollege = async (req, res) => {
         tuition_fee_annual || 0, hostel_fee_annual || 0, other_charges || 0,
         official_website || '', contact_phone || '', established_year || null,
         accreditation || '', facilities ? JSON.stringify(facilities) : '[]',
-        image_url || '',
+        sanitizedImage,
         extra_fees && Array.isArray(extra_fees) ? JSON.stringify(extra_fees) : '[]']
     );
     res.status(201).json({ id: result.insertId, message: 'College created' });
@@ -181,6 +182,7 @@ const updateCollege = async (req, res) => {
     if (!existing.length) return res.status(404).json({ error: 'College not found' });
 
     const { name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, facilities, image_url, extra_fees } = req.body;
+    const sanitizedImage = image_url && !image_url.startsWith('data:') ? image_url : '';
 
     await pool.query(
       `UPDATE colleges SET name = ?, state = ?, city = ?, type = ?, total_seats = ?,
@@ -191,7 +193,7 @@ const updateCollege = async (req, res) => {
         tuition_fee_annual || 0, hostel_fee_annual || 0, other_charges || 0,
         official_website || '', contact_phone || '', established_year || null,
         accreditation || '', facilities ? JSON.stringify(facilities) : '[]',
-        image_url || '',
+        sanitizedImage,
         extra_fees && Array.isArray(extra_fees) ? JSON.stringify(extra_fees) : '[]',
         id]
     );
