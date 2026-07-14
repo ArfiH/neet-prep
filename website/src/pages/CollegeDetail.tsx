@@ -112,8 +112,8 @@ export default function CollegeDetail() {
               <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Total Seats</div>
             </div>
             <div className="card" style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>{fees > 0 ? `₹${api.formatPrice(fees)}` : '—'}</div>
-              <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Annual Fees</div>
+              <div style={{ fontSize: 24, fontWeight: 700, color: 'var(--color-text)' }}>{college.tuition_fee_annual > 0 ? `₹${api.formatPrice(college.tuition_fee_annual)}` : '—'}</div>
+              <div style={{ fontSize: 13, color: 'var(--color-text-3)' }}>Tuition Fees</div>
             </div>
           </div>
 
@@ -144,10 +144,6 @@ export default function CollegeDetail() {
                     <span style={{ fontWeight: 600 }}>₹{api.formatPrice(Number(f.value))}</span>
                   </div>
                 ))}
-                <div style={{ borderTop: '1px solid var(--color-border)', marginTop: 'var(--space-1)', paddingTop: 'var(--space-2)', display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ fontWeight: 600 }}>Total</span>
-                  <span style={{ fontWeight: 700, color: 'var(--color-accent)' }}>₹{api.formatPrice(fees)}</span>
-                </div>
               </div>
             </div>
           )}

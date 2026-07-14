@@ -144,14 +144,9 @@ export default function CollegeDetailScreen() {
             <View style={styles.statBox}>
               <IndianRupee size={20} color='#D97706' strokeWidth={2} />
               <Text style={styles.statValue}>
-                  {formatFee(
-                    Math.round(Number(college.tuition_fee_annual || 0) +
-                    Number(college.hostel_fee_annual || 0) +
-                    Number(college.other_charges || 0) +
-                    (college.extra_fees || []).reduce((sum, f) => sum + Number(f.value || 0), 0))
-                  )}
+                  {formatFee(Math.round(Number(college.tuition_fee_annual || 0)))}
               </Text>
-              <Text style={styles.statLabel}>Annual Fees</Text>
+              <Text style={styles.statLabel}>Tuition Fees</Text>
             </View>
           </View>
 
@@ -207,17 +202,6 @@ export default function CollegeDetailScreen() {
                     <Text style={styles.feeValue}>₹{Math.round(Number(f.value)).toLocaleString()}/yr</Text>
                   </View>
                 ))}
-                <View style={[styles.feeRow, styles.feeTotalRow]}>
-                  <Text style={styles.feeTotalLabel}>Total Annual Cost</Text>
-                  <Text style={styles.feeTotalValue}>
-                    ₹{Math.round(
-                      Number(college.tuition_fee_annual || 0) +
-                      Number(college.hostel_fee_annual || 0) +
-                      Number(college.other_charges || 0) +
-                      (college.extra_fees || []).reduce((sum, f) => sum + Number(f.value || 0), 0)
-                    ).toLocaleString()}/yr
-                  </Text>
-                </View>
               </View>
             </View>
           )}
