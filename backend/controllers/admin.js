@@ -238,7 +238,7 @@ const getCutoffs = async (req, res) => {
 
 const createCutoff = async (req, res) => {
   try {
-    const { college_id, year, general_rank, obc_rank, sc_rank, st_rank } = req.body;
+    const { college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks } = req.body;
     if (!college_id || !year) return res.status(400).json({ error: 'College ID and year are required' });
 
     const [existing] = await pool.query('SELECT id FROM colleges WHERE id = ?', [college_id]);
@@ -248,8 +248,8 @@ const createCutoff = async (req, res) => {
     if (dup.length) return res.status(409).json({ error: 'Cutoff already exists for this college and year' });
 
     const [result] = await pool.query(
-      'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank) VALUES (?, ?, ?, ?, ?, ?)',
-      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999]
+      'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999, general_marks ?? null, obc_marks ?? null, sc_marks ?? null, st_marks ?? null]
     );
     res.status(201).json({ id: result.insertId, message: 'Cutoff created' });
   } catch (error) {
@@ -264,10 +264,10 @@ const updateCutoff = async (req, res) => {
     const [existing] = await pool.query('SELECT id FROM cutoffs WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'Cutoff not found' });
 
-    const { college_id, year, general_rank, obc_rank, sc_rank, st_rank } = req.body;
+    const { college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks } = req.body;
     await pool.query(
-      'UPDATE cutoffs SET college_id = ?, year = ?, general_rank = ?, obc_rank = ?, sc_rank = ?, st_rank = ? WHERE id = ?',
-      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999, id]
+      'UPDATE cutoffs SET college_id = ?, year = ?, general_rank = ?, obc_rank = ?, sc_rank = ?, st_rank = ?, general_marks = ?, obc_marks = ?, sc_marks = ?, st_marks = ? WHERE id = ?',
+      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999, general_marks ?? null, obc_marks ?? null, sc_marks ?? null, st_marks ?? null, id]
     );
     res.json({ message: 'Cutoff updated' });
   } catch (error) {

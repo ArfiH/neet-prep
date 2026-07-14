@@ -41,6 +41,10 @@ type Cutoff = {
   obc_rank: number;
   sc_rank: number;
   st_rank: number;
+  general_marks: number | null;
+  obc_marks: number | null;
+  sc_marks: number | null;
+  st_marks: number | null;
 };
 
 const formatFee = (fee: number) => {
@@ -153,7 +157,7 @@ export default function CollegeDetailScreen() {
           {/* NEET Cutoffs */}
           {cutoffs.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>NEET Cutoff Ranks</Text>
+              <Text style={styles.sectionTitle}>NEET Cutoff Ranks & Marks</Text>
               <View style={styles.cutoffTable}>
                 <View style={styles.cutoffHeader}>
                   <Text style={styles.cutoffHeaderText}>Year</Text>
@@ -163,12 +167,37 @@ export default function CollegeDetailScreen() {
                   <Text style={styles.cutoffHeaderText}>ST</Text>
                 </View>
                 {cutoffs.map((cutoff) => (
-                  <View key={cutoff.id} style={styles.cutoffRow}>
-                    <Text style={styles.cutoffYear}>{cutoff.year}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.general_rank && cutoff.general_rank !== 999999 ? cutoff.general_rank.toLocaleString() : ''}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.obc_rank && cutoff.obc_rank !== 999999 ? cutoff.obc_rank.toLocaleString() : ''}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.sc_rank && cutoff.sc_rank !== 999999 ? cutoff.sc_rank.toLocaleString() : ''}</Text>
-                    <Text style={styles.cutoffRank}>{cutoff.st_rank && cutoff.st_rank !== 999999 ? cutoff.st_rank.toLocaleString() : ''}</Text>
+                  <View key={cutoff.id}>
+                    <View style={styles.cutoffRow}>
+                      <Text style={styles.cutoffYear}>{cutoff.year}</Text>
+                      <Text style={styles.cutoffRank}>
+                        {cutoff.general_rank && cutoff.general_rank !== 999999 ? cutoff.general_rank.toLocaleString() : ''}
+                      </Text>
+                      <Text style={styles.cutoffRank}>
+                        {cutoff.obc_rank && cutoff.obc_rank !== 999999 ? cutoff.obc_rank.toLocaleString() : ''}
+                      </Text>
+                      <Text style={styles.cutoffRank}>
+                        {cutoff.sc_rank && cutoff.sc_rank !== 999999 ? cutoff.sc_rank.toLocaleString() : ''}
+                      </Text>
+                      <Text style={styles.cutoffRank}>
+                        {cutoff.st_rank && cutoff.st_rank !== 999999 ? cutoff.st_rank.toLocaleString() : ''}
+                      </Text>
+                    </View>
+                    <View style={styles.cutoffMarksRow}>
+                      <Text style={styles.cutoffMarksLabel}>Marks</Text>
+                      <Text style={styles.cutoffMarks}>
+                        {cutoff.general_marks != null ? cutoff.general_marks : '—'}
+                      </Text>
+                      <Text style={styles.cutoffMarks}>
+                        {cutoff.obc_marks != null ? cutoff.obc_marks : '—'}
+                      </Text>
+                      <Text style={styles.cutoffMarks}>
+                        {cutoff.sc_marks != null ? cutoff.sc_marks : '—'}
+                      </Text>
+                      <Text style={styles.cutoffMarks}>
+                        {cutoff.st_marks != null ? cutoff.st_marks : '—'}
+                      </Text>
+                    </View>
                   </View>
                 ))}
               </View>
@@ -333,6 +362,16 @@ const styles = StyleSheet.create({
   },
   cutoffYear: { flex: 1, fontSize: 12, fontWeight: '700', color: COLORS.fg, textAlign: 'center' },
   cutoffRank: { flex: 1, fontSize: 12, color: COLORS.muted, textAlign: 'center' },
+  cutoffMarksRow: {
+    flexDirection: 'row',
+    paddingVertical: 4,
+    paddingHorizontal: 12,
+    borderTopWidth: 1,
+    borderTopColor: COLORS.border,
+    backgroundColor: COLORS.surface,
+  },
+  cutoffMarksLabel: { flex: 1, fontSize: 10, color: COLORS.muted, textAlign: 'center', fontWeight: '600' },
+  cutoffMarks: { flex: 1, fontSize: 11, color: COLORS.muted, textAlign: 'center' },
   cutoffNote: { fontSize: 11, color: COLORS.muted, marginTop: 6, textAlign: 'center' },
 
   feeCard: {

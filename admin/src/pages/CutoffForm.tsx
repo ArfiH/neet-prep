@@ -11,6 +11,7 @@ export default function CutoffForm() {
   const [form, setForm] = useState({
     college_id: '', year: new Date().getFullYear().toString(),
     general_rank: '999999', obc_rank: '999999', sc_rank: '999999', st_rank: '999999',
+    general_marks: '', obc_marks: '', sc_marks: '', st_marks: '',
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -28,6 +29,10 @@ export default function CutoffForm() {
             obc_rank: cutoff.obc_rank != null ? String(cutoff.obc_rank) : '999999',
             sc_rank: cutoff.sc_rank != null ? String(cutoff.sc_rank) : '999999',
             st_rank: cutoff.st_rank != null ? String(cutoff.st_rank) : '999999',
+            general_marks: cutoff.general_marks != null ? String(cutoff.general_marks) : '',
+            obc_marks: cutoff.obc_marks != null ? String(cutoff.obc_marks) : '',
+            sc_marks: cutoff.sc_marks != null ? String(cutoff.sc_marks) : '',
+            st_marks: cutoff.st_marks != null ? String(cutoff.st_marks) : '',
           });
         }
       }).catch(e => setError(e.message));
@@ -46,6 +51,10 @@ export default function CutoffForm() {
         obc_rank: form.obc_rank ? parseInt(form.obc_rank) : 999999,
         sc_rank: form.sc_rank ? parseInt(form.sc_rank) : 999999,
         st_rank: form.st_rank ? parseInt(form.st_rank) : 999999,
+        general_marks: form.general_marks ? parseInt(form.general_marks) : null,
+        obc_marks: form.obc_marks ? parseInt(form.obc_marks) : null,
+        sc_marks: form.sc_marks ? parseInt(form.sc_marks) : null,
+        st_marks: form.st_marks ? parseInt(form.st_marks) : null,
       };
       if (isEdit && id) {
         await updateCutoff(Number(id), data);
@@ -89,16 +98,32 @@ export default function CutoffForm() {
           <FormField label="General Rank">
             <input type="number" min="0" value={form.general_rank} onChange={e => update('general_rank', e.target.value)} style={inputStyle} />
           </FormField>
+          <FormField label="General Marks">
+            <input type="number" min="0" max="720" value={form.general_marks} onChange={e => update('general_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
+          </FormField>
+        </div>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="OBC Rank">
             <input type="number" min="0" value={form.obc_rank} onChange={e => update('obc_rank', e.target.value)} style={inputStyle} />
+          </FormField>
+          <FormField label="OBC Marks">
+            <input type="number" min="0" max="720" value={form.obc_marks} onChange={e => update('obc_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
           </FormField>
         </div>
         <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="SC Rank">
             <input type="number" min="0" value={form.sc_rank} onChange={e => update('sc_rank', e.target.value)} style={inputStyle} />
           </FormField>
+          <FormField label="SC Marks">
+            <input type="number" min="0" max="720" value={form.sc_marks} onChange={e => update('sc_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
+          </FormField>
+        </div>
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
           <FormField label="ST Rank">
             <input type="number" min="0" value={form.st_rank} onChange={e => update('st_rank', e.target.value)} style={inputStyle} />
+          </FormField>
+          <FormField label="ST Marks">
+            <input type="number" min="0" max="720" value={form.st_marks} onChange={e => update('st_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
           </FormField>
         </div>
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>

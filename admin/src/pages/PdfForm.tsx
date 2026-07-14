@@ -4,7 +4,7 @@ import { Upload, Check } from 'lucide-react';
 import { getPdf, createPdf, updatePdf, uploadPdfWithProgress } from '../lib/api';
 
 const SUBJECTS = ['Biology', 'Physics', 'Chemistry', 'Practice'];
-const CATEGORIES = ['', 'Notes', 'Short notes', 'Formulae', 'Questions', 'PYQs'];
+const CATEGORIES = ['', 'Notes', 'Short notes', 'Formulae', 'Questions', 'PYQs', 'NCERT Highlights', 'Book'];
 
 export default function PdfForm() {
   const { id } = useParams();

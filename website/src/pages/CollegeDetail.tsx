@@ -26,6 +26,10 @@ type College = {
     obc_rank: number;
     sc_rank: number;
     st_rank: number;
+    general_marks: number | null;
+    obc_marks: number | null;
+    sc_marks: number | null;
+    st_marks: number | null;
   }>;
 };
 
@@ -176,27 +180,57 @@ export default function CollegeDetail() {
           {college.cutoffs?.length > 0 && (
             <div className="card" style={{ overflow: 'hidden', padding: 0 }}>
               <div style={{ padding: 'var(--space-5) var(--space-5) var(--space-3)' }}>
-                <h3 style={{ fontSize: 16, fontWeight: 600 }}>Cutoff Ranks</h3>
+                <h3 style={{ fontSize: 16, fontWeight: 600 }}>Cutoff Ranks & Marks</h3>
               </div>
               <div style={{ overflowX: 'auto' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <th style={{ padding: '10px var(--space-4)', textAlign: 'left', color: 'var(--color-text-3)', fontWeight: 600 }}>Year</th>
-                      <th style={{ padding: '10px var(--space-4)', textAlign: 'left', color: 'var(--color-text-3)', fontWeight: 600 }}>General</th>
-                      <th style={{ padding: '10px var(--space-4)', textAlign: 'left', color: 'var(--color-text-3)', fontWeight: 600 }}>OBC</th>
-                      <th style={{ padding: '10px var(--space-4)', textAlign: 'left', color: 'var(--color-text-3)', fontWeight: 600 }}>SC</th>
-                      <th style={{ padding: '10px var(--space-4)', textAlign: 'left', color: 'var(--color-text-3)', fontWeight: 600 }}>ST</th>
+                      <th rowSpan={2} style={{ padding: '10px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)', minWidth: 50 }}>Year</th>
+                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)' }}>General</th>
+                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)' }}>OBC</th>
+                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)' }}>SC</th>
+                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600 }}>ST</th>
+                    </tr>
+                    <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Rank</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Marks</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Rank</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Marks</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Rank</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Marks</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11 }}>Rank</th>
+                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11 }}>Marks</th>
                     </tr>
                   </thead>
                   <tbody>
                     {college.cutoffs.map(c => (
                       <tr key={c.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
-                        <td style={{ padding: '10px var(--space-4)', fontWeight: 600 }}>{c.year}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.general_rank && c.general_rank !== 999999 ? c.general_rank.toLocaleString() : ''}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.obc_rank && c.obc_rank !== 999999 ? c.obc_rank.toLocaleString() : ''}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.sc_rank && c.sc_rank !== 999999 ? c.sc_rank.toLocaleString() : ''}</td>
-                        <td style={{ padding: '10px var(--space-4)', color: 'var(--color-text-2)' }}>{c.st_rank && c.st_rank !== 999999 ? c.st_rank.toLocaleString() : ''}</td>
+                        <td style={{ padding: '10px var(--space-3)', fontWeight: 600, textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>{c.year}</td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
+                          {c.general_rank && c.general_rank !== 999999 ? c.general_rank.toLocaleString() : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', borderRight: '1px solid var(--color-border)', fontSize: 12 }}>
+                          {c.general_marks != null ? c.general_marks : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
+                          {c.obc_rank && c.obc_rank !== 999999 ? c.obc_rank.toLocaleString() : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', borderRight: '1px solid var(--color-border)', fontSize: 12 }}>
+                          {c.obc_marks != null ? c.obc_marks : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
+                          {c.sc_rank && c.sc_rank !== 999999 ? c.sc_rank.toLocaleString() : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', borderRight: '1px solid var(--color-border)', fontSize: 12 }}>
+                          {c.sc_marks != null ? c.sc_marks : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
+                          {c.st_rank && c.st_rank !== 999999 ? c.st_rank.toLocaleString() : '—'}
+                        </td>
+                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', fontSize: 12 }}>
+                          {c.st_marks != null ? c.st_marks : '—'}
+                        </td>
                       </tr>
                     ))}
                   </tbody>

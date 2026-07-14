@@ -31,24 +31,31 @@ export default function CutoffList() {
 
   if (error) return <div style={{ color: 'var(--color-danger)' }}>{error}</div>;
 
+  const renderRank = (rank: number, marks: number | null) => {
+    if (rank === 999999) return '—';
+    const parts = [rank.toLocaleString()];
+    if (marks != null) parts.push(`(${marks})`);
+    return parts.join(' ');
+  };
+
   const columns = [
     { key: 'college_name', label: 'College' },
     { key: 'year', label: 'Year' },
     {
       key: 'general_rank', label: 'General',
-      render: (c: any) => c.general_rank === 999999 ? '—' : c.general_rank?.toLocaleString(),
+      render: (c: any) => renderRank(c.general_rank, c.general_marks),
     },
     {
       key: 'obc_rank', label: 'OBC',
-      render: (c: any) => c.obc_rank === 999999 ? '—' : c.obc_rank?.toLocaleString(),
+      render: (c: any) => renderRank(c.obc_rank, c.obc_marks),
     },
     {
       key: 'sc_rank', label: 'SC',
-      render: (c: any) => c.sc_rank === 999999 ? '—' : c.sc_rank?.toLocaleString(),
+      render: (c: any) => renderRank(c.sc_rank, c.sc_marks),
     },
     {
       key: 'st_rank', label: 'ST',
-      render: (c: any) => c.st_rank === 999999 ? '—' : c.st_rank?.toLocaleString(),
+      render: (c: any) => renderRank(c.st_rank, c.st_marks),
     },
   ];
 
