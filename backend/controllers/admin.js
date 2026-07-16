@@ -736,10 +736,144 @@ const getPayments = async (req, res) => {
   }
 };
 
+const parseCSV = (buffer) => {
+  const text = buffer.toString('utf-8').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+  const lines = text.split('\n').filter(l => l.trim());
+  if (lines.length < 2) return { headers: [], rows: [] };
+
+  const parseLine = (line) => {
+    const fields = [];
+    let current = '';
+    let inQuotes = false;
+    for (let i = 0; i < line.length; i++) {
+      const ch = line[i];
+      if (ch === '"') {
+        if (inQuotes && i + 1 < line.length && line[i + 1] === '"') {
+          current += '"';
+          i++;
+        } else {
+          inQuotes = !inQuotes;
+        }
+      } else if (ch === ',' && !inQuotes) {
+        fields.push(current.trim());
+        current = '';
+      } else {
+        current += ch;
+      }
+    }
+    fields.push(current.trim());
+    return fields;
+  };
+
+  const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, ''));
+  const colMap = {};
+  const known = {
+    name: 'name', state: 'state', city: 'city', type: 'type',
+    total_seats: 'total_seats', totalseats: 'total_seats', seats: 'total_seats',
+    tuition_fee_annual: 'tuition_fee_annual', tuitionfee: 'tuition_fee_annual', tuitionfeeannual: 'tuition_fee_annual',
+    hostel_fee_annual: 'hostel_fee_annual', hostelfee: 'hostel_fee_annual', hostelfeeannual: 'hostel_fee_annual',
+    other_charges: 'other_charges', othercharges: 'other_charges',
+    official_website: 'official_website', website: 'official_website',
+    contact_phone: 'contact_phone', phone: 'contact_phone',
+    established_year: 'established_year', year: 'established_year', established: 'established_year',
+    accreditation: 'accreditation',
+    image_url: 'image_url', image: 'image_url',
+  };
+  for (const h of headers) {
+    if (known[h]) colMap[known[h]] = headers.indexOf(h);
+  }
+
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const vals = parseLine(lines[i]);
+    const row = {};
+    for (const [col, idx] of Object.entries(colMap)) {
+      row[col] = vals[idx] || '';
+    }
+    rows.push(row);
+  }
+  return { rows, errors: [] };
+};
+
+const importColleges = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'CSV file is required' });
+
+    const { rows } = parseCSV(req.file.buffer);
+    if (!rows.length) return res.status(400).json({ error: 'No data rows found in CSV' });
+
+    const errors = [];
+    const toInsert = [];
+
+    for (let i = 0; i < rows.length; i++) {
+      const r = rows[i];
+      const rowNum = i + 2;
+
+      if (!r.name) { errors.push({ row: rowNum, reason: 'Name is required' }); continue; }
+      if (!r.state) { errors.push({ row: rowNum, reason: 'State is required' }); continue; }
+
+      const validTypes = ['Government', 'Private', 'Deemed', 'Central University', 'State University'];
+      const type = r.type && validTypes.includes(r.type) ? r.type : 'Government';
+
+      const sanitizedImage = r.image_url && !r.image_url.startsWith('data:') ? r.image_url : '';
+
+      toInsert.push([
+        r.name.trim(), r.state.trim(), r.city?.trim() || '',
+        type,
+        parseInt(r.total_seats) || 0,
+        parseFloat(r.tuition_fee_annual) || 0,
+        parseFloat(r.hostel_fee_annual) || 0,
+        parseFloat(r.other_charges) || 0,
+        r.official_website?.trim() || '',
+        r.contact_phone?.trim() || '',
+        parseInt(r.established_year) || null,
+        r.accreditation?.trim() || '',
+        sanitizedImage,
+      ]);
+    }
+
+    if (!toInsert.length) {
+      return res.json({ imported: 0, errors, message: 'No valid rows to import' });
+    }
+
+    const inserted = [];
+    for (const row of toInsert) {
+      try {
+        const [dup] = await pool.query(
+          'SELECT id FROM colleges WHERE name = ? AND state = ?',
+          [row[0], row[1]]
+        );
+        if (dup.length) {
+          errors.push({ row: '—', reason: `Duplicate skipped: "${row[0]}" in ${row[1]}` });
+          continue;
+        }
+
+        const [result] = await pool.query(
+          `INSERT INTO colleges (name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, accreditation, image_url)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          row
+        );
+        inserted.push(result.insertId);
+      } catch (err) {
+        errors.push({ row: '—', reason: `"${row[0]}": ${err.message}` });
+      }
+    }
+
+    res.json({
+      imported: inserted.length,
+      errors,
+      message: `Imported ${inserted.length} of ${toInsert.length} colleges`,
+    });
+  } catch (error) {
+    console.error('Import colleges error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
-  getColleges, getCollege, createCollege, updateCollege, deleteCollege,
+  getColleges, getCollege, createCollege, updateCollege, deleteCollege, importColleges,
   getCutoffs, createCutoff, updateCutoff, deleteCutoff,
   getUsers, updateUserRole,
   banUser, unbanUser,

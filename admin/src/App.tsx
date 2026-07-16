@@ -7,6 +7,7 @@ import PdfList from './pages/PdfList';
 import PdfForm from './pages/PdfForm';
 import CollegeList from './pages/CollegeList';
 import CollegeForm from './pages/CollegeForm';
+import CollegeImport from './pages/CollegeImport';
 import CutoffList from './pages/CutoffList';
 import CutoffForm from './pages/CutoffForm';
 import UserList from './pages/UserList';
@@ -70,6 +71,7 @@ export default function App() {
         <Route path="pdfs/:id/edit" element={<PdfForm />} />
         <Route path="colleges" element={<CollegeList />} />
         <Route path="colleges/new" element={<CollegeForm />} />
+        <Route path="colleges/import" element={<CollegeImport />} />
         <Route path="colleges/:id/edit" element={<CollegeForm />} />
         <Route path="cutoffs" element={<CutoffList />} />
         <Route path="cutoffs/new" element={<CutoffForm />} />

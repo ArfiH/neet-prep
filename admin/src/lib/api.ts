@@ -141,6 +141,22 @@ export const getCollege = (id: number) => request<any>(`/colleges/${id}`);
 export const createCollege = (data: any) => request<any>('/colleges', { method: 'POST', body: JSON.stringify(data) });
 export const updateCollege = (id: number, data: any) => request<any>(`/colleges/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteCollege = (id: number) => request<any>(`/colleges/${id}`, { method: 'DELETE' });
+export const importColleges = (file: File): Promise<{ imported: number; errors: { row: string; reason: string }[]; message: string }> => {
+  const token = getToken();
+  const formData = new FormData();
+  formData.append('file', file);
+  return fetch(`${API_BASE}/admin/colleges/import`, {
+    method: 'POST',
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+    body: formData,
+  }).then(async res => {
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Import failed');
+    }
+    return res.json();
+  });
+};
 
 // Cutoffs
 export const getCutoffs = (collegeId?: number) => request<any[]>(`/cutoffs${collegeId ? `?college_id=${collegeId}` : ''}`);

@@ -20,6 +20,7 @@ router.post('/pdfs/upload', upload.single('file'), c.uploadPdf);
 router.get('/colleges', c.getColleges);
 router.get('/colleges/:id', c.getCollege);
 router.post('/colleges', c.createCollege);
+router.post('/colleges/import', upload.single('file'), c.importColleges);
 router.put('/colleges/:id', c.updateCollege);
 router.delete('/colleges/:id', c.deleteCollege);
 
