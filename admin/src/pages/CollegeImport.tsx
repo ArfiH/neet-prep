@@ -20,7 +20,7 @@ export default function CollegeImport() {
     const reader = new FileReader();
     reader.onload = (e) => {
       const text = e.target?.result as string;
-      const lines = text.split('\n').filter(l => l.trim()).slice(0, 6);
+      const lines = text.split('\n').filter(l => l.trim());
       const rows = lines.map(l => {
         const fields = [];
         let cur = '', inQ = false;
@@ -109,7 +109,7 @@ export default function CollegeImport() {
 
         {preview.length > 1 && !result && (
           <div style={{ marginBottom: 'var(--space-4)' }}>
-            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 'var(--space-2)' }}>Preview (first {preview.length - 1} rows)</div>
+            <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 'var(--space-2)' }}>Preview ({preview.length - 1} rows)</div>
             <div style={{ overflowX: 'auto', fontSize: 12, border: '1px solid var(--color-border)', borderRadius: 'var(--radius-sm)' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>
                 <thead>
