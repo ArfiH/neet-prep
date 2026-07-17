@@ -26,6 +26,7 @@ router.delete('/colleges/:id', c.deleteCollege);
 
 router.get('/cutoffs', c.getCutoffs);
 router.post('/cutoffs', c.createCutoff);
+router.post('/cutoffs/import', upload.single('file'), c.importCutoffs);
 router.put('/cutoffs/:id', c.updateCutoff);
 router.delete('/cutoffs/:id', c.deleteCutoff);
 

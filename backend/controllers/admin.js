@@ -164,7 +164,7 @@ const createCollege = async (req, res) => {
       [name, state, city || '', type || 'Government', total_seats || 0,
         tuition_fee_annual || 0, hostel_fee_annual || 0, other_charges || 0,
         official_website || '', contact_phone || '', established_year || null,
-        accreditation || '', facilities ? JSON.stringify(facilities) : '[]',
+        accreditation || 'NMC', facilities ? JSON.stringify(facilities) : '[]',
         sanitizedImage,
         extra_fees && Array.isArray(extra_fees) ? JSON.stringify(extra_fees) : '[]']
     );
@@ -192,7 +192,7 @@ const updateCollege = async (req, res) => {
       [name, state, city || '', type || 'Government', total_seats || 0,
         tuition_fee_annual || 0, hostel_fee_annual || 0, other_charges || 0,
         official_website || '', contact_phone || '', established_year || null,
-        accreditation || '', facilities ? JSON.stringify(facilities) : '[]',
+        accreditation || 'NMC', facilities ? JSON.stringify(facilities) : '[]',
         sanitizedImage,
         extra_fees && Array.isArray(extra_fees) ? JSON.stringify(extra_fees) : '[]',
         id]
@@ -766,33 +766,25 @@ const parseCSV = (buffer) => {
   };
 
   const headers = parseLine(lines[0]).map(h => h.toLowerCase().replace(/[^a-z0-9_]/g, ''));
-  const colMap = {};
-  const known = {
-    name: 'name', state: 'state', city: 'city', type: 'type',
-    total_seats: 'total_seats', totalseats: 'total_seats', seats: 'total_seats',
-    tuition_fee_annual: 'tuition_fee_annual', tuitionfee: 'tuition_fee_annual', tuitionfeeannual: 'tuition_fee_annual',
-    hostel_fee_annual: 'hostel_fee_annual', hostelfee: 'hostel_fee_annual', hostelfeeannual: 'hostel_fee_annual',
-    other_charges: 'other_charges', othercharges: 'other_charges',
-    official_website: 'official_website', website: 'official_website',
-    contact_phone: 'contact_phone', phone: 'contact_phone',
-    established_year: 'established_year', year: 'established_year', established: 'established_year',
-    accreditation: 'accreditation',
-    image_url: 'image_url', image: 'image_url',
-  };
-  for (const h of headers) {
-    if (known[h]) colMap[known[h]] = headers.indexOf(h);
-  }
 
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const vals = parseLine(lines[i]);
     const row = {};
-    for (const [col, idx] of Object.entries(colMap)) {
-      row[col] = vals[idx] || '';
+    for (let j = 0; j < headers.length; j++) {
+      row[headers[j]] = vals[j] || '';
     }
     rows.push(row);
   }
   return { rows, errors: [] };
+};
+
+const normalizeRow = (row, aliases) => {
+  const out = { ...row };
+  for (const [variant, canonical] of Object.entries(aliases)) {
+    if (out[variant] && !out[canonical]) out[canonical] = out[variant];
+  }
+  return out;
 };
 
 const importColleges = async (req, res) => {
@@ -805,8 +797,19 @@ const importColleges = async (req, res) => {
     const errors = [];
     const toInsert = [];
 
+    const collegeAliases = {
+      totalseats: 'total_seats', seats: 'total_seats',
+      tuitionfee: 'tuition_fee_annual', tuitionfeeannual: 'tuition_fee_annual',
+      hostelfee: 'hostel_fee_annual', hostelfeeannual: 'hostel_fee_annual',
+      othercharges: 'other_charges',
+      website: 'official_website',
+      phone: 'contact_phone',
+      established: 'established_year', year: 'established_year',
+      image: 'image_url',
+    };
+
     for (let i = 0; i < rows.length; i++) {
-      const r = rows[i];
+      let r = normalizeRow(rows[i], collegeAliases);
       const rowNum = i + 2;
 
       if (!r.name) { errors.push({ row: rowNum, reason: 'Name is required' }); continue; }
@@ -827,7 +830,7 @@ const importColleges = async (req, res) => {
         r.official_website?.trim() || '',
         r.contact_phone?.trim() || '',
         parseInt(r.established_year) || null,
-        r.accreditation?.trim() || '',
+        r.accreditation?.trim() || 'NMC',
         sanitizedImage,
       ]);
     }
@@ -870,11 +873,99 @@ const importColleges = async (req, res) => {
   }
 };
 
+const importCutoffs = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: 'CSV file is required' });
+
+    const { rows } = parseCSV(req.file.buffer);
+    if (!rows.length) return res.status(400).json({ error: 'No data rows found in CSV' });
+
+    const errors = [];
+    const toInsert = [];
+
+    const cutoffAliases = {
+      collegeid: 'college_id',
+      generalrank: 'general_rank',
+      obcrank: 'obc_rank',
+      scrank: 'sc_rank',
+      strank: 'st_rank',
+      generalmarks: 'general_marks',
+      obcmarks: 'obc_marks',
+      scmarks: 'sc_marks',
+      stmarks: 'st_marks',
+    };
+
+    for (let i = 0; i < rows.length; i++) {
+      let r = normalizeRow(rows[i], cutoffAliases);
+      const rowNum = i + 2;
+
+      if (!r.college_id) { errors.push({ row: rowNum, reason: 'college_id is required' }); continue; }
+      if (!r.year) { errors.push({ row: rowNum, reason: 'year is required' }); continue; }
+
+      const collegeId = parseInt(r.college_id);
+      const year = parseInt(r.year);
+
+      if (!collegeId || !year) { errors.push({ row: rowNum, reason: 'college_id and year must be numbers' }); continue; }
+
+      const [college] = await pool.query('SELECT id FROM colleges WHERE id = ?', [collegeId]);
+      if (!college.length) { errors.push({ row: rowNum, reason: `College ID ${collegeId} not found` }); continue; }
+
+      toInsert.push({
+        college_id: collegeId,
+        year,
+        general_rank: parseInt(r.general_rank) || 999999,
+        obc_rank: parseInt(r.obc_rank) || 999999,
+        sc_rank: parseInt(r.sc_rank) || 999999,
+        st_rank: parseInt(r.st_rank) || 999999,
+        general_marks: r.general_marks ? parseInt(r.general_marks) : null,
+        obc_marks: r.obc_marks ? parseInt(r.obc_marks) : null,
+        sc_marks: r.sc_marks ? parseInt(r.sc_marks) : null,
+        st_marks: r.st_marks ? parseInt(r.st_marks) : null,
+      });
+    }
+
+    if (!toInsert.length) {
+      return res.json({ imported: 0, errors, message: 'No valid rows to import' });
+    }
+
+    const inserted = [];
+    for (const row of toInsert) {
+      try {
+        const [dup] = await pool.query(
+          'SELECT id FROM cutoffs WHERE college_id = ? AND year = ?',
+          [row.college_id, row.year]
+        );
+        if (dup.length) {
+          errors.push({ row: '—', reason: `Duplicate skipped: college ${row.college_id}, ${row.year}` });
+          continue;
+        }
+
+        const [result] = await pool.query(
+          'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [row.college_id, row.year, row.general_rank, row.obc_rank, row.sc_rank, row.st_rank, row.general_marks, row.obc_marks, row.sc_marks, row.st_marks]
+        );
+        inserted.push(result.insertId);
+      } catch (err) {
+        errors.push({ row: '—', reason: `college ${row.college_id}, ${row.year}: ${err.message}` });
+      }
+    }
+
+    res.json({
+      imported: inserted.length,
+      errors,
+      message: `Imported ${inserted.length} of ${toInsert.length} cutoffs`,
+    });
+  } catch (error) {
+    console.error('Import cutoffs error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
   getColleges, getCollege, createCollege, updateCollege, deleteCollege, importColleges,
-  getCutoffs, createCutoff, updateCutoff, deleteCutoff,
+  getCutoffs, createCutoff, updateCutoff, deleteCutoff, importCutoffs,
   getUsers, updateUserRole,
   banUser, unbanUser,
   getUserPurchases, grantPdfAccess, revokePdfAccess,

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import DataTable from '../components/DataTable';
 import ConfirmDialog from '../components/ConfirmDialog';
 import { getCutoffs, deleteCutoff } from '../lib/api';
+import { Upload } from 'lucide-react';
 
 export default function CutoffList() {
   const navigate = useNavigate();
@@ -63,7 +64,10 @@ export default function CutoffList() {
     <div>
       <div className="flex-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-4)' }}>
         <h2 style={{ fontSize: 16, fontWeight: 600 }}>Cutoffs</h2>
-        <button onClick={() => navigate('/cutoffs/new')} style={addBtnStyle}>+ New Cutoff</button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button onClick={() => navigate('/cutoffs/import')} style={importBtnStyle}><Upload size={14} /> Import CSV</button>
+          <button onClick={() => navigate('/cutoffs/new')} style={addBtnStyle}>+ New Cutoff</button>
+        </div>
       </div>
       {loading ? (
         <div style={{ color: 'var(--color-text-3)' }}>Loading...</div>
@@ -97,4 +101,14 @@ const addBtnStyle: React.CSSProperties = {
   fontSize: 13,
   fontWeight: 600,
   cursor: 'pointer',
+};
+
+const importBtnStyle: React.CSSProperties = {
+  ...addBtnStyle,
+  background: 'var(--color-paper-2)',
+  color: 'var(--color-text)',
+  border: '1px solid var(--color-border)',
+  display: 'flex',
+  alignItems: 'center',
+  gap: 6,
 };

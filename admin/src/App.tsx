@@ -10,6 +10,7 @@ import CollegeForm from './pages/CollegeForm';
 import CollegeImport from './pages/CollegeImport';
 import CutoffList from './pages/CutoffList';
 import CutoffForm from './pages/CutoffForm';
+import CutoffImport from './pages/CutoffImport';
 import UserList from './pages/UserList';
 import UserPurchases from './pages/UserPurchases';
 import BroadcastNotification from './pages/BroadcastNotification';
@@ -75,6 +76,7 @@ export default function App() {
         <Route path="colleges/:id/edit" element={<CollegeForm />} />
         <Route path="cutoffs" element={<CutoffList />} />
         <Route path="cutoffs/new" element={<CutoffForm />} />
+        <Route path="cutoffs/import" element={<CutoffImport />} />
         <Route path="cutoffs/:id/edit" element={<CutoffForm />} />
         <Route path="users" element={<UserList />} />
         <Route path="users/:id/purchases" element={<UserPurchases />} />
