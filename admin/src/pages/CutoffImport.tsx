@@ -21,7 +21,18 @@ export default function CutoffImport() {
     reader.onload = (e) => {
       const text = e.target?.result as string;
       const lines = text.split('\n').filter(l => l.trim()).slice(0, 6);
-      const rows = lines.map(l => l.split(',').map(v => v.replace(/^"|"$/g, '').trim()));
+      const rows = lines.map(l => {
+        const fields = [];
+        let cur = '', inQ = false;
+        for (let i = 0; i < l.length; i++) {
+          const ch = l[i];
+          if (ch === '"') { inQ ? (i + 1 < l.length && l[i + 1] === '"' ? (cur += '"', i++) : inQ = false) : inQ = true; }
+          else if (ch === ',' && !inQ) { fields.push(cur.trim()); cur = ''; }
+          else cur += ch;
+        }
+        fields.push(cur.trim());
+        return fields.map(v => v.replace(/^"|"$/g, '').trim());
+      });
       setPreview(rows);
     };
     reader.readAsText(f);

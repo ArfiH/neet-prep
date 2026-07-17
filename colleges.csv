@@ -1,2 +1,3 @@
-name , state , city , type , total_seats , tuition_fee_annual , hostel_fee_annual , other_charges , official_website , contact_phone , established_year , image_url 
-"New College, Bihar", Karnataka , Manipal , Deemed , 250 , 1795000.00 , 125000.00 , 10000.00 , https://www.manipal.edu/kmc-manipal.html , +91-820-2922323 , 1953 , https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNUyDPjzBXgjDbVNtTmZlMt_DE6LEU8isZdDDzJWB9yw&s=10 
+name, state, city, type, total_seats, tuition_fee_annual, hostel_fee_annual, other_charges, official_website, contact_phone, established_year, image_url 
+"New College, Manipal", Karnataka, Manipal, Deemed, 250, 1795000.00, 125000.00, 10000.00, https://www.manipal.edu/kmc-manipal.html, +91-820-2922323, 1953, https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNUyDPjzBXgjDbVNtTmZlMt_DE6LEU8isZdDDzJWB9yw&s=10 
+Medical College, Bihar, Patna, Deemed, 350, 1795000.00, 125000.00, 10000.00, https://www.manipal.edu/kmc-manipal.html, +91-820-2922323, 1953, https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSNUyDPjzBXgjDbVNtTmZlMt_DE6LEU8isZdDDzJWB9yw&s=10 
