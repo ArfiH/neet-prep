@@ -30,6 +30,7 @@ type PredictedCollege = {
 };
 
 const CATEGORIES = ['General', 'OBC', 'SC', 'ST'];
+const COLLEGE_TYPES = ['All', 'Government', 'Private', 'Deemed', 'Central University', 'State University'];
 const STATES = [
   'All India', 'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa',
   'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu & Kashmir', 'Jharkhand',
@@ -46,6 +47,7 @@ export default function CollegesScreen() {
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('General');
   const [state, setState] = useState('All India');
+  const [collegeType, setCollegeType] = useState('All');
   const [results, setResults] = useState<PredictedCollege[]>([]);
   const [loading, setLoading] = useState(false);
   const [predicted, setPredicted] = useState(false);
@@ -87,7 +89,7 @@ export default function CollegesScreen() {
 
     const userRank = parseInt(rank);
     try {
-      const predictions = await api.predictColleges(userRank, category, state);
+      const predictions = await api.predictColleges(userRank, category, state, collegeType);
       setResults(predictions || []);
     } catch (e) {
       setResults([]);
@@ -199,6 +201,22 @@ export default function CollegesScreen() {
                   onPress={() => setCategory(cat)}
                 >
                   <Text style={[styles.catPillText, category === cat && styles.catPillTextActive]}>{cat}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          {/* College Type */}
+          <View style={styles.inputGroup}>
+            <Text style={styles.inputLabel}>College Type</Text>
+            <View style={styles.pillRow}>
+              {COLLEGE_TYPES.map(t => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.catPill, collegeType === t && styles.catPillActive]}
+                  onPress={() => setCollegeType(t)}
+                >
+                  <Text style={[styles.catPillText, collegeType === t && styles.catPillTextActive]}>{t}</Text>
                 </TouchableOpacity>
               ))}
             </View>

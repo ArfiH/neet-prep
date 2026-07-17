@@ -63,7 +63,7 @@ const getCollegeById = async (req, res) => {
 
 const predictColleges = async (req, res) => {
   try {
-    const { rank, category, state } = req.query;
+    const { rank, category, state, type } = req.query;
 
     if (!rank) {
       return res.status(400).json({ error: 'Rank is required' });
@@ -87,6 +87,11 @@ const predictColleges = async (req, res) => {
     if (state && state !== 'All India') {
       query += ' AND c.state = ?';
       params.push(state);
+    }
+
+    if (type && type !== 'All') {
+      query += ' AND c.type = ?';
+      params.push(type);
     }
 
     query += ` ORDER BY cu.${categoryColumn} ASC`;

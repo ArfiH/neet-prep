@@ -230,9 +230,10 @@ export async function getCollegeById(id: string): Promise<any> {
   return request(`/colleges/${id}`);
 }
 
-export async function predictColleges(rank: number, category: string, state?: string): Promise<any[]> {
+export async function predictColleges(rank: number, category: string, state?: string, type?: string): Promise<any[]> {
   const params = new URLSearchParams({ rank: String(rank), category });
   if (state && state !== 'All India') params.set('state', state);
+  if (type && type !== 'All') params.set('type', type);
   return request(`/colleges/predict?${params.toString()}`);
 }
 

@@ -5,6 +5,7 @@ import * as api from '../lib/api';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
 const CATEGORIES = ['General', 'OBC', 'SC', 'ST'];
+const COLLEGE_TYPES = ['All', 'Government', 'Private', 'Deemed', 'Central University', 'State University'];
 const STATES = [
   'All India', 'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa',
   'Gujarat', 'Haryana', 'Himachal Pradesh', 'Jammu & Kashmir', 'Jharkhand',
@@ -44,6 +45,7 @@ export default function Colleges() {
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('General');
   const [state, setState] = useState('All India');
+  const [collegeType, setCollegeType] = useState('All');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [results, setResults] = useState<Prediction[]>([]);
@@ -113,7 +115,7 @@ export default function Colleges() {
     setPredicted(false);
 
     try {
-      const data = await api.predictColleges(rankNum, category, state);
+      const data = await api.predictColleges(rankNum, category, state, collegeType);
       setResults(data || []);
     } catch (err: any) {
       api.logError('Colleges.predict', err);
@@ -297,6 +299,28 @@ export default function Colleges() {
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* College Type */}
+          <div style={{ marginBottom: 'var(--space-5)' }}>
+            <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>College Type</label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {COLLEGE_TYPES.map(t => (
+                <button
+                  key={t}
+                  onClick={() => setCollegeType(t)}
+                  style={{
+                    padding: '8px 14px', borderRadius: 'var(--radius-sm)',
+                    border: '1.5px solid var(--color-border)',
+                    background: collegeType === t ? 'var(--color-accent)' : 'var(--color-paper-2)',
+                    color: collegeType === t ? '#fff' : 'var(--color-text-2)',
+                    fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                  }}
+                >
+                  {t}
+                </button>
+              ))}
             </div>
           </div>
 
