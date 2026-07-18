@@ -345,6 +345,10 @@ const serveRawPdf = async (req, res) => {
       return res.status(400).json({ error: 'PDF file not available' });
     }
 
+    if (!pdf.file_url.startsWith('http')) {
+      return res.status(400).json({ error: 'Invalid PDF file URL format' });
+    }
+
     if (!pdf.is_free) {
       const [purchases] = await pool.query(
         'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ? AND status = "completed"',
@@ -374,14 +378,14 @@ const serveRawPdf = async (req, res) => {
       pdfBytes = Buffer.from(await response.arrayBuffer());
     }
 
-    const fileName = pdf.title.replace(/"/g, '').replace(/[<>:;"'/\\?*]/g, '_');
+    const safeTitle = pdf.title.replace(/[^a-zA-Z0-9._-]/g, '_').replace(/_+/g, '_').substring(0, 100);
 
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `inline; filename="${fileName}.pdf"`);
+    res.setHeader('Content-Disposition', `inline; filename="${safeTitle}.pdf"`);
     res.status(200).send(pdfBytes);
   } catch (error) {
-    console.error('Serve PDF error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Serve PDF error:', error.message, error.stack);
+    res.status(500).json({ error: 'Server error', detail: process.env.NODE_ENV === 'development' ? error.message : undefined });
   }
 };
 
