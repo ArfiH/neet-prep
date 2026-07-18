@@ -54,6 +54,25 @@ const getCollegeById = async (req, res) => {
       [id]
     );
 
+    const cutoffIds = cutoffs.map(c => c.id);
+    if (cutoffIds.length > 0) {
+      const placeholders = cutoffIds.map(() => '?').join(',');
+      const [values] = await pool.query(
+        `SELECT cv.*, cat.name AS category_name FROM cutoff_values cv
+         JOIN categories cat ON cat.id = cv.category_id
+         WHERE cv.cutoff_id IN (${placeholders}) ORDER BY cat.sort_order, cat.id`,
+        cutoffIds
+      );
+      const grouped = {};
+      for (const v of values) {
+        if (!grouped[v.cutoff_id]) grouped[v.cutoff_id] = [];
+        grouped[v.cutoff_id].push({ id: v.id, category_id: v.category_id, category_name: v.category_name, rank: v.rank, marks: v.marks });
+      }
+      for (const c of cutoffs) {
+        c.values = grouped[c.id] || [];
+      }
+    }
+
     res.json({ ...parseCollege(colleges[0]), cutoffs });
   } catch (error) {
     console.error('Get college error:', error);
@@ -69,20 +88,24 @@ const predictColleges = async (req, res) => {
       return res.status(400).json({ error: 'Rank is required' });
     }
 
-    const categoryColumn = {
-      General: 'general_rank',
-      OBC: 'obc_rank',
-      SC: 'sc_rank',
-      ST: 'st_rank',
-    }[category || 'General'];
+    const [catRows] = await pool.query(
+      'SELECT id FROM categories WHERE name = ?',
+      [category || 'General']
+    );
+    if (catRows.length === 0) {
+      return res.status(400).json({ error: `Unknown category: ${category || 'General'}` });
+    }
+    const categoryId = catRows[0].id;
 
     let query = `
-      SELECT c.*, cu.year, cu.general_rank, cu.obc_rank, cu.sc_rank, cu.st_rank
+      SELECT c.*, cu.year, cv.rank AS cutoff_rank, cv.marks AS cutoff_marks
       FROM colleges c
       INNER JOIN cutoffs cu ON c.id = cu.college_id
+      INNER JOIN cutoff_values cv ON cv.cutoff_id = cu.id AND cv.category_id = ?
       WHERE cu.year = 2024
+        AND cv.rank IS NOT NULL AND cv.rank != 999999
     `;
-    const params = [];
+    const params = [categoryId];
 
     if (state && state !== 'All India') {
       query += ' AND c.state = ?';
@@ -94,13 +117,13 @@ const predictColleges = async (req, res) => {
       params.push(type);
     }
 
-    query += ` ORDER BY cu.${categoryColumn} ASC`;
+    query += ' ORDER BY cv.rank ASC';
 
     const [results] = await pool.query(query, params);
 
     const predictions = [];
     for (const row of results) {
-      const cutoffRank = row[categoryColumn] || 999999;
+      const cutoffRank = row.cutoff_rank || 999999;
       const probability = getProbability(parseInt(rank), cutoffRank);
 
       if (probability > 0) {

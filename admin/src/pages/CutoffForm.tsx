@@ -1,6 +1,6 @@
 import { useEffect, useState, FormEvent } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { getCutoffs, createCutoff, updateCutoff, getColleges } from '../lib/api';
+import { getCutoffs, createCutoff, updateCutoff, getColleges, getCategories } from '../lib/api';
 
 export default function CutoffForm() {
   const { id } = useParams();
@@ -8,32 +8,38 @@ export default function CutoffForm() {
   const isEdit = !!id;
 
   const [colleges, setColleges] = useState<any[]>([]);
-  const [form, setForm] = useState({
-    college_id: '', year: new Date().getFullYear().toString(),
-    general_rank: '999999', obc_rank: '999999', sc_rank: '999999', st_rank: '999999',
-    general_marks: '', obc_marks: '', sc_marks: '', st_marks: '',
-  });
+  const [categories, setCategories] = useState<any[]>([]);
+  const [collegeId, setCollegeId] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear().toString());
+  const [values, setValues] = useState<Record<number, { rank: string; marks: string }>>({});
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   useEffect(() => {
     getColleges().then(setColleges).catch(() => {});
+    getCategories().then(cats => {
+      setCategories(cats);
+      const init: Record<number, { rank: string; marks: string }> = {};
+      for (const c of cats) {
+        init[c.id] = { rank: '999999', marks: '' };
+      }
+      setValues(init);
+    }).catch(() => {});
     if (isEdit && id) {
       getCutoffs().then(all => {
         const cutoff = all.find((c: any) => c.id === Number(id));
         if (cutoff) {
-          setForm({
-            college_id: String(cutoff.college_id),
-            year: String(cutoff.year),
-            general_rank: cutoff.general_rank != null ? String(cutoff.general_rank) : '999999',
-            obc_rank: cutoff.obc_rank != null ? String(cutoff.obc_rank) : '999999',
-            sc_rank: cutoff.sc_rank != null ? String(cutoff.sc_rank) : '999999',
-            st_rank: cutoff.st_rank != null ? String(cutoff.st_rank) : '999999',
-            general_marks: cutoff.general_marks != null ? String(cutoff.general_marks) : '',
-            obc_marks: cutoff.obc_marks != null ? String(cutoff.obc_marks) : '',
-            sc_marks: cutoff.sc_marks != null ? String(cutoff.sc_marks) : '',
-            st_marks: cutoff.st_marks != null ? String(cutoff.st_marks) : '',
-          });
+          setCollegeId(String(cutoff.college_id));
+          setYear(String(cutoff.year));
+          const vals: Record<number, { rank: string; marks: string }> = {};
+          for (const c of categories) {
+            const found = (cutoff.values || []).find((v: any) => v.category_id === c.id);
+            vals[c.id] = {
+              rank: found ? String(found.rank) : '999999',
+              marks: found && found.marks != null ? String(found.marks) : '',
+            };
+          }
+          setValues(vals);
         }
       }).catch(e => setError(e.message));
     }
@@ -44,17 +50,15 @@ export default function CutoffForm() {
     setLoading(true);
     setError('');
     try {
+      const vals = categories.map(c => ({
+        category_id: c.id,
+        rank: parseInt(values[c.id]?.rank) || 999999,
+        marks: values[c.id]?.marks ? parseInt(values[c.id].marks) : null,
+      }));
       const data = {
-        college_id: parseInt(form.college_id),
-        year: parseInt(form.year),
-        general_rank: form.general_rank ? parseInt(form.general_rank) : 999999,
-        obc_rank: form.obc_rank ? parseInt(form.obc_rank) : 999999,
-        sc_rank: form.sc_rank ? parseInt(form.sc_rank) : 999999,
-        st_rank: form.st_rank ? parseInt(form.st_rank) : 999999,
-        general_marks: form.general_marks ? parseInt(form.general_marks) : null,
-        obc_marks: form.obc_marks ? parseInt(form.obc_marks) : null,
-        sc_marks: form.sc_marks ? parseInt(form.sc_marks) : null,
-        st_marks: form.st_marks ? parseInt(form.st_marks) : null,
+        college_id: parseInt(collegeId),
+        year: parseInt(year),
+        values: vals,
       };
       if (isEdit && id) {
         await updateCutoff(Number(id), data);
@@ -69,7 +73,9 @@ export default function CutoffForm() {
     }
   };
 
-  const update = (key: string, value: any) => setForm(f => ({ ...f, [key]: value }));
+  const setVal = (catId: number, field: 'rank' | 'marks', val: string) => {
+    setValues(prev => ({ ...prev, [catId]: { ...prev[catId], [field]: val } }));
+  };
 
   const yearOptions = [];
   for (let y = 2030; y >= 2015; y--) yearOptions.push(y);
@@ -84,48 +90,26 @@ export default function CutoffForm() {
       )}
       <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-4)', maxWidth: 500 }}>
         <FormField label="College" required>
-          <select value={form.college_id} onChange={e => update('college_id', e.target.value)} style={inputStyle}>
+          <select value={collegeId} onChange={e => setCollegeId(e.target.value)} style={inputStyle}>
             <option value="">Select college...</option>
             {colleges.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
           </select>
         </FormField>
         <FormField label="Year" required>
-          <select value={form.year} onChange={e => update('year', e.target.value)} style={inputStyle}>
+          <select value={year} onChange={e => setYear(e.target.value)} style={inputStyle}>
             {yearOptions.map(y => <option key={y} value={y}>{y}</option>)}
           </select>
         </FormField>
-        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-          <FormField label="General Rank">
-            <input type="number" min="0" value={form.general_rank} onChange={e => update('general_rank', e.target.value)} style={inputStyle} />
-          </FormField>
-          <FormField label="General Marks">
-            <input type="number" min="0" max="720" value={form.general_marks} onChange={e => update('general_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
-          </FormField>
-        </div>
-        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-          <FormField label="OBC Rank">
-            <input type="number" min="0" value={form.obc_rank} onChange={e => update('obc_rank', e.target.value)} style={inputStyle} />
-          </FormField>
-          <FormField label="OBC Marks">
-            <input type="number" min="0" max="720" value={form.obc_marks} onChange={e => update('obc_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
-          </FormField>
-        </div>
-        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-          <FormField label="SC Rank">
-            <input type="number" min="0" value={form.sc_rank} onChange={e => update('sc_rank', e.target.value)} style={inputStyle} />
-          </FormField>
-          <FormField label="SC Marks">
-            <input type="number" min="0" max="720" value={form.sc_marks} onChange={e => update('sc_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
-          </FormField>
-        </div>
-        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
-          <FormField label="ST Rank">
-            <input type="number" min="0" value={form.st_rank} onChange={e => update('st_rank', e.target.value)} style={inputStyle} />
-          </FormField>
-          <FormField label="ST Marks">
-            <input type="number" min="0" max="720" value={form.st_marks} onChange={e => update('st_marks', e.target.value)} style={inputStyle} placeholder="Optional" />
-          </FormField>
-        </div>
+        {categories.map(cat => (
+          <div key={cat.id} className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
+            <FormField label={`${cat.name} Rank`}>
+              <input type="number" min="0" value={values[cat.id]?.rank || '999999'} onChange={e => setVal(cat.id, 'rank', e.target.value)} style={inputStyle} />
+            </FormField>
+            <FormField label={`${cat.name} Marks`}>
+              <input type="number" min="0" max="720" value={values[cat.id]?.marks || ''} onChange={e => setVal(cat.id, 'marks', e.target.value)} style={inputStyle} placeholder="Optional" />
+            </FormField>
+          </div>
+        ))}
         <div style={{ display: 'flex', gap: 'var(--space-3)' }}>
           <button type="button" onClick={() => navigate('/cutoffs')} style={cancelBtnStyle}>Cancel</button>
           <button type="submit" disabled={loading} style={{ ...submitBtnStyle, opacity: loading ? 0.6 : 1 }}>

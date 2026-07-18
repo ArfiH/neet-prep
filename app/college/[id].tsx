@@ -34,17 +34,17 @@ type College = {
   extra_fees: { label: string; value: number }[];
 };
 
+type CutoffValue = {
+  category_id: number;
+  category_name: string;
+  rank: number;
+  marks: number | null;
+};
+
 type Cutoff = {
   id: string;
   year: number;
-  general_rank: number;
-  obc_rank: number;
-  sc_rank: number;
-  st_rank: number;
-  general_marks: number | null;
-  obc_marks: number | null;
-  sc_marks: number | null;
-  st_marks: number | null;
+  values: CutoffValue[];
 };
 
 const formatFee = (fee: number) => {
@@ -161,42 +161,27 @@ export default function CollegeDetailScreen() {
               <View style={styles.cutoffTable}>
                 <View style={styles.cutoffHeader}>
                   <Text style={styles.cutoffHeaderText}>Year</Text>
-                  <Text style={styles.cutoffHeaderText}>General</Text>
-                  <Text style={styles.cutoffHeaderText}>OBC</Text>
-                  <Text style={styles.cutoffHeaderText}>SC</Text>
-                  <Text style={styles.cutoffHeaderText}>ST</Text>
+                  {cutoffs[0]?.values?.map((v) => (
+                    <Text key={v.category_id} style={styles.cutoffHeaderText}>{v.category_name}</Text>
+                  ))}
                 </View>
                 {cutoffs.map((cutoff) => (
                   <View key={cutoff.id}>
                     <View style={styles.cutoffRow}>
                       <Text style={styles.cutoffYear}>{cutoff.year}</Text>
-                      <Text style={styles.cutoffRank}>
-                        {cutoff.general_rank && cutoff.general_rank !== 999999 ? cutoff.general_rank.toLocaleString() : ''}
-                      </Text>
-                      <Text style={styles.cutoffRank}>
-                        {cutoff.obc_rank && cutoff.obc_rank !== 999999 ? cutoff.obc_rank.toLocaleString() : ''}
-                      </Text>
-                      <Text style={styles.cutoffRank}>
-                        {cutoff.sc_rank && cutoff.sc_rank !== 999999 ? cutoff.sc_rank.toLocaleString() : ''}
-                      </Text>
-                      <Text style={styles.cutoffRank}>
-                        {cutoff.st_rank && cutoff.st_rank !== 999999 ? cutoff.st_rank.toLocaleString() : ''}
-                      </Text>
+                      {cutoff.values?.map((v) => (
+                        <Text key={v.category_id} style={styles.cutoffRank}>
+                          {v.rank && v.rank !== 999999 ? v.rank.toLocaleString() : ''}
+                        </Text>
+                      ))}
                     </View>
                     <View style={styles.cutoffMarksRow}>
                       <Text style={styles.cutoffMarksLabel}>Marks</Text>
-                      <Text style={styles.cutoffMarks}>
-                        {cutoff.general_marks != null ? cutoff.general_marks : '—'}
-                      </Text>
-                      <Text style={styles.cutoffMarks}>
-                        {cutoff.obc_marks != null ? cutoff.obc_marks : '—'}
-                      </Text>
-                      <Text style={styles.cutoffMarks}>
-                        {cutoff.sc_marks != null ? cutoff.sc_marks : '—'}
-                      </Text>
-                      <Text style={styles.cutoffMarks}>
-                        {cutoff.st_marks != null ? cutoff.st_marks : '—'}
-                      </Text>
+                      {cutoff.values?.map((v) => (
+                        <Text key={v.category_id} style={styles.cutoffMarks}>
+                          {v.marks != null ? v.marks : '—'}
+                        </Text>
+                      ))}
                     </View>
                   </View>
                 ))}

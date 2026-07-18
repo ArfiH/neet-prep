@@ -141,6 +141,7 @@ export const getCollege = (id: number) => request<any>(`/colleges/${id}`);
 export const createCollege = (data: any) => request<any>('/colleges', { method: 'POST', body: JSON.stringify(data) });
 export const updateCollege = (id: number, data: any) => request<any>(`/colleges/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteCollege = (id: number) => request<any>(`/colleges/${id}`, { method: 'DELETE' });
+export const bulkDeleteColleges = (ids: number[]) => request<any>('/colleges/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
 export const importColleges = (file: File): Promise<{ imported: number; errors: { row: string; reason: string }[]; message: string }> => {
   const token = getToken();
   const formData = new FormData();
@@ -158,11 +159,18 @@ export const importColleges = (file: File): Promise<{ imported: number; errors: 
   });
 };
 
+// Categories
+export const getCategories = () => request<any[]>('/categories');
+export const createCategory = (data: { name: string }) => request<any>('/categories', { method: 'POST', body: JSON.stringify(data) });
+export const updateCategory = (id: number, data: { name?: string; sort_order?: number }) => request<any>(`/categories/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+export const deleteCategory = (id: number) => request<any>(`/categories/${id}`, { method: 'DELETE' });
+
 // Cutoffs
-export const getCutoffs = (collegeId?: number) => request<any[]>(`/cutoffs${collegeId ? `?college_id=${collegeId}` : ''}`);
+export const getCutoffs = (collegeId?: number) => request<any[]>('/cutoffs' + (collegeId ? `?college_id=${collegeId}` : ''));
 export const createCutoff = (data: any) => request<any>('/cutoffs', { method: 'POST', body: JSON.stringify(data) });
 export const updateCutoff = (id: number, data: any) => request<any>(`/cutoffs/${id}`, { method: 'PUT', body: JSON.stringify(data) });
 export const deleteCutoff = (id: number) => request<any>(`/cutoffs/${id}`, { method: 'DELETE' });
+export const bulkDeleteCutoffs = (ids: number[]) => request<any>('/cutoffs/bulk-delete', { method: 'POST', body: JSON.stringify({ ids }) });
 export const importCutoffs = (file: File): Promise<{ imported: number; errors: { row: string; reason: string }[]; message: string }> => {
   const token = getToken();
   const formData = new FormData();

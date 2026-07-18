@@ -217,6 +217,10 @@ export async function recordFailedPayment(data: { razorpay_order_id: string; raz
 // ---------------------------------------------------------------------------
 // Colleges
 // ---------------------------------------------------------------------------
+export async function getCategories(): Promise<any[]> {
+  return request('/colleges/categories');
+}
+
 export async function getColleges(state?: string): Promise<any[]> {
   const qs = state ? `?state=${encodeURIComponent(state)}` : '';
   return request(`/colleges${qs}`);

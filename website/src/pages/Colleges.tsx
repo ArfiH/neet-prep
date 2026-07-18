@@ -4,7 +4,6 @@ import { Search } from 'lucide-react';
 import * as api from '../lib/api';
 import { useMediaQuery } from '../lib/useMediaQuery';
 
-const CATEGORIES = ['General', 'OBC', 'SC', 'ST'];
 const COLLEGE_TYPES = ['All', 'Government', 'Private', 'Deemed', 'Central University', 'State University'];
 const STATES = [
   'All India', 'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa',
@@ -42,6 +41,7 @@ type SortKey = 'probability' | 'cutoff_rank' | 'name';
 export default function Colleges() {
   const navigate = useNavigate();
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const [categories, setCategories] = useState<string[]>([]);
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('General');
   const [state, setState] = useState('All India');
@@ -90,6 +90,14 @@ export default function Colleges() {
     };
     document.addEventListener('mousedown', handleClick);
     return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  useEffect(() => {
+    api.getCategories().then(cats => {
+      const names = cats.map((c: any) => c.name);
+      setCategories(names);
+      if (names.length > 0 && !names.includes(category)) setCategory(names[0]);
+    }).catch(() => {});
   }, []);
 
   const filteredStates = STATES.filter(s => s.toLowerCase().includes(stateSearch.toLowerCase()));
@@ -228,7 +236,7 @@ export default function Colleges() {
             <div>
               <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: 'var(--color-text)', marginBottom: 'var(--space-2)' }}>Category</label>
               <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                {CATEGORIES.map(cat => (
+                {categories.map(cat => (
                   <button
                     key={cat}
                     onClick={() => setCategory(cat)}

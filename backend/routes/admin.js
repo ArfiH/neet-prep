@@ -21,12 +21,19 @@ router.get('/colleges', c.getColleges);
 router.get('/colleges/:id', c.getCollege);
 router.post('/colleges', c.createCollege);
 router.post('/colleges/import', upload.single('file'), c.importColleges);
+router.post('/colleges/bulk-delete', c.bulkDeleteColleges);
 router.put('/colleges/:id', c.updateCollege);
 router.delete('/colleges/:id', c.deleteCollege);
+
+router.get('/categories', c.getCategories);
+router.post('/categories', c.createCategory);
+router.put('/categories/:id', c.updateCategory);
+router.delete('/categories/:id', c.deleteCategory);
 
 router.get('/cutoffs', c.getCutoffs);
 router.post('/cutoffs', c.createCutoff);
 router.post('/cutoffs/import', upload.single('file'), c.importCutoffs);
+router.post('/cutoffs/bulk-delete', c.bulkDeleteCutoffs);
 router.put('/cutoffs/:id', c.updateCutoff);
 router.delete('/cutoffs/:id', c.deleteCutoff);
 

@@ -29,7 +29,6 @@ type PredictedCollege = {
   rank_diff: number;
 };
 
-const CATEGORIES = ['General', 'OBC', 'SC', 'ST'];
 const COLLEGE_TYPES = ['All', 'Government', 'Private', 'Deemed', 'Central University', 'State University'];
 const STATES = [
   'All India', 'Andhra Pradesh', 'Assam', 'Bihar', 'Chhattisgarh', 'Delhi', 'Goa',
@@ -44,6 +43,7 @@ const monoFont = Platform.select({ ios: 'Menlo', android: 'monospace', default: 
 
 export default function CollegesScreen() {
   const router = useRouter();
+  const [categories, setCategories] = useState<string[]>([]);
   const [rank, setRank] = useState('');
   const [category, setCategory] = useState('General');
   const [state, setState] = useState('All India');
@@ -60,6 +60,14 @@ export default function CollegesScreen() {
   const [showSearchDropdown, setShowSearchDropdown] = useState(false);
   const [searchLoading, setSearchLoading] = useState(false);
   const searchInputRef = useRef<TextInput>(null);
+
+  useEffect(() => {
+    api.getCategories().then(cats => {
+      const names = cats.map((c: any) => c.name);
+      setCategories(names);
+      if (names.length > 0 && !names.includes(category)) setCategory(names[0]);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (searchQuery.length < 2) {
@@ -194,7 +202,7 @@ export default function CollegesScreen() {
           <View style={styles.inputGroup}>
             <Text style={styles.inputLabel}>Category</Text>
             <View style={styles.pillRow}>
-              {CATEGORIES.map((cat) => (
+              {categories.map((cat) => (
                 <TouchableOpacity
                   key={cat}
                   style={[styles.catPill, category === cat && styles.catPillActive]}

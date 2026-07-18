@@ -14,10 +14,13 @@ interface DataTableProps<T> {
   onEdit?: (item: T) => void;
   onDelete?: (item: T) => void;
   searchPlaceholder?: string;
+  selectedValues?: Set<string | number>;
+  onSelectChange?: (selected: Set<string | number>) => void;
 }
 
 export default function DataTable<T extends Record<string, any>>({
   columns, data, keyField, onEdit, onDelete, searchPlaceholder,
+  selectedValues, onSelectChange,
 }: DataTableProps<T>) {
   const [search, setSearch] = useState('');
   const [sortKey, setSortKey] = useState<string | null>(null);
@@ -50,6 +53,25 @@ export default function DataTable<T extends Record<string, any>>({
       setSortDir('asc');
     }
   };
+
+  const handleSelect = (id: string | number, checked: boolean) => {
+    if (!selectedValues || !onSelectChange) return;
+    const next = new Set(selectedValues);
+    if (checked) next.add(id);
+    else next.delete(id);
+    onSelectChange(next);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (!onSelectChange) return;
+    if (checked) {
+      onSelectChange(new Set(filtered.map(item => item[keyField])));
+    } else {
+      onSelectChange(new Set());
+    }
+  };
+
+  const allFilteredSelected = filtered.length > 0 && filtered.every(item => selectedValues?.has(item[keyField]));
 
   return (
     <div style={{
@@ -86,6 +108,16 @@ export default function DataTable<T extends Record<string, any>>({
         }}>
           <thead>
             <tr style={{ borderBottom: '1px solid var(--color-border)', background: 'var(--color-paper-2)' }}>
+              {onSelectChange && (
+                <th style={{ padding: 'var(--space-2) var(--space-3)', width: 40 }}>
+                  <input
+                    type="checkbox"
+                    checked={allFilteredSelected}
+                    onChange={e => handleSelectAll(e.target.checked)}
+                    style={{ cursor: 'pointer' }}
+                  />
+                </th>
+              )}
               {columns.map(col => (
                 <th
                   key={col.key}
@@ -124,10 +156,21 @@ export default function DataTable<T extends Record<string, any>>({
                 style={{
                   borderBottom: '1px solid var(--color-border)',
                   transition: 'background var(--transition-fast)',
+                  background: selectedValues?.has(item[keyField]) ? 'var(--color-accent-muted)' : 'transparent',
                 }}
-                onMouseEnter={e => (e.currentTarget.style.background = 'var(--color-paper-2)')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                onMouseEnter={e => (e.currentTarget.style.background = selectedValues?.has(item[keyField]) ? 'var(--color-accent-muted)' : 'var(--color-paper-2)')}
+                onMouseLeave={e => (e.currentTarget.style.background = selectedValues?.has(item[keyField]) ? 'var(--color-accent-muted)' : 'transparent')}
               >
+                {onSelectChange && (
+                  <td style={{ padding: 'var(--space-2) var(--space-3)' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedValues?.has(item[keyField]) || false}
+                      onChange={e => handleSelect(item[keyField], e.target.checked)}
+                      style={{ cursor: 'pointer' }}
+                    />
+                  </td>
+                )}
                 {columns.map(col => (
                   <td key={col.key} style={{
                     padding: 'var(--space-2) var(--space-3)',
@@ -156,7 +199,7 @@ export default function DataTable<T extends Record<string, any>>({
             ))}
             {filtered.length === 0 && (
               <tr>
-                <td colSpan={columns.length + (onEdit || onDelete ? 1 : 0)} style={{
+                <td colSpan={columns.length + (onEdit || onDelete ? 1 : 0) + (onSelectChange ? 1 : 0)} style={{
                   padding: 'var(--space-8)',
                   textAlign: 'center',
                   color: 'var(--color-text-3)',

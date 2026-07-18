@@ -218,6 +218,83 @@ const deleteCollege = async (req, res) => {
   }
 };
 
+const getCategories = async (req, res) => {
+  try {
+    const [rows] = await pool.query('SELECT * FROM categories ORDER BY sort_order, id');
+    res.json(rows);
+  } catch (error) {
+    console.error('Get categories error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const createCategory = async (req, res) => {
+  try {
+    const { name } = req.body;
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Category name is required' });
+    const [existing] = await pool.query('SELECT id FROM categories WHERE name = ?', [name.trim()]);
+    if (existing.length) return res.status(409).json({ error: 'Category already exists' });
+    const [result] = await pool.query('INSERT INTO categories (name, sort_order) VALUES (?, 99)', [name.trim()]);
+    res.status(201).json({ id: result.insertId, message: 'Category created' });
+  } catch (error) {
+    console.error('Create category error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, sort_order } = req.body;
+    const [existing] = await pool.query('SELECT id FROM categories WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'Category not found' });
+    if (name && name.trim()) {
+      const [dup] = await pool.query('SELECT id FROM categories WHERE name = ? AND id != ?', [name.trim(), id]);
+      if (dup.length) return res.status(409).json({ error: 'Category name already exists' });
+    }
+    await pool.query(
+      'UPDATE categories SET name = COALESCE(?, name), sort_order = COALESCE(?, sort_order) WHERE id = ?',
+      [name?.trim() || null, sort_order ?? null, id]
+    );
+    res.json({ message: 'Category updated' });
+  } catch (error) {
+    console.error('Update category error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [existing] = await pool.query('SELECT id FROM categories WHERE id = ?', [id]);
+    if (!existing.length) return res.status(404).json({ error: 'Category not found' });
+    await pool.query('DELETE FROM cutoff_values WHERE category_id = ?', [id]);
+    await pool.query('DELETE FROM categories WHERE id = ?', [id]);
+    res.json({ message: 'Category deleted' });
+  } catch (error) {
+    console.error('Delete category error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const attachValues = async (cutoffs) => {
+  if (cutoffs.length === 0) return cutoffs;
+  const ids = cutoffs.map(c => c.id);
+  const placeholders = ids.map(() => '?').join(',');
+  const [values] = await pool.query(
+    `SELECT cv.*, cat.name AS category_name FROM cutoff_values cv
+     JOIN categories cat ON cat.id = cv.category_id
+     WHERE cv.cutoff_id IN (${placeholders}) ORDER BY cat.sort_order, cat.id`,
+    ids
+  );
+  const grouped = {};
+  for (const v of values) {
+    if (!grouped[v.cutoff_id]) grouped[v.cutoff_id] = [];
+    grouped[v.cutoff_id].push({ id: v.id, category_id: v.category_id, category_name: v.category_name, rank: v.rank, marks: v.marks });
+  }
+  return cutoffs.map(c => ({ ...c, values: grouped[c.id] || [] }));
+};
+
 const getCutoffs = async (req, res) => {
   try {
     let query = `SELECT c.*, col.name AS college_name, col.state AS college_state
@@ -229,7 +306,8 @@ const getCutoffs = async (req, res) => {
     }
     query += ' ORDER BY col.name, c.year DESC';
     const [cutoffs] = await pool.query(query, params);
-    res.json(cutoffs);
+    const withValues = await attachValues(cutoffs);
+    res.json(withValues);
   } catch (error) {
     console.error('Admin get cutoffs error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -238,7 +316,7 @@ const getCutoffs = async (req, res) => {
 
 const createCutoff = async (req, res) => {
   try {
-    const { college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks } = req.body;
+    const { college_id, year, values } = req.body;
     if (!college_id || !year) return res.status(400).json({ error: 'College ID and year are required' });
 
     const [existing] = await pool.query('SELECT id FROM colleges WHERE id = ?', [college_id]);
@@ -248,10 +326,20 @@ const createCutoff = async (req, res) => {
     if (dup.length) return res.status(409).json({ error: 'Cutoff already exists for this college and year' });
 
     const [result] = await pool.query(
-      'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999, general_marks ?? null, obc_marks ?? null, sc_marks ?? null, st_marks ?? null]
+      'INSERT INTO cutoffs (college_id, year) VALUES (?, ?)',
+      [college_id, year]
     );
-    res.status(201).json({ id: result.insertId, message: 'Cutoff created' });
+    const cutoffId = result.insertId;
+
+    if (values && values.length > 0) {
+      const bulkValues = values.map(v => [cutoffId, v.category_id, v.rank ?? 999999, v.marks ?? null]);
+      await pool.query(
+        'INSERT INTO cutoff_values (cutoff_id, category_id, rank, marks) VALUES ?',
+        [bulkValues]
+      );
+    }
+
+    res.status(201).json({ id: cutoffId, message: 'Cutoff created' });
   } catch (error) {
     console.error('Admin create cutoff error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -264,11 +352,21 @@ const updateCutoff = async (req, res) => {
     const [existing] = await pool.query('SELECT id FROM cutoffs WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'Cutoff not found' });
 
-    const { college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks } = req.body;
+    const { college_id, year, values } = req.body;
     await pool.query(
-      'UPDATE cutoffs SET college_id = ?, year = ?, general_rank = ?, obc_rank = ?, sc_rank = ?, st_rank = ?, general_marks = ?, obc_marks = ?, sc_marks = ?, st_marks = ? WHERE id = ?',
-      [college_id, year, general_rank ?? 999999, obc_rank ?? 999999, sc_rank ?? 999999, st_rank ?? 999999, general_marks ?? null, obc_marks ?? null, sc_marks ?? null, st_marks ?? null, id]
+      'UPDATE cutoffs SET college_id = ?, year = ? WHERE id = ?',
+      [college_id, year, id]
     );
+
+    if (values && values.length > 0) {
+      await pool.query('DELETE FROM cutoff_values WHERE cutoff_id = ?', [id]);
+      const bulkValues = values.map(v => [id, v.category_id, v.rank ?? 999999, v.marks ?? null]);
+      await pool.query(
+        'INSERT INTO cutoff_values (cutoff_id, category_id, rank, marks) VALUES ?',
+        [bulkValues]
+      );
+    }
+
     res.json({ message: 'Cutoff updated' });
   } catch (error) {
     console.error('Admin update cutoff error:', error);
@@ -281,10 +379,45 @@ const deleteCutoff = async (req, res) => {
     const [existing] = await pool.query('SELECT id FROM cutoffs WHERE id = ?', [req.params.id]);
     if (!existing.length) return res.status(404).json({ error: 'Cutoff not found' });
 
+    await pool.query('DELETE FROM cutoff_values WHERE cutoff_id = ?', [req.params.id]);
     await pool.query('DELETE FROM cutoffs WHERE id = ?', [req.params.id]);
     res.json({ message: 'Cutoff deleted' });
   } catch (error) {
     console.error('Admin delete cutoff error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const bulkDeleteColleges = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids array is required' });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(`DELETE FROM cutoffs WHERE college_id IN (${placeholders})`, ids);
+    await pool.query(`DELETE FROM colleges WHERE id IN (${placeholders})`, ids);
+    res.json({ deleted: ids.length, message: `${ids.length} college(s) deleted` });
+  } catch (error) {
+    console.error('Admin bulk delete colleges error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const bulkDeleteCutoffs = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0) {
+      return res.status(400).json({ error: 'ids array is required' });
+    }
+
+    const placeholders = ids.map(() => '?').join(',');
+    await pool.query(`DELETE FROM cutoff_values WHERE cutoff_id IN (${placeholders})`, ids);
+    await pool.query(`DELETE FROM cutoffs WHERE id IN (${placeholders})`, ids);
+    res.json({ deleted: ids.length, message: `${ids.length} cutoff(s) deleted` });
+  } catch (error) {
+    console.error('Admin bulk delete cutoffs error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -944,7 +1077,20 @@ const importCutoffs = async (req, res) => {
           'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [row.college_id, row.year, row.general_rank, row.obc_rank, row.sc_rank, row.st_rank, row.general_marks, row.obc_marks, row.sc_marks, row.st_marks]
         );
-        inserted.push(result.insertId);
+        const cutoffId = result.insertId;
+        const oldToNew = { general_rank: 1, obc_rank: 2, sc_rank: 3, st_rank: 4 };
+        const catValues = [];
+        for (const [col, catId] of Object.entries(oldToNew)) {
+          const rankKey = col;
+          const marksKey = col.replace('_rank', '_marks');
+          if (row[rankKey] != null && row[rankKey] !== 999999) {
+            catValues.push([cutoffId, catId, row[rankKey], row[marksKey] || null]);
+          }
+        }
+        if (catValues.length > 0) {
+          await pool.query('INSERT INTO cutoff_values (cutoff_id, category_id, rank, marks) VALUES ?', [catValues]);
+        }
+        inserted.push(cutoffId);
       } catch (err) {
         errors.push({ row: '—', reason: `college ${row.college_id}, ${row.year}: ${err.message}` });
       }
@@ -964,8 +1110,9 @@ const importCutoffs = async (req, res) => {
 module.exports = {
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
-  getColleges, getCollege, createCollege, updateCollege, deleteCollege, importColleges,
-  getCutoffs, createCutoff, updateCutoff, deleteCutoff, importCutoffs,
+  getColleges, getCollege, createCollege, updateCollege, deleteCollege, importColleges, bulkDeleteColleges,
+  getCutoffs, createCutoff, updateCutoff, deleteCutoff, importCutoffs, bulkDeleteCutoffs,
+  getCategories, createCategory, updateCategory, deleteCategory,
   getUsers, updateUserRole,
   banUser, unbanUser,
   getUserPurchases, grantPdfAccess, revokePdfAccess,

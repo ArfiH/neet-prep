@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import * as api from '../lib/api';
 import { useMediaQuery } from '../lib/useMediaQuery';
@@ -22,14 +22,7 @@ type College = {
   cutoffs: Array<{
     id: number;
     year: number;
-    general_rank: number;
-    obc_rank: number;
-    sc_rank: number;
-    st_rank: number;
-    general_marks: number | null;
-    obc_marks: number | null;
-    sc_marks: number | null;
-    st_marks: number | null;
+    values: Array<{ category_id: number; category_name: string; rank: number; marks: number | null }>;
   }>;
 };
 
@@ -187,50 +180,42 @@ export default function CollegeDetail() {
                   <thead>
                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
                       <th rowSpan={2} style={{ padding: '10px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)', minWidth: 50 }}>Year</th>
-                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)' }}>General</th>
-                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)' }}>OBC</th>
-                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600, borderRight: '1px solid var(--color-border)' }}>SC</th>
-                      <th colSpan={2} style={{ padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600 }}>ST</th>
+                      {college.cutoffs[0]?.values?.map((v, i) => (
+                        <th key={v.category_id} colSpan={2} style={{
+                          padding: '8px var(--space-3)', textAlign: 'center', color: 'var(--color-text-3)', fontWeight: 600,
+                          borderRight: i < college.cutoffs[0].values.length - 1 ? '1px solid var(--color-border)' : 'none'
+                        }}>{v.category_name}</th>
+                      ))}
                     </tr>
                     <tr style={{ borderBottom: '1px solid var(--color-border)' }}>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Rank</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Marks</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Rank</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Marks</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Rank</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11, borderRight: '1px solid var(--color-border)' }}>Marks</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11 }}>Rank</th>
-                      <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11 }}>Marks</th>
+                      {college.cutoffs[0]?.values?.map((v, i) => (
+                        <React.Fragment key={v.category_id}>
+                          <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11 }}>Rank</th>
+                          <th style={{ padding: '6px var(--space-2)', textAlign: 'center', color: 'var(--color-text-4)', fontWeight: 500, fontSize: 11 }}>Marks</th>
+                        </React.Fragment>
+                      ))}
                     </tr>
                   </thead>
                   <tbody>
                     {college.cutoffs.map(c => (
                       <tr key={c.id} style={{ borderBottom: '1px solid var(--color-border)' }}>
                         <td style={{ padding: '10px var(--space-3)', fontWeight: 600, textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>{c.year}</td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
-                          {c.general_rank && c.general_rank !== 999999 ? c.general_rank.toLocaleString() : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', borderRight: '1px solid var(--color-border)', fontSize: 12 }}>
-                          {c.general_marks != null ? c.general_marks : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
-                          {c.obc_rank && c.obc_rank !== 999999 ? c.obc_rank.toLocaleString() : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', borderRight: '1px solid var(--color-border)', fontSize: 12 }}>
-                          {c.obc_marks != null ? c.obc_marks : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
-                          {c.sc_rank && c.sc_rank !== 999999 ? c.sc_rank.toLocaleString() : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', borderRight: '1px solid var(--color-border)', fontSize: 12 }}>
-                          {c.sc_marks != null ? c.sc_marks : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center', borderRight: '1px solid var(--color-border)' }}>
-                          {c.st_rank && c.st_rank !== 999999 ? c.st_rank.toLocaleString() : '—'}
-                        </td>
-                        <td style={{ padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', fontSize: 12 }}>
-                          {c.st_marks != null ? c.st_marks : '—'}
-                        </td>
+                        {c.values?.map((v, i) => (
+                          <React.Fragment key={v.category_id}>
+                            <td style={{
+                              padding: '10px var(--space-2)', color: 'var(--color-text-2)', textAlign: 'center',
+                              borderRight: i < c.values.length - 1 ? '1px solid var(--color-border)' : 'none'
+                            }}>
+                              {v.rank && v.rank !== 999999 ? v.rank.toLocaleString() : '—'}
+                            </td>
+                            <td style={{
+                              padding: '10px var(--space-2)', color: 'var(--color-text-3)', textAlign: 'center', fontSize: 12,
+                              borderRight: i < c.values.length - 1 ? '1px solid var(--color-border)' : 'none'
+                            }}>
+                              {v.marks != null ? v.marks : '—'}
+                            </td>
+                          </React.Fragment>
+                        ))}
                       </tr>
                     ))}
                   </tbody>

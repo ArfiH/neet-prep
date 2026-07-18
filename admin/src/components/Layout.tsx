@@ -8,6 +8,7 @@ const navItems = [
   { to: '/pdfs', label: 'PDFs' },
   { to: '/colleges', label: 'Colleges' },
   { to: '/cutoffs', label: 'Cutoffs' },
+  { to: '/categories', label: 'Categories' },
   { to: '/users', label: 'Users' },
   { to: '/delivery-requests', label: 'Deliveries' },
   { to: '/notifications/broadcast', label: 'Broadcast' },

@@ -226,6 +226,10 @@ class ApiClient {
   }
 
   // College methods
+  async getCategories() {
+    return this.request<any[]>('/colleges/categories', { method: 'GET' });
+  }
+
   async getColleges(state?: string, type?: string) {
     const params = new URLSearchParams();
     if (state) params.append('state', state);
