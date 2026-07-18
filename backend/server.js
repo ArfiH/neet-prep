@@ -46,7 +46,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/api/auth', authRoutes);
 app.use('/api/pdfs', pdfRoutes);
 app.use('/api/colleges', collegeRoutes);
-app.use('/api', passwordResetRoutes);
+app.use('/api/auth', passwordResetRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api', redirectRoutes);
 app.use('/api/admin', adminRoutes);

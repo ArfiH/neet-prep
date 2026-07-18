@@ -6,6 +6,8 @@ const c = require('../controllers/admin');
 
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 100 * 1024 * 1024 } });
 
+router.post('/forgot-password', c.adminForgotPassword);
+
 router.use(adminAuth);
 
 router.get('/dashboard', c.getDashboard);
@@ -38,6 +40,7 @@ router.put('/cutoffs/:id', c.updateCutoff);
 router.delete('/cutoffs/:id', c.deleteCutoff);
 
 router.get('/users', c.getUsers);
+router.post('/change-password', c.adminChangePassword);
 router.put('/users/:id/role', c.updateUserRole);
 router.put('/users/:id/ban', c.banUser);
 router.put('/users/:id/unban', c.unbanUser);

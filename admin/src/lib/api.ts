@@ -72,6 +72,9 @@ export function logout() {
   clearToken();
 }
 
+export const adminForgotPassword = (email: string) =>
+  request<{ message: string }>('/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
+
 // Dashboard
 export const getDashboard = () => request<{
   pdfCount: number; collegeCount: number; userCount: number; purchaseCount: number; monthlyPurchases: number;
@@ -193,6 +196,8 @@ export const getUsers = () => request<any[]>('/users');
 export const updateUserRole = (id: number, role: string) => request<any>(`/users/${id}/role`, { method: 'PUT', body: JSON.stringify({ role }) });
 export const banUser = (id: number) => request<any>(`/users/${id}/ban`, { method: 'PUT' });
 export const unbanUser = (id: number) => request<any>(`/users/${id}/unban`, { method: 'PUT' });
+export const changePassword = (currentPassword: string, newPassword: string) =>
+  request<{ message: string }>('/change-password', { method: 'POST', body: JSON.stringify({ currentPassword, newPassword }) });
 export const getUserPurchases = (id: number) => request<any[]>(`/users/${id}/purchases`);
 export const grantPdfAccess = (userId: number, pdfId: number) =>
   request<any>(`/users/${userId}/purchases`, { method: 'POST', body: JSON.stringify({ pdf_id: pdfId }) });

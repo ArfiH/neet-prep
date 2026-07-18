@@ -127,15 +127,32 @@ const resetPasswordWeb = async (req, res) => {
         <div style="background:#fff;padding:40px;border-radius:20px;max-width:400px;width:100%">
           <h2 style="color:#1a1d23;margin-bottom:8px">Reset Password</h2>
           <p style="color:#5f6570;margin-bottom:24px">Enter your new password below.</p>
-          <form action="/api/auth/reset-password-web-submit" method="POST" style="display:flex;flex-direction:column;gap:16px">
+          <div id="error" style="display:none;padding:12px;background:#fef2f2;color:#dc2626;border-radius:12px;font-size:14px;margin-bottom:16px;font-weight:500"></div>
+          <form id="resetForm" action="/api/auth/reset-password-web-submit" method="POST" style="display:flex;flex-direction:column;gap:16px" onsubmit="return validate()">
             <input type="hidden" name="token" value="${token}">
             <div>
               <label style="font-size:14px;font-weight:600;color:#1a1d23;display:block;margin-bottom:6px">New Password</label>
-              <input type="password" name="newPassword" required minlength="6" style="width:100%;padding:14px;border:1px solid #e2e4e8;border-radius:12px;font-size:16px;box-sizing:border-box">
+              <input type="password" name="newPassword" id="newPassword" required minlength="6" style="width:100%;padding:14px;border:1px solid #e2e4e8;border-radius:12px;font-size:16px;box-sizing:border-box">
+            </div>
+            <div>
+              <label style="font-size:14px;font-weight:600;color:#1a1d23;display:block;margin-bottom:6px">Re-enter New Password</label>
+              <input type="password" name="confirmPassword" id="confirmPassword" required minlength="6" style="width:100%;padding:14px;border:1px solid #e2e4e8;border-radius:12px;font-size:16px;box-sizing:border-box">
             </div>
             <button type="submit" style="background:#2ea86e;color:#fff;padding:16px;border:none;border-radius:14px;font-size:16px;font-weight:700;cursor:pointer">Reset Password</button>
           </form>
         </div>
+        <script>
+          function validate() {
+            var p1 = document.getElementById('newPassword').value;
+            var p2 = document.getElementById('confirmPassword').value;
+            if (p1 !== p2) {
+              document.getElementById('error').style.display = 'block';
+              document.getElementById('error').textContent = 'Passwords do not match.';
+              return false;
+            }
+            return true;
+          }
+        </script>
       </body></html>
     `);
   } catch (error) {
@@ -153,7 +170,7 @@ const resetPasswordWeb = async (req, res) => {
 
 const resetPasswordWebSubmit = async (req, res) => {
   try {
-    const { token, newPassword } = req.body;
+    const { token, newPassword, confirmPassword } = req.body;
 
     if (!token || !newPassword) {
       return res.status(400).send(`
@@ -172,6 +189,17 @@ const resetPasswordWebSubmit = async (req, res) => {
           <div style="background:#fff;padding:40px;border-radius:20px;max-width:400px;width:100%;text-align:center">
             <h2 style="color:#dc2626;margin-bottom:8px">Error</h2>
             <p style="color:#5f6570">Password must be at least 6 characters.</p>
+          </div>
+        </body></html>
+      `);
+    }
+
+    if (newPassword !== confirmPassword) {
+      return res.status(400).send(`
+        <html><body style="font-family:sans-serif;display:flex;justify-content:center;align-items:center;min-height:100vh;background:#f5f5f5;padding:20px">
+          <div style="background:#fff;padding:40px;border-radius:20px;max-width:400px;width:100%;text-align:center">
+            <h2 style="color:#dc2626;margin-bottom:8px">Error</h2>
+            <p style="color:#5f6570">Passwords do not match.</p>
           </div>
         </body></html>
       `);
@@ -208,7 +236,6 @@ const resetPasswordWebSubmit = async (req, res) => {
           </div>
           <h2 style="color:#1a1d23;margin-bottom:8px">Password Reset!</h2>
           <p style="color:#5f6570;margin-bottom:24px">Your password has been updated. You can now log in.</p>
-          <a href="myapp://login" style="display:inline-block;background:#2ea86e;color:#fff;padding:14px 32px;border-radius:14px;text-decoration:none;font-weight:700;font-size:16px">Open NEET Zymee</a>
         </div>
       </body></html>
     `);

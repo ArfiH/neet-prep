@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { NavLink, useNavigate, Outlet } from 'react-router-dom';
 import { Menu, X } from 'lucide-react';
-import { logout } from '../lib/api';
+import { logout, changePassword } from '../lib/api';
 
 const navItems = [
   { to: '/', label: 'Dashboard' },
@@ -20,6 +20,11 @@ export default function Layout() {
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [cpCurrent, setCpCurrent] = useState('');
+  const [cpNew, setCpNew] = useState('');
+  const [cpError, setCpError] = useState('');
+  const [cpSuccess, setCpSuccess] = useState('');
 
   useEffect(() => {
     const check = () => setIsMobile(window.innerWidth < 768);
@@ -31,6 +36,24 @@ export default function Layout() {
   const handleLogout = () => {
     logout();
     navigate('/login');
+  };
+
+  const handleChangePassword = async () => {
+    setCpError('');
+    setCpSuccess('');
+    if (!cpNew || cpNew.length < 6) {
+      setCpError('New password must be at least 6 characters');
+      return;
+    }
+    try {
+      const res = await changePassword(cpCurrent, cpNew);
+      setCpSuccess(res.message);
+      setCpCurrent('');
+      setCpNew('');
+      setTimeout(() => setShowChangePassword(false), 1500);
+    } catch (e: any) {
+      setCpError(e.message);
+    }
   };
 
   const closeSidebar = () => {
@@ -76,8 +99,27 @@ export default function Layout() {
           ))}
         </nav>
         <div style={styles.spacer} />
+        <button onClick={() => { setCpError(''); setCpSuccess(''); setCpCurrent(''); setCpNew(''); setShowChangePassword(true); }} style={styles.logoutBtn}>Change Password</button>
         <button onClick={handleLogout} style={styles.logoutBtn}>Sign Out</button>
       </aside>
+
+      {showChangePassword && (
+        <div style={styles.modalOverlay} onClick={() => setShowChangePassword(false)}>
+          <div style={styles.modal} onClick={e => e.stopPropagation()}>
+            <h3 style={{ margin: 0, fontSize: 16, fontWeight: 600, color: 'var(--color-text)' }}>Change Password</h3>
+            {cpError && <div style={{ color: 'var(--color-danger)', fontSize: 13, marginTop: 'var(--space-2)' }}>{cpError}</div>}
+            {cpSuccess && <div style={{ color: 'var(--color-success)', fontSize: 13, marginTop: 'var(--space-2)' }}>{cpSuccess}</div>}
+            <div style={{ marginTop: 'var(--space-4)', display: 'flex', flexDirection: 'column', gap: 'var(--space-3)' }}>
+              <input type="password" placeholder="Current password" value={cpCurrent} onChange={e => setCpCurrent(e.target.value)} style={styles.input} autoComplete="current-password" />
+              <input type="password" placeholder="New password (min 6 chars)" value={cpNew} onChange={e => setCpNew(e.target.value)} style={styles.input} autoComplete="new-password" />
+              <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end', marginTop: 'var(--space-1)' }}>
+                <button onClick={() => setShowChangePassword(false)} style={styles.modalCancelBtn}>Cancel</button>
+                <button onClick={handleChangePassword} style={styles.modalConfirmBtn}>Update</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       <main style={{
         ...styles.main,
         ...(isMobile ? { marginLeft: 0 } : {}),
@@ -199,5 +241,53 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: 'pointer',
     color: 'var(--color-text-2)',
     flexShrink: 0,
+  },
+  modalOverlay: {
+    position: 'fixed',
+    inset: 0,
+    background: 'rgba(0,0,0,0.5)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 200,
+  },
+  modal: {
+    background: 'var(--color-paper)',
+    borderRadius: 'var(--radius-lg)',
+    padding: 'var(--space-5)',
+    width: '90%',
+    maxWidth: 380,
+    boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+  },
+  input: {
+    width: '100%',
+    padding: 'var(--space-2) var(--space-3)',
+    borderRadius: 'var(--radius-md)',
+    border: '1px solid var(--color-border)',
+    fontSize: 14,
+    background: 'var(--color-paper-2)',
+    color: 'var(--color-text)',
+    outline: 'none',
+    boxSizing: 'border-box' as const,
+  },
+  modalCancelBtn: {
+    background: 'none',
+    border: '1px solid var(--color-border)',
+    borderRadius: 'var(--radius-md)',
+    padding: 'var(--space-2) var(--space-4)',
+    fontSize: 13,
+    fontWeight: 500,
+    cursor: 'pointer',
+    color: 'var(--color-text-2)',
+  },
+  modalConfirmBtn: {
+    background: 'var(--color-accent)',
+    border: 'none',
+    borderRadius: 'var(--radius-md)',
+    padding: 'var(--space-2) var(--space-4)',
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: 'pointer',
+    color: '#fff',
   },
 };

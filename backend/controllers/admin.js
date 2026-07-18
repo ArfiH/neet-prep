@@ -1,5 +1,7 @@
 const { pool } = require('../config/db');
-const { sendNotificationEmail } = require('../services/email');
+const { sendNotificationEmail, sendPasswordResetEmail } = require('../services/email');
+const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 
 const parsePdf = (pdf) => ({
   ...pdf,
@@ -430,6 +432,58 @@ const getUsers = async (req, res) => {
     res.json(users);
   } catch (error) {
     console.error('Admin get users error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const adminForgotPassword = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+
+    const [users] = await pool.query(
+      "SELECT id FROM users WHERE email = ? AND role = 'admin'",
+      [email]
+    );
+
+    if (users.length > 0) {
+      const resetToken = crypto.randomBytes(32).toString('hex');
+      const expiresAt = new Date(Date.now() + 30 * 60 * 1000);
+      await pool.query(
+        'INSERT INTO password_resets (email, token, expires_at) VALUES (?, ?, ?)',
+        [email, resetToken, expiresAt]
+      );
+      sendPasswordResetEmail(email, resetToken).catch(err =>
+        console.error('Failed to send admin reset email:', err)
+      );
+    }
+
+    res.json({
+      message: 'If an admin account exists with this email, you will receive a password reset link shortly.'
+    });
+  } catch (error) {
+    console.error('Admin forgot password error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+const adminChangePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    if (!newPassword || newPassword.length < 6) {
+      return res.status(400).json({ error: 'New password must be at least 6 characters' });
+    }
+    const [users] = await pool.query('SELECT password_hash FROM users WHERE id = ?', [req.adminUserId]);
+    if (!users.length) return res.status(404).json({ error: 'Admin not found' });
+    if (currentPassword) {
+      const match = await bcrypt.compare(currentPassword, users[0].password_hash);
+      if (!match) return res.status(401).json({ error: 'Current password is incorrect' });
+    }
+    const hash = await bcrypt.hash(newPassword, 10);
+    await pool.query('UPDATE users SET password_hash = ? WHERE id = ?', [hash, req.adminUserId]);
+    res.json({ message: 'Password changed successfully' });
+  } catch (error) {
+    console.error('Admin change password error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 };
@@ -1113,7 +1167,7 @@ module.exports = {
   getColleges, getCollege, createCollege, updateCollege, deleteCollege, importColleges, bulkDeleteColleges,
   getCutoffs, createCutoff, updateCutoff, deleteCutoff, importCutoffs, bulkDeleteCutoffs,
   getCategories, createCategory, updateCategory, deleteCategory,
-  getUsers, updateUserRole,
+  getUsers, adminForgotPassword, adminChangePassword, updateUserRole,
   banUser, unbanUser,
   getUserPurchases, grantPdfAccess, revokePdfAccess,
   broadcastNotification, sendUserNotification,
