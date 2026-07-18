@@ -22,7 +22,7 @@ export default function CutoffForm() {
       if (!isEdit || !id) {
         const init: Record<number, { rank: string; marks: string }> = {};
         for (const c of cats) {
-          init[c.id] = { rank: '999999', marks: '' };
+          init[c.id] = { rank: '', marks: '' };
         }
         setValues(init);
         return;
@@ -36,7 +36,7 @@ export default function CutoffForm() {
           for (const c of cats) {
             const found = (cutoff.values || []).find((v: any) => v.category_id === c.id);
             vals[c.id] = {
-              rank: found ? String(found.rank) : '999999',
+              rank: found && found.rank !== 999999 ? String(found.rank) : '',
               marks: found && found.marks != null ? String(found.marks) : '',
             };
           }
@@ -104,7 +104,7 @@ export default function CutoffForm() {
         {categories.map(cat => (
           <div key={cat.id} className="grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-4)' }}>
             <FormField label={`${cat.name} Rank`}>
-              <input type="number" min="0" value={values[cat.id]?.rank || '999999'} onChange={e => setVal(cat.id, 'rank', e.target.value)} style={inputStyle} />
+              <input type="number" min="0" value={values[cat.id]?.rank || ''} onChange={e => setVal(cat.id, 'rank', e.target.value)} style={inputStyle} />
             </FormField>
             <FormField label={`${cat.name} Marks`}>
               <input type="number" min="0" max="720" value={values[cat.id]?.marks || ''} onChange={e => setVal(cat.id, 'marks', e.target.value)} style={inputStyle} placeholder="Optional" />
