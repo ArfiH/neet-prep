@@ -19,20 +19,21 @@ export default function CutoffForm() {
     getColleges().then(setColleges).catch(() => {});
     getCategories().then(cats => {
       setCategories(cats);
-      const init: Record<number, { rank: string; marks: string }> = {};
-      for (const c of cats) {
-        init[c.id] = { rank: '999999', marks: '' };
+      if (!isEdit || !id) {
+        const init: Record<number, { rank: string; marks: string }> = {};
+        for (const c of cats) {
+          init[c.id] = { rank: '999999', marks: '' };
+        }
+        setValues(init);
+        return;
       }
-      setValues(init);
-    }).catch(() => {});
-    if (isEdit && id) {
       getCutoffs().then(all => {
         const cutoff = all.find((c: any) => c.id === Number(id));
         if (cutoff) {
           setCollegeId(String(cutoff.college_id));
           setYear(String(cutoff.year));
           const vals: Record<number, { rank: string; marks: string }> = {};
-          for (const c of categories) {
+          for (const c of cats) {
             const found = (cutoff.values || []).find((v: any) => v.category_id === c.id);
             vals[c.id] = {
               rank: found ? String(found.rank) : '999999',
@@ -42,7 +43,7 @@ export default function CutoffForm() {
           setValues(vals);
         }
       }).catch(e => setError(e.message));
-    }
+    }).catch(() => {});
   }, [id, isEdit]);
 
   const handleSubmit = async (e: FormEvent) => {
