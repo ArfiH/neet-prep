@@ -92,7 +92,7 @@ export default function PDFViewer() {
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#1a1a1a' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: 'var(--color-danger)', fontSize: 16, marginBottom: 'var(--space-4)' }}>{error}</p>
-          <Link to="/pdfs" className="btn btn-outline">Back to PDFs</Link>
+          <Link to="/pdfs" className="btn btn-outline" style={{ background: 'var(--color-paper-2)' }}>Back to PDFs</Link>
         </div>
       </div>
     );
