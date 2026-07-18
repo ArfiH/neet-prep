@@ -75,6 +75,8 @@ export function logout() {
 export const adminForgotPassword = (email: string) =>
   request<{ message: string }>('/forgot-password', { method: 'POST', body: JSON.stringify({ email }) });
 
+export const getAdminMe = () => request<{ email: string; isMainAdmin: boolean }>('/me');
+
 // Dashboard
 export const getDashboard = () => request<{
   pdfCount: number; collegeCount: number; userCount: number; purchaseCount: number; monthlyPurchases: number;

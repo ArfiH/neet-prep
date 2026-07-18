@@ -10,6 +10,7 @@ router.post('/forgot-password', c.adminForgotPassword);
 
 router.use(adminAuth);
 
+router.get('/me', c.adminMe);
 router.get('/dashboard', c.getDashboard);
 
 router.get('/pdfs', c.getPdfs);

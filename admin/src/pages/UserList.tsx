@@ -2,15 +2,19 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import DataTable from '../components/DataTable';
 import ConfirmDialog from '../components/ConfirmDialog';
-import { getUsers, updateUserRole, banUser, unbanUser } from '../lib/api';
+import { getUsers, getAdminMe, updateUserRole, banUser, unbanUser } from '../lib/api';
 
 export default function UserList() {
   const navigate = useNavigate();
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-
+  const [isMainAdmin, setIsMainAdmin] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{ title: string; message: string; onConfirm: () => void } | null>(null);
+
+  useEffect(() => {
+    getAdminMe().then(d => setIsMainAdmin(d.isMainAdmin)).catch(() => {});
+  }, []);
 
   const load = () => {
     setLoading(true);
@@ -108,21 +112,25 @@ export default function UserList() {
       key: '_actions', label: '',
       render: (u: any) => (
         <div style={{ display: 'flex', gap: 'var(--space-2)', justifyContent: 'flex-end' }}>
-          <button
-            onClick={() => handleToggleRole(u)}
-            style={btnStyle}
-            title={u.role === 'admin' ? 'Demote to user' : 'Promote to admin'}
-          >
-            Toggle Role
-          </button>
-          <button
-            onClick={() => navigate(`/users/${u.id}/purchases`)}
-            style={btnStyle}
-            title="Manage PDF access"
-          >
-            PDFs
-          </button>
-          {u.is_banned ? (
+          {isMainAdmin && (
+            <button
+              onClick={() => handleToggleRole(u)}
+              style={btnStyle}
+              title={u.role === 'admin' ? 'Demote to user' : 'Promote to admin'}
+            >
+              Toggle Role
+            </button>
+          )}
+          {isMainAdmin && (
+            <button
+              onClick={() => navigate(`/users/${u.id}/purchases`)}
+              style={btnStyle}
+              title="Manage PDF access"
+            >
+              PDFs
+            </button>
+          )}
+          {isMainAdmin && (u.is_banned ? (
             <button
               onClick={() => handleUnban(u)}
               style={{ ...btnStyle, color: 'var(--color-success)', borderColor: 'var(--color-success)' }}
@@ -140,7 +148,7 @@ export default function UserList() {
                 Ban
               </button>
             )
-          )}
+          ))}
         </div>
       ),
     },

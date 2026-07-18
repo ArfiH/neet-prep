@@ -11,6 +11,13 @@ const parsePdf = (pdf) => ({
   is_deliverable: Boolean(pdf.is_deliverable),
 });
 
+const adminMe = async (req, res) => {
+  res.json({
+    email: req.adminEmail,
+    isMainAdmin: req.adminEmail === (process.env.MAIN_ADMIN_EMAIL || 'neetzymee@gmail.com'),
+  });
+};
+
 const getDashboard = async (req, res) => {
   try {
     const [[{ c: pdfCount }]] = await pool.query('SELECT COUNT(*) as c FROM pdfs');
@@ -490,6 +497,9 @@ const adminChangePassword = async (req, res) => {
 
 const updateUserRole = async (req, res) => {
   try {
+    if (req.adminEmail !== (process.env.MAIN_ADMIN_EMAIL || 'neetzymee@gmail.com')) {
+      return res.status(403).json({ error: 'Only the main admin can perform this action' });
+    }
     const { id } = req.params;
     const { role } = req.body;
     if (!['admin', 'user'].includes(role)) return res.status(400).json({ error: 'Invalid role' });
@@ -507,6 +517,9 @@ const updateUserRole = async (req, res) => {
 
 const banUser = async (req, res) => {
   try {
+    if (req.adminEmail !== (process.env.MAIN_ADMIN_EMAIL || 'neetzymee@gmail.com')) {
+      return res.status(403).json({ error: 'Only the main admin can perform this action' });
+    }
     const { id } = req.params;
     const [existing] = await pool.query('SELECT id, role FROM users WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'User not found' });
@@ -522,6 +535,9 @@ const banUser = async (req, res) => {
 
 const unbanUser = async (req, res) => {
   try {
+    if (req.adminEmail !== (process.env.MAIN_ADMIN_EMAIL || 'neetzymee@gmail.com')) {
+      return res.status(403).json({ error: 'Only the main admin can perform this action' });
+    }
     const { id } = req.params;
     const [existing] = await pool.query('SELECT id FROM users WHERE id = ?', [id]);
     if (!existing.length) return res.status(404).json({ error: 'User not found' });
@@ -558,6 +574,9 @@ const getUserPurchases = async (req, res) => {
 
 const grantPdfAccess = async (req, res) => {
   try {
+    if (req.adminEmail !== (process.env.MAIN_ADMIN_EMAIL || 'neetzymee@gmail.com')) {
+      return res.status(403).json({ error: 'Only the main admin can perform this action' });
+    }
     const { id } = req.params;
     const { pdf_id } = req.body;
     if (!pdf_id) return res.status(400).json({ error: 'pdf_id is required' });
@@ -609,6 +628,9 @@ const uploadPdf = async (req, res) => {
 
 const revokePdfAccess = async (req, res) => {
   try {
+    if (req.adminEmail !== (process.env.MAIN_ADMIN_EMAIL || 'neetzymee@gmail.com')) {
+      return res.status(403).json({ error: 'Only the main admin can perform this action' });
+    }
     const { id, pdfId } = req.params;
     const [existing] = await pool.query(
       'SELECT id FROM purchases WHERE user_id = ? AND pdf_id = ?',
@@ -1162,6 +1184,7 @@ const importCutoffs = async (req, res) => {
 };
 
 module.exports = {
+  adminMe,
   getDashboard,
   getPdfs, getPdf, createPdf, updatePdf, deletePdf, uploadPdf,
   getColleges, getCollege, createCollege, updateCollege, deleteCollege, importColleges, bulkDeleteColleges,
