@@ -212,7 +212,7 @@ export default function Colleges() {
         </div>
 
         {/* Form Card */}
-        <div className="card" style={{ marginBottom: 'var(--space-6)' }}>
+        <div className="card" style={{ marginBottom: 'var(--space-6)', padding: 'var(--space-3)' }}>
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 'var(--space-5)', marginBottom: 'var(--space-5)' }}>
             {/* Rank */}
             <div>
@@ -241,7 +241,7 @@ export default function Colleges() {
                     key={cat}
                     onClick={() => setCategory(cat)}
                     style={{
-                      flex: isMobile ? '0 1 auto' : 1, padding: '10px 16px', borderRadius: 'var(--radius-sm)',
+                      flex: '0 1 auto', padding: '8px 18px', borderRadius: 'var(--radius-sm)',
                       border: '1.5px solid var(--color-border)',
                       background: category === cat ? 'var(--color-accent)' : 'var(--color-paper-2)',
                       color: category === cat ? '#fff' : 'var(--color-text-2)',
@@ -319,11 +319,11 @@ export default function Colleges() {
                   key={t}
                   onClick={() => setCollegeType(t)}
                   style={{
-                    padding: '8px 14px', borderRadius: 'var(--radius-sm)',
+                    padding: '10px 20px', borderRadius: 'var(--radius-sm)',
                     border: '1.5px solid var(--color-border)',
                     background: collegeType === t ? 'var(--color-accent)' : 'var(--color-paper-2)',
                     color: collegeType === t ? '#fff' : 'var(--color-text-2)',
-                    fontWeight: 600, fontSize: 12, cursor: 'pointer',
+                    fontWeight: 600, fontSize: 13, cursor: 'pointer',
                   }}
                 >
                   {t}

@@ -324,7 +324,7 @@ const styles = StyleSheet.create({
   rankInput: { backgroundColor: COLORS.stage, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 13, fontSize: 18, fontWeight: '700', color: COLORS.fg, borderWidth: 1, borderColor: COLORS.border },
 
   pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  catPill: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface },
+  catPill: { paddingHorizontal: 20, paddingVertical: 10, borderRadius: 12, borderWidth: 1.5, borderColor: COLORS.border, backgroundColor: COLORS.surface },
   catPillActive: { borderColor: COLORS.primary, backgroundColor: COLORS.primary },
   catPillText: { fontSize: 13, fontWeight: '600', color: COLORS.muted },
   catPillTextActive: { color: '#fff' },
