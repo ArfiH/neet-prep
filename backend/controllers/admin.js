@@ -1090,92 +1090,60 @@ const importCutoffs = async (req, res) => {
     if (!rows.length) return res.status(400).json({ error: 'No data rows found in CSV' });
 
     const errors = [];
-    const toInsert = [];
+    const inserted = [];
 
-    const cutoffAliases = {
-      collegeid: 'college_id',
-      generalrank: 'general_rank',
-      obcrank: 'obc_rank',
-      scrank: 'sc_rank',
-      strank: 'st_rank',
-      generalmarks: 'general_marks',
-      obcmarks: 'obc_marks',
-      scmarks: 'sc_marks',
-      stmarks: 'st_marks',
-    };
+    // Build category name → id map
+    const [categories] = await pool.query('SELECT id, name FROM categories');
+    const catMap = {};
+    for (const c of categories) catMap[c.name.toLowerCase()] = c.id;
 
     for (let i = 0; i < rows.length; i++) {
-      let r = normalizeRow(rows[i], cutoffAliases);
+      const r = rows[i];
       const rowNum = i + 2;
 
       if (!r.college_id) { errors.push({ row: rowNum, reason: 'college_id is required' }); continue; }
       if (!r.year) { errors.push({ row: rowNum, reason: 'year is required' }); continue; }
+      if (!r.category) { errors.push({ row: rowNum, reason: 'category is required' }); continue; }
 
       const collegeId = parseInt(r.college_id);
       const year = parseInt(r.year);
-
       if (!collegeId || !year) { errors.push({ row: rowNum, reason: 'college_id and year must be numbers' }); continue; }
 
       const [college] = await pool.query('SELECT id FROM colleges WHERE id = ?', [collegeId]);
       if (!college.length) { errors.push({ row: rowNum, reason: `College ID ${collegeId} not found` }); continue; }
 
-      toInsert.push({
-        college_id: collegeId,
-        year,
-        general_rank: parseInt(r.general_rank) || 999999,
-        obc_rank: parseInt(r.obc_rank) || 999999,
-        sc_rank: parseInt(r.sc_rank) || 999999,
-        st_rank: parseInt(r.st_rank) || 999999,
-        general_marks: r.general_marks ? parseInt(r.general_marks) : null,
-        obc_marks: r.obc_marks ? parseInt(r.obc_marks) : null,
-        sc_marks: r.sc_marks ? parseInt(r.sc_marks) : null,
-        st_marks: r.st_marks ? parseInt(r.st_marks) : null,
-      });
-    }
+      const catName = r.category.trim().toLowerCase();
+      const categoryId = catMap[catName];
+      if (!categoryId) { errors.push({ row: rowNum, reason: `Unknown category "${r.category}"` }); continue; }
 
-    if (!toInsert.length) {
-      return res.json({ imported: 0, errors, message: 'No valid rows to import' });
-    }
-
-    const inserted = [];
-    for (const row of toInsert) {
       try {
-        const [dup] = await pool.query(
-          'SELECT id FROM cutoffs WHERE college_id = ? AND year = ?',
-          [row.college_id, row.year]
-        );
-        if (dup.length) {
-          errors.push({ row: '—', reason: `Duplicate skipped: college ${row.college_id}, ${row.year}` });
-          continue;
+        // Find or create cutoff row
+        let [cutoffs] = await pool.query('SELECT id FROM cutoffs WHERE college_id = ? AND year = ?', [collegeId, year]);
+        let cutoffId;
+        if (cutoffs.length > 0) {
+          cutoffId = cutoffs[0].id;
+        } else {
+          const [result] = await pool.query('INSERT INTO cutoffs (college_id, year) VALUES (?, ?)', [collegeId, year]);
+          cutoffId = result.insertId;
         }
 
-        const [result] = await pool.query(
-          'INSERT INTO cutoffs (college_id, year, general_rank, obc_rank, sc_rank, st_rank, general_marks, obc_marks, sc_marks, st_marks) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-          [row.college_id, row.year, row.general_rank, row.obc_rank, row.sc_rank, row.st_rank, row.general_marks, row.obc_marks, row.sc_marks, row.st_marks]
+        const rank = r.rank ? parseInt(r.rank) : 999999;
+        const marks = r.marks ? parseInt(r.marks) : null;
+
+        await pool.query(
+          'INSERT INTO cutoff_values (cutoff_id, category_id, rank, marks) VALUES (?, ?, ?, ?) ON DUPLICATE KEY UPDATE rank = VALUES(rank), marks = VALUES(marks)',
+          [cutoffId, categoryId, rank, marks]
         );
-        const cutoffId = result.insertId;
-        const oldToNew = { general_rank: 1, obc_rank: 2, sc_rank: 3, st_rank: 4 };
-        const catValues = [];
-        for (const [col, catId] of Object.entries(oldToNew)) {
-          const rankKey = col;
-          const marksKey = col.replace('_rank', '_marks');
-          if (row[rankKey] != null && row[rankKey] !== 999999) {
-            catValues.push([cutoffId, catId, row[rankKey], row[marksKey] || null]);
-          }
-        }
-        if (catValues.length > 0) {
-          await pool.query('INSERT INTO cutoff_values (cutoff_id, category_id, rank, marks) VALUES ?', [catValues]);
-        }
         inserted.push(cutoffId);
       } catch (err) {
-        errors.push({ row: '—', reason: `college ${row.college_id}, ${row.year}: ${err.message}` });
+        errors.push({ row: rowNum, reason: err.message });
       }
     }
 
     res.json({
       imported: inserted.length,
       errors,
-      message: `Imported ${inserted.length} of ${toInsert.length} cutoffs`,
+      message: `Imported ${inserted.length} category cutoff entries`,
     });
   } catch (error) {
     console.error('Import cutoffs error:', error);

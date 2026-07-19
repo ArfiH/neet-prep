@@ -63,12 +63,19 @@ export default function CutoffImport() {
 
       <div style={{ maxWidth: 640 }}>
         <div style={{ marginBottom: 'var(--space-4)', fontSize: 13, color: 'var(--color-text-2)', lineHeight: 1.6 }}>
-          Upload a CSV file with cutoff data. Required columns: <strong>college_id</strong>, <strong>year</strong>.
-          Optional columns: <code>general_rank</code>, <code>obc_rank</code>, <code>sc_rank</code>, <code>st_rank</code>,
-          <code>general_marks</code>, <code>obc_marks</code>, <code>sc_marks</code>, <code>st_marks</code>.
+          Upload a CSV file with cutoff data. Required columns: <strong>college_id</strong>, <strong>year</strong>, <strong>category</strong>.
+          Optional columns: <code>rank</code>, <code>marks</code>.
           <br /><br />
-          Ranks default to "no data" if omitted. Existing entries for the same college + year are skipped.
+          Each row represents one category for one college + year. You can import categories incrementally
+          (e.g. General today, OBC tomorrow). Existing entries are updated.
+          <br /><br />
+          <strong>CSV format example:</strong>
         </div>
+        <pre style={{ fontSize: 12, background: 'var(--color-paper-2)', padding: 'var(--space-3)', borderRadius: 'var(--radius-sm)', overflowX: 'auto', marginBottom: 'var(--space-4)' }}>
+college_id,year,category,rank,marks{'\n'}
+101,2024,General,500,650{'\n'}
+101,2024,OBC,1200,600{'\n'}
+102,2024,General,800,620</pre>
 
         {!result && (
           <div
